@@ -6,7 +6,17 @@
 
 - This presentation created using [knitr](http://yihui.name/knitr/) + [pandoc](http://johnmacfarlane.net/pandoc/) + [reveal.js](http://lab.hakim.se/reveal-js/)
 - I have created a recitation repository on github: [https://github.com/ddimmery/Quant-II-Recitation](https://github.com/ddimmery/Quant-II-Recitation)
-- This presentation is available at [https://github.com/ddimmery/Quant-II-Recitation/raw/master/2014-01-31/presentation.html](https://github.com/ddimmery/Quant-II-Recitation/blob/master/2014-01-31/presentation.html)
+- The recitation website will also be on github, at [http://ddimmery.github.io/Quant-II-Recitation](http://ddimmery.github.io/Quant-II-Recitation)
+- This presentation is available on the course website.
+- The raw .Rmd file is available in the repository. You can create a handout version of it with the following commands (assuming knitr and pandoc are installed), first in R:
+```
+require(knitr)
+knit(presentation.Rmd)
+```
+- And then on the command line:
+```
+pandoc presentation.md -o handout.pdf
+```
 
 # Today's Topic
 
@@ -655,7 +665,7 @@ iris <- read.csv("iris.csv")
 
 # Simulate some Data
 
-```{r graphics,fig.cap='', fig.width=4.5, fig.height=4.5 }
+```{r 1-simdata,fig.cap='', fig.width=4.5, fig.height=4.5 }
 set.seed(1023) # Important for replication
 X <- rnorm(1000,0,5)
 Y <- sin(5*X)*exp(abs(X)) + rnorm(1000)
@@ -677,7 +687,7 @@ summary(dat.lm)
 ```
 
 # Pretty Output
-- How do we get $\LaTeX$ output?
+- How do we get LaTeX output?
 - The `xtable` package:
 
 . . .
@@ -732,7 +742,7 @@ apsrtable(dat.lm,dat.lm2)
 
 # apsrtable
 
-```{r fig.cap='', fig.width=6, fig.height=6}
+```{r 1-apsrtable,fig.cap='', fig.width=6, fig.height=6}
 library(png)
 library(grid)
 img <- readPNG("apsrtable.png")
@@ -748,7 +758,7 @@ stargazer(dat.lm,dat.lm2)
 
 # stargazer
 
-```{r fig.cap='', fig.width=6, fig.height=6}
+```{r 1-stargazer,fig.cap='', fig.width=6, fig.height=6}
 img <- readPNG("stargazer.png")
 grid.raster(img)
 ```
@@ -757,7 +767,7 @@ grid.raster(img)
 
 - Both packages are good (and can be supplemented with `xtable` when it is easier)
 
-- Get pretty close to what you want with these packages, and then tweak the $\LaTeX$ directly.
+- Get pretty close to what you want with these packages, and then tweak the LaTeX directly.
 
 # Plotting
 - It's all about coordinate pairs.
@@ -773,7 +783,7 @@ grid.raster(img)
 - Some objects respond specially to `plot`. Try `plot(dat.lm)`
 
 # Tying it Together
-```{r fig.cap='', fig.width=6, fig.height=6}
+```{r 1-llinbw,fig.cap='', fig.width=6, fig.height=6}
 x <- seq(-1,1,.01)
 y <- 3/4*(1-x^2)
 plot(x,y, type="l", xlab="h", ylab="weight")
@@ -802,7 +812,7 @@ loc.lin<-function(Y,X,c=0,bw=sd(X)/2){
 
 # Fit the Surface
 
-```{r fig.cap='', fig.width=6, fig.height=6}
+```{r 1-llmfit,fig.cap='', fig.width=6, fig.height=6}
 X.est<-seq(0,5,.1)
 dat.llm<-sapply(X.est, function(x) loc.lin(Y,X,c=x,bw=.25))
 plot(X,Y,xlim=c(0,5),ylim=c(-50,50),pch=20)
