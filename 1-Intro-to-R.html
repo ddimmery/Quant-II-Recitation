@@ -57,7 +57,13 @@ document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
 <ul>
 <li class="fragment">This presentation created using <a href="http://yihui.name/knitr/">knitr</a> + <a href="http://johnmacfarlane.net/pandoc/">pandoc</a> + <a href="http://lab.hakim.se/reveal-js/">reveal.js</a></li>
 <li class="fragment">I have created a recitation repository on github: <a href="https://github.com/ddimmery/Quant-II-Recitation">https://github.com/ddimmery/Quant-II-Recitation</a></li>
-<li class="fragment">This presentation is available at <a href="https://github.com/ddimmery/Quant-II-Recitation/blob/master/2014-01-31/presentation.html">https://github.com/ddimmery/Quant-II-Recitation/raw/master/2014-01-31/presentation.html</a></li>
+<li class="fragment">The recitation website will also be on github, at <a href="http://ddimmery.github.io/Quant-II-Recitation">http://ddimmery.github.io/Quant-II-Recitation</a></li>
+<li class="fragment">This presentation is available on the course website.</li>
+<li class="fragment"><p>The raw .Rmd file is available in the repository. You can create a handout version of it with the following commands (assuming knitr and pandoc are installed), first in R:</p>
+<pre><code>require(knitr)
+knit(presentation.Rmd)</code></pre></li>
+<li class="fragment"><p>And then on the command line:</p>
+<pre><code>pandoc presentation.md -o handout.pdf</code></pre></li>
 </ul>
 </section>
 <section id="todays-topic" class="slide level1">
@@ -758,9 +764,8 @@ new</code></pre>
 <div class="fragment">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">setwd</span>(<span class="st">&quot;~/github/Quant II Recitation/2014-01-31/&quot;</span>)
 <span class="kw">dir</span>()</code></pre>
-<pre><code>## [1] &quot;apsrtable.png&quot;     &quot;figure&quot;            &quot;iris.csv&quot;         
-## [4] &quot;presentation.html&quot; &quot;presentation.md&quot;   &quot;presentation.Rmd&quot; 
-## [7] &quot;reveal.js&quot;         &quot;stargazer.pdf&quot;     &quot;stargazer.png&quot;</code></pre>
+<pre><code>## [1] &quot;apsrtable.png&quot;    &quot;figure&quot;           &quot;iris.csv&quot;        
+## [4] &quot;presentation.Rmd&quot; &quot;stargazer.png&quot;    &quot;test.md&quot;</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r">iris &lt;-<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">&quot;iris.csv&quot;</span>)</code></pre>
 <ul>
 <li class="fragment"><p>If data is, for instance, a Stata .dta file, use <code>read.dta</code> from the <code>foreign</code> package.</p></li>
@@ -817,14 +822,14 @@ dat.lm</code></pre>
 <section id="pretty-output" class="slide level1">
 <h1>Pretty Output</h1>
 <ul>
-<li class="fragment">How do we get <span class="math">\(\LaTeX\)</span> output?</li>
+<li class="fragment">How do we get LaTeX output?</li>
 <li class="fragment">The <code>xtable</code> package:</li>
 </ul>
 <div class="fragment">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(xtable)
 <span class="kw">xtable</span>(dat.lm)</code></pre>
 <pre><code>## % latex table generated in R 3.0.2 by xtable 1.7-1 package
-## % Tue Jan 28 18:00:20 2014
+## % Tue Jan 28 23:20:03 2014
 ## \begin{table}[ht]
 ## \centering
 ## \begin{tabular}{rrrrr}
@@ -846,7 +851,7 @@ dat.lm</code></pre>
 <div class="fragment">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">xtable</span>(A)</code></pre>
 <pre><code>## % latex table generated in R 3.0.2 by xtable 1.7-1 package
-## % Tue Jan 28 18:00:20 2014
+## % Tue Jan 28 23:20:03 2014
 ## \begin{table}[ht]
 ## \centering
 ## \begin{tabular}{rrr}
@@ -870,7 +875,7 @@ dat.lm</code></pre>
 <pre><code>## [1] &quot;matrix&quot;</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">xtable</span>(<span class="kw">summary</span>(dat.lm)$coefficients)</code></pre>
 <pre><code>## % latex table generated in R 3.0.2 by xtable 1.7-1 package
-## % Tue Jan 28 18:00:20 2014
+## % Tue Jan 28 23:20:03 2014
 ## \begin{table}[ht]
 ## \centering
 ## \begin{tabular}{rrrrr}
@@ -895,7 +900,7 @@ dat.lm</code></pre>
 <div class="fragment">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>(<span class="kw">xtable</span>(dat.lm, <span class="dt">digits =</span> <span class="dv">1</span>), <span class="dt">booktabs =</span> <span class="ot">TRUE</span>)</code></pre>
 <pre><code>## % latex table generated in R 3.0.2 by xtable 1.7-1 package
-## % Tue Jan 28 18:00:20 2014
+## % Tue Jan 28 23:20:03 2014
 ## \begin{table}[ht]
 ## \centering
 ## \begin{tabular}{rrrrr}
@@ -956,7 +961,7 @@ img &lt;-<span class="st"> </span><span class="kw">readPNG</span>(<span class="s
 <span class="kw">stargazer</span>(dat.lm, dat.lm2)</code></pre>
 <pre><code>## 
 ## % Table created by stargazer v.4.5.3 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
-## % Date and time: Tue, Jan 28, 2014 - 18:00:20
+## % Date and time: Tue, Jan 28, 2014 - 23:20:04
 ## \begin{table}[!htbp] \centering 
 ##   \caption{} 
 ##   \label{} 
@@ -999,7 +1004,7 @@ img &lt;-<span class="st"> </span><span class="kw">readPNG</span>(<span class="s
 <h1>Both</h1>
 <ul>
 <li class="fragment"><p>Both packages are good (and can be supplemented with <code>xtable</code> when it is easier)</p></li>
-<li class="fragment"><p>Get pretty close to what you want with these packages, and then tweak the <span class="math">\(\LaTeX\)</span> directly.</p></li>
+<li class="fragment"><p>Get pretty close to what you want with these packages, and then tweak the LaTeX directly.</p></li>
 </ul>
 </section>
 <section id="plotting" class="slide level1">
@@ -1037,6 +1042,7 @@ y &lt;-<span class="st"> </span><span class="dv">3</span>/<span class="dv">4</sp
 <li class="fragment"><span class="math">\(\hat{\beta}_c = (X&#39;WX)^{-1}X&#39;WY\)</span></li>
 <li class="fragment">Covariance matrix is <span class="math">\(s^2(X&#39;WX)^{-1}\)</span></li>
 </ul>
+<div class="fragment">
 <pre class="sourceCode r"><code class="sourceCode r">loc.lin &lt;-<span class="st"> </span>function(Y, X, <span class="dt">c =</span> <span class="dv">0</span>, <span class="dt">bw =</span> <span class="kw">sd</span>(X)/<span class="dv">2</span>) {
     d &lt;-<span class="st"> </span>(X -<span class="st"> </span>c)/bw
     W &lt;-<span class="st"> </span><span class="dv">3</span>/<span class="dv">4</span> *<span class="st"> </span>(<span class="dv">1</span> -<span class="st"> </span>d^<span class="dv">2</span>) *<span class="st"> </span>(<span class="kw">abs</span>(d) &lt;<span class="st"> </span><span class="dv">1</span>)
@@ -1047,6 +1053,7 @@ y &lt;-<span class="st"> </span><span class="dv">3</span>/<span class="dv">4</sp
     sigma &lt;-<span class="st"> </span><span class="kw">solve</span>(<span class="kw">t</span>(X) %*%<span class="st"> </span>W %*%<span class="st"> </span>X) *<span class="st"> </span><span class="kw">c</span>(sigma)
     <span class="kw">return</span>(<span class="kw">c</span>(<span class="dt">est =</span> b[<span class="dv">1</span>], <span class="dt">se =</span> <span class="kw">sqrt</span>(<span class="kw">diag</span>(sigma))[<span class="dv">1</span>]))
 }</code></pre>
+</div>
 </section>
 <section id="fit-the-surface" class="slide level1">
 <h1>Fit the Surface</h1>
