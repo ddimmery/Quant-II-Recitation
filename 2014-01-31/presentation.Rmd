@@ -1,0 +1,812 @@
+% Quant II Recitation
+% Drew Dimmery <drewd@nyu.edu>
+% January 31, 2014
+
+# What is this?
+
+- This presentation created using [knitr](http://yihui.name/knitr/) + [pandoc](http://johnmacfarlane.net/pandoc/) + [reveal.js](http://lab.hakim.se/reveal-js/)
+- I have created a recitation repository on github: [https://github.com/ddimmery/Quant-II-Recitation](https://github.com/ddimmery/Quant-II-Recitation)
+- This presentation is available at [https://github.com/ddimmery/Quant-II-Recitation/raw/master/2014-01-31/presentation.html](https://github.com/ddimmery/Quant-II-Recitation/blob/master/2014-01-31/presentation.html)
+
+# Today's Topic
+
+- Sharing is caring.
+    - If you don't share your research (+ code and data) then what's the point of doing it?
+- Today we will be discussing some necessary mechanics.
+    - R and how to bend it to your will
+    - Producing high quality tables / plots
+    - If there's any time left, we can talk a little more about identification
+
+# Sharing
+- All homework will be submitted to me (preferably in hard copy)
+- All replication code will be posted to a gist on github, and submitted to me via email.
+    - [gist.github.com](https://gist.github.com/)
+    - Code should have a header with relevant information (name, date created, date modified, input files, output files, etc)
+    - **Code should be well commented**
+    - If you'd prefer to submit homework as some sort of knitr document, that is also fine. Just submit the `.Rmd` file.
+- All tables and plots should be of very high quality.
+- Yes, this will take a non-trivial amount of time.
+
+# Workflow
+- Find an editor and learn everything about it:
+    - **[vim](http://www.vim.org/)** (+ [Vim-R-plugin](http://www.vim.org/scripts/script.php?script_id=2628))
+    - [emacs](http://www.gnu.org/software/emacs/) (+ [ESS](http://ess.r-project.org/) [Emacs Speaks Statistics])
+    - [Notepad++](http://notepad-plus-plus.org/), [Kate](http://kate-editor.org/), [Sublime](http://www.sublimetext.com/), etc
+    - **[Rstudio](http://www.rstudio.com/)**
+    - [Eclipse](http://www.eclipse.org/) (+ [StatET](http://www.walware.de/goto/statet))
+- Familiarize yourself with version control software
+    - [git](http://git-scm.com/) ([github](https://github.com/) or [TortoiseGit](https://code.google.com/p/tortoisegit/))
+    - or just [Dropbox](https://www.dropbox.com/)
+
+# When things break
+- Documentation - Ex: `?lm`
+- [Google](http://google.com)
+- CRAN (Reference manuals, vignettes, etc) - Ex: [http://cran.r-project.org/web/packages/AER/index.html](http://cran.r-project.org/web/packages/AER/index.html)
+- JSS - Ex: [http://www.jstatsoft.org/v27/i02](http://www.jstatsoft.org/v27/i02)
+- Stack Overflow - [http://stackoverflow.com/questions/tagged/r](http://stackoverflow.com/questions/tagged/r)
+- Listservs - [http://www.r-project.org/mail.html](http://www.r-project.org/mail.html)
+
+# Resources
+- [The Art of R Programming](http://heather.cs.ucdavis.edu/~matloff/132/NSPpart.pdf) - N. Matloff
+- [Modern Applied Statistics with S](http://www.stats.ox.ac.uk/pub/MASS4/) - W. Venables and B. Ripley
+- [Advanced R Programming](http://adv-r.had.co.nz/) - forthcoming, H. Wickham
+- [The R Inferno](http://www.burns-stat.com/documents/books/the-r-inferno/) - P. Burns
+- [Rdataviz](https://github.com/pablobarbera/Rdataviz) - a talk by P. Barberá on ggplot2
+
+# Reading R Documentation
+- <a href="http://stat.ethz.ch/R-manual/R-patched/library/stats/html/lm.html" target="_blank">`?lm`</a>
+
+# CRAN documentation
+- <a href="http://cran.r-project.org/web/packages/AER/index.html" target="_blank">AER</a>
+
+# JSS
+- <a href="http://www.jstatsoft.org/v27/i02/">`plm`</a>
+
+# Confusing Things
+- At the prompt, > means you’re good to go, + means a parenthesis or bracket is open.
+- Case sensitive
+- Use / in path names. Not \\.
+- R uses variables – there is no "sheet" here, like in Stata
+- **R is a programming language**
+- More on errors later!
+
+# Using Third-party Code
+- Relevant commands are: `install.packages` and `library`
+- Find the appropriate packages and commands with Google and via searching in R:
+```
+?covariance
+??covariance
+install.packages("sandwich")
+library("sandwich")
+?vcovHC
+```
+
+# Data types
+- Character - strings
+- Double / Numeric - numbers
+- Logical - true/false
+- Factor - unordered categorical variables
+- Objects - its complicated
+
+# Character
+
+. . .
+
+```{r}
+str <- "This is a string"
+```
+
+. . .
+
+```{r}
+paste("This","is","a","string", sep=" ")
+```
+
+. . .
+
+```{r}
+as.character(99)
+class(str)
+```
+
+# Numeric
+
+. . .
+
+```{r}
+num <- 99.867
+class(num)
+```
+. . .
+
+```{r}
+round(num, digits=2)
+```
+
+. . .
+
+```{r}
+round(str, digits=2)
+```
+
+. . .
+
+```{r}
+pi
+exp(1)
+```
+
+- `sin`, `exp`, `log`, `factorial`, `choose`, `BesselJ`, etc
+
+# Logical
+
+- The logical type allows us to make statements about truth
+
+. . .
+
+```{r}
+2 == 4
+class(2==4)
+```
+
+. . .
+
+```{r}
+str != num
+```
+
+. . .
+
+```{r}
+"34" == 34
+```
+
+- `==`, `!=`, `>`, `<`, `>=`, `<=`, `!`, `&`, `|`, `any`, `all`, etc
+
+# Objects
+
+- Many functions will return objects rather than a single datatype.
+
+. . .
+
+```{r}
+X <- 1:100; Y <- rnorm(100,X)
+out.lm <- lm(Y~X)
+class(out.lm)
+```
+
+- Objects can have other data embedded inside them
+
+. . .
+
+```{r}
+out.lm$rank
+class(out.lm$rank)
+```
+
+# Data Structures
+
+- There are other ways to hold data, though:
+
+    - Vectors
+    - Lists
+    - Matrices
+    - Dataframes
+
+# Vectors
+
+- Almost everything in R is a vector.
+
+. . .
+
+```{r}
+as.vector(4)
+4
+```
+
+. . .
+
+- We can combine vectors with `c`:
+
+. . .
+
+```{r}
+vec <- c("a","b","c")
+vec
+```
+
+. . .
+
+```{r}
+c(2,3,vec)
+```
+
+# Vectors (cont.)
+
+- Sometimes R does some weird stuff:
+
+. . .
+
+```{r}
+c(1,2,3,4) + c(1,2)
+```
+
+- It "recycles" the shorter vector:
+
+. . .
+
+```{r}
+c(1,2,3,4) + c(1,2,1,2)
+```
+
+. . .
+
+```{r}
+c(1,2,3,4) + c(1,2,3)
+```
+
+# More Vectors
+- We can index vectors in several ways
+
+. . .
+
+```{r}
+vec[1]
+```
+
+. . .
+
+```{r}
+names(vec) <- c("first","second","third")
+vec
+```
+
+. . .
+
+```{r}
+vec["first"]
+```
+
+# Missingness
+
+. . .
+
+```{r}
+vec[1] <- NA
+vec
+```
+
+. . .
+
+```{r}
+is.na(vec)
+```
+
+. . .
+```{r}
+vec[!is.na(vec)] # vec[complete.cases(vec)]
+```
+
+# Lists
+
+- Lists are similar to vectors, but they allow for arbitrary mixing of types and lengths.
+
+. . .
+
+```{r}
+listie <- list(first = vec, second = num)
+listie
+```
+
+. . .
+
+```{r}
+listie[[1]]
+listie$first
+```
+
+# Matrices
+
+- $$A = \begin{pmatrix}1 & 3\\ 2 & 4\end{pmatrix}$$
+- $A_{ij}$
+- $A_{1,2} = 3$
+- $A_{1,\cdot} = (1,3)$
+
+. . .
+
+```{r}
+A <- matrix(c(1,2,3,4),nrow=2,ncol=2)
+A
+A[1,2]
+A[1,]
+```
+
+# Matrix Operations
+
+- Its very easy to manipulate matrices:
+
+. . .
+
+```{r}
+solve(A) #A^{-1}
+```
+
+. . . 
+
+```{r}
+10*A
+```
+
+. . .
+
+```{r}
+B<-diag(c(1,2))
+B
+```
+
+. . .
+
+```{r}
+A%*%B
+```
+
+# More Matrix Ops.
+
+. . .
+
+```{r}
+A%*%diag(3)
+```
+
+```{r}
+t(A) # A'
+```
+
+. . .
+
+```{r}
+rbind(A,B)
+```
+
+```{r}
+cbind(A,B)
+```
+
+. . .
+
+```{r}
+c(1,2,3)%x%c(1,1) # Kronecker Product
+```
+
+# Naming Things
+
+. . .
+
+```{r}
+rownames(A)
+```
+
+. . .
+
+```{r}
+rownames(A)<-c("a","b")
+colnames(A)<-c("c","d")
+A
+```
+
+. . .
+
+```{r}
+A[,"d"]
+```
+
+- Matrices are vectors:
+
+. . .
+
+```{r}
+A[3]
+```
+
+# Dataframes
+
+- The workhorse
+
+- Basically just a matrix that allows mixing of types.
+
+. . .
+
+```{r}
+data(iris)
+head(iris)
+```
+
+# Control Flow
+
+- loops
+- if/else
+- functions
+- useful stock functions to know
+
+# Loops
+
+- for loops - just a way to say "do this for each element of the index"
+- "this" is defined in what follows the "for" expression
+
+. . .
+
+```{r}
+for(i in 1:5) {
+  cat(i*10," ")
+}
+```
+
+. . .
+
+```{r}
+for(i in 1:length(vec)) { 
+  cat(vec[i]," ")
+}
+```
+
+. . .
+
+```{r}
+for(i in vec) { 
+  cat(i," ")
+}
+```
+
+# If/Else
+
+. . .
+
+```{r}
+if(vec[2]=="b") print("Hello World!")
+```
+
+. . .
+
+```{r}
+if(vec[3]=="a") {
+  print("Hello World!")
+} else {
+  print("!dlroW olleH")
+}
+```
+
+# Vectorized If/Else
+
+- Conditional execution on each element of a vector
+
+. . .
+
+```{r}
+vec <- letters[1:3]
+new <- vector(length=length(vec))
+for(i in 1:length(vec)) {
+  if(vec[i]=="b") {
+    new[i] <- 13
+  } else {
+    new[i] <- 0
+  }
+}
+new
+```
+
+. . .
+
+```{r}
+new <- ifelse(vec=="b",13,0)
+new
+```
+
+# Functions
+
+- $f : X \to Y$
+- Functions in R are largely the same. ("Pure functions")
+
+. . .
+
+```{r}
+add3 <- function(X) {
+  return(X+3)
+}
+add3(2)
+```
+
+. . .
+
+```{r}
+makeGroups<-function(groups,members=1) {
+  return((1:groups)%x%rep(1,members))
+}
+makeGroups(5)
+makeGroups(5,2)
+```
+
+# Useful Functions
+
+- Note: Most functions don’t do complete case analysis by default (usually option na.rm=TRUE)
+
+- `print`, `cat`, `paste`, `with`, `length`, `sort`, `order`, `unique`, `rep`, `nrow`, `ncol`, `complete.cases`, `subset`, `merge`, `mean`, `sum`, `sd`, `var`, `lag`,`lm`, `model.matrix`,`coef`, `vcov`, `residuals`, `vcovHC` (from `sandwich`), `ivreg` (from `AER`), `countrycode` (from`countrycode`),`summary`, `pdf`, `plot`, Tools from `plm`, and many more.
+
+# Distributional Functions
+
+- `?Distributions`
+- They have a consistent naming scheme.
+- `rnorm`, `dnorm`, `qnorm`, `pnorm`
+- `rdist` - generate random variable from dist
+- `ddist` - density function of dist
+- `qdist` - quantile function of dist
+- `pdist` - distribution function of dist
+- look at documentation for parameterization
+
+. . .
+
+```{r}
+rnorm(16)
+```
+
+# Robust SEs
+```{.r .numberLines}
+robust.se <- function(model,cluster=1:length(model$residuals)) {
+  require(sandwich)
+  require(lmtest)
+  M <- length(unique(cluster))
+  N <- length(cluster)
+  K <- model$rank
+  dfc <- (M/(M - 1)) * ((N - 1)/(N - K))
+  uj  <- apply(
+               estfun(model),
+               2,
+               function(x) tapply(x, cluster, sum)
+              )
+  rcse.cov <- dfc * sandwich(model,meat = crossprod(uj)/N)
+  rcse.se <- coeftest(model, rcse.cov)
+  return(list(rcse.cov, rcse.se))
+}
+```
+
+# Multiple Dispactch
+
+- Sometimes functions will behave differently based on context:
+
+. . .
+
+```{r}
+summary(vec)
+```
+
+. . .
+
+```{r}
+summary(c(1,2,3,4))
+```
+
+. . .
+
+```{r}
+summary(iris[,1:4])
+```
+
+- Why? `?summary` `?summary.lm`
+  
+# The \*apply family
+
+- These functions allow one to *efficiently* perform a large number of actions on data.
+- `apply` - performs actions on the rows or columns of a matrix/array (1 for rows, 2 for columns, 3 for ??)
+- `sapply` - performs actions on every element of a vector
+- `tapply` - performs actions on a vector by group
+- `replicate` - performs the same action a given number of times
+
+# apply
+
+```{r}
+A
+apply(A,1,sum)
+apply(A,2,mean)
+```
+
+# sapply
+
+```{r}
+vec
+sapply(vec,function(x) paste0(x,".vec"))
+```
+- Can be accomplished more simply with:
+
+. . .
+
+```{r}
+paste0(vec,".vec")
+```
+
+- Why?
+
+- `replicate` is basically just `sapply(1:N,funct)` where `funct` never uses the index.
+
+# tapply
+
+```{r}
+tapply(1:10, makeGroups(5,2), mean)
+```
+
+# Working With Data
+
+- Input
+- Output
+
+# Input
+
+. . .
+
+```{r}
+setwd("~/github/Quant II Recitation/2014-01-31/")
+dir()
+iris <- read.csv("iris.csv")
+```
+
+- If data is, for instance, a Stata .dta file, use `read.dta` from the `foreign` package.
+
+- Useful options for reading data: `sep`, `na.strings`, `stringsAsFactors`
+
+- For different formats, Google it.
+
+# Simulate some Data
+
+```{r graphics,fig.cap='', fig.width=4.5, fig.height=4.5 }
+set.seed(1023) # Important for replication
+X <- rnorm(1000,0,5)
+Y <- sin(5*X)*exp(abs(X)) + rnorm(1000)
+dat <- data.frame(X,Y)
+plot(X,Y,xlim=c(0,5),ylim=c(-50,50))
+```
+
+# Regression Output
+
+```{r}
+dat.lm<-lm(Y~X,data=dat)
+dat.lm
+```
+
+# Regression Output
+
+```{r}
+summary(dat.lm)
+```
+
+# Pretty Output
+- How do we get $\LaTeX$ output?
+- The `xtable` package:
+
+. . .
+
+```{r}
+require(xtable)
+xtable(dat.lm)
+```
+
+# xtable
+- `xtable` works on any sort of matrix
+
+. . .
+
+```{r}
+xtable(A)
+```
+
+# xtable
+- This is what `xtable` does with the `lm` object:
+
+. . .
+
+```{r}
+class(summary(dat.lm)$coefficients)
+xtable(summary(dat.lm)$coefficients)
+```
+
+- Note that this is the same as the output from `xtable(dat.lm)`
+
+# Pretty it up
+
+- Now let's make some changes to what `xtable` spits out:
+
+. . .
+
+```{r}
+print(xtable(dat.lm,digits=1),booktabs=TRUE)
+```
+
+- Many more options, see `?xtable` and `?print.xtable`
+
+# apsrtable
+
+- Read the documentation - there are many options.
+
+```{r}
+require(apsrtable)
+dat.lm2 <- lm(Y~X+0,data=dat)
+apsrtable(dat.lm,dat.lm2)
+```
+
+# apsrtable
+
+```{r fig.cap='', fig.width=6, fig.height=6}
+library(png)
+library(grid)
+img <- readPNG("apsrtable.png")
+grid.raster(img)
+```
+
+# stargazer
+
+```{r}
+require(stargazer)
+stargazer(dat.lm,dat.lm2)
+```
+
+# stargazer
+
+```{r fig.cap='', fig.width=6, fig.height=6}
+img <- readPNG("stargazer.png")
+grid.raster(img)
+```
+
+# Both
+
+- Both packages are good (and can be supplemented with `xtable` when it is easier)
+
+- Get pretty close to what you want with these packages, and then tweak the $\LaTeX$ directly.
+
+# Plotting
+- It's all about coordinate pairs.
+- `plot(x,y)` plots the pairs of points in `x` and `y`
+- Notable options:
+    - `type` - determines whether you plot points, lines or whatnot
+    - `pch` - determines plotting character
+    - `xlim` - x limits of the plot (likewise for `y`)
+    - `xlab` - label on the x-axis
+    - `main` - main plot label
+    - `col` - color
+    - A massive number of options. Read the docs.
+- Some objects respond specially to `plot`. Try `plot(dat.lm)`
+
+# Tying it Together
+```{r fig.cap='', fig.width=6, fig.height=6}
+x <- seq(-1,1,.01)
+y <- 3/4*(1-x^2)
+plot(x,y, type="l", xlab="h", ylab="weight")
+```
+
+# Tying it Together
+- $W$ is an $n\times p$ diagonal weighting matrix, $h$ is a "bandwidth".
+- Diagonal entries are $\frac{3}{4}\cdot(1-d^2)\cdot 1_{\{|d|\le 1\}}$ where $d = \frac{X-c}{h}$
+- $\hat{\beta}_c = (X'WX)^{-1}X'WY$
+- Covariance matrix is $s^2(X'WX)^{-1}$
+
+. . .
+
+```{r}
+loc.lin<-function(Y,X,c=0,bw=sd(X)/2){
+  d<-(X-c)/bw
+  W<-3/4*(1-d^2)*(abs(d)<1)
+  W<-diag(W)
+  X<-cbind(1,d)
+  b<-solve(t(X)%*%W%*%X)%*%t(X)%*%W%*%Y
+  sigma<-t(Y-X%*%b)%*%W%*%(Y-X%*%b)/(sum(diag(W)>0)-2)
+  sigma<-solve(t(X)%*%W%*%X)*c(sigma)
+  return(c(est=b[1],se=sqrt(diag(sigma))[1]))
+}
+```
+
+# Fit the Surface
+
+```{r fig.cap='', fig.width=6, fig.height=6}
+X.est<-seq(0,5,.1)
+dat.llm<-sapply(X.est, function(x) loc.lin(Y,X,c=x,bw=.25))
+plot(X,Y,xlim=c(0,5),ylim=c(-50,50),pch=20)
+lines(X.est,dat.llm[1,],col="red")
+lines(X.est,dat.llm[1,]+1.96*dat.llm[2,],col="pink")
+lines(X.est,dat.llm[1,]-1.96*dat.llm[2,],col="pink")
+```
