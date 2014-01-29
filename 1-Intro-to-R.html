@@ -58,7 +58,7 @@ document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
 <li class="fragment">This presentation created using <a href="http://yihui.name/knitr/">knitr</a> + <a href="http://johnmacfarlane.net/pandoc/">pandoc</a> + <a href="http://lab.hakim.se/reveal-js/">reveal.js</a></li>
 <li class="fragment">I have created a recitation repository on github: <a href="https://github.com/ddimmery/Quant-II-Recitation">https://github.com/ddimmery/Quant-II-Recitation</a></li>
 <li class="fragment">The recitation website will also be on github, at <a href="http://ddimmery.github.io/Quant-II-Recitation">http://ddimmery.github.io/Quant-II-Recitation</a></li>
-<li class="fragment">This presentation is available on the course website.</li>
+<li class="fragment">This presentation is available on the course website, as is a handout version in pdf.</li>
 <li class="fragment"><p>The raw .Rmd file is available in the repository. You can create a handout version of it with the following commands (assuming knitr and pandoc are installed), first in R:</p>
 <pre><code>require(knitr)
 knit(presentation.Rmd)</code></pre></li>
@@ -636,8 +636,9 @@ new</code></pre>
 </ul>
 <div class="fragment">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">rnorm</span>(<span class="dv">16</span>)</code></pre>
-<pre><code>##  [1]  0.4597  2.2269  2.7330  0.4495 -0.2498  0.2645  0.4470  0.9376
-##  [9]  1.3010  0.5880  1.3179  0.3703 -1.2490 -1.0140  1.3069 -1.4451</code></pre>
+<pre><code>##  [1]  0.03219 -0.89729 -0.28782  0.86993 -1.21937  1.47985  0.38488
+##  [8]  0.28917 -1.66721  0.23155  1.63280  0.84529 -0.87946 -0.22374
+## [15]  1.35861 -0.61532</code></pre>
 </div>
 </section>
 <section id="robust-ses" class="slide level1">
@@ -764,8 +765,9 @@ new</code></pre>
 <div class="fragment">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">setwd</span>(<span class="st">&quot;~/github/Quant II Recitation/2014-01-31/&quot;</span>)
 <span class="kw">dir</span>()</code></pre>
-<pre><code>## [1] &quot;apsrtable.png&quot;    &quot;figure&quot;           &quot;iris.csv&quot;        
-## [4] &quot;presentation.Rmd&quot; &quot;stargazer.png&quot;    &quot;test.md&quot;</code></pre>
+<pre><code>## [1] &quot;apsrtable.png&quot;     &quot;figure&quot;            &quot;handout.pdf&quot;      
+## [4] &quot;iris.csv&quot;          &quot;presentation.html&quot; &quot;presentation.md&quot;  
+## [7] &quot;presentation.Rmd&quot;  &quot;stargazer.png&quot;</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r">iris &lt;-<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">&quot;iris.csv&quot;</span>)</code></pre>
 <ul>
 <li class="fragment"><p>If data is, for instance, a Stata .dta file, use <code>read.dta</code> from the <code>foreign</code> package.</p></li>
@@ -782,7 +784,7 @@ Y &lt;-<span class="st"> </span><span class="kw">sin</span>(<span class="dv">5</
 dat &lt;-<span class="st"> </span><span class="kw">data.frame</span>(X, Y)
 <span class="kw">plot</span>(X, Y, <span class="dt">xlim =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">5</span>), <span class="dt">ylim =</span> <span class="kw">c</span>(-<span class="dv">50</span>, <span class="dv">50</span>))</code></pre>
 <figure>
-<img src="figure/graphics.png" />
+<img src="figure/1-simdata.png" />
 </figure>
 </section>
 <section id="regression-output" class="slide level1">
@@ -826,10 +828,11 @@ dat.lm</code></pre>
 <li class="fragment">The <code>xtable</code> package:</li>
 </ul>
 <div class="fragment">
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(xtable)
-<span class="kw">xtable</span>(dat.lm)</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(xtable)</code></pre>
+<pre><code>## Loading required package: xtable</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">xtable</span>(dat.lm)</code></pre>
 <pre><code>## % latex table generated in R 3.0.2 by xtable 1.7-1 package
-## % Tue Jan 28 23:20:03 2014
+## % Tue Jan 28 23:38:40 2014
 ## \begin{table}[ht]
 ## \centering
 ## \begin{tabular}{rrrrr}
@@ -851,7 +854,7 @@ dat.lm</code></pre>
 <div class="fragment">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">xtable</span>(A)</code></pre>
 <pre><code>## % latex table generated in R 3.0.2 by xtable 1.7-1 package
-## % Tue Jan 28 23:20:03 2014
+## % Tue Jan 28 23:38:40 2014
 ## \begin{table}[ht]
 ## \centering
 ## \begin{tabular}{rrr}
@@ -875,7 +878,7 @@ dat.lm</code></pre>
 <pre><code>## [1] &quot;matrix&quot;</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">xtable</span>(<span class="kw">summary</span>(dat.lm)$coefficients)</code></pre>
 <pre><code>## % latex table generated in R 3.0.2 by xtable 1.7-1 package
-## % Tue Jan 28 23:20:03 2014
+## % Tue Jan 28 23:38:40 2014
 ## \begin{table}[ht]
 ## \centering
 ## \begin{tabular}{rrrrr}
@@ -900,7 +903,7 @@ dat.lm</code></pre>
 <div class="fragment">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>(<span class="kw">xtable</span>(dat.lm, <span class="dt">digits =</span> <span class="dv">1</span>), <span class="dt">booktabs =</span> <span class="ot">TRUE</span>)</code></pre>
 <pre><code>## % latex table generated in R 3.0.2 by xtable 1.7-1 package
-## % Tue Jan 28 23:20:03 2014
+## % Tue Jan 28 23:38:40 2014
 ## \begin{table}[ht]
 ## \centering
 ## \begin{tabular}{rrrrr}
@@ -922,9 +925,14 @@ dat.lm</code></pre>
 <ul>
 <li class="fragment">Read the documentation - there are many options.</li>
 </ul>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(apsrtable)
-dat.lm2 &lt;-<span class="st"> </span><span class="kw">lm</span>(Y ~<span class="st"> </span>X +<span class="st"> </span><span class="dv">0</span>, <span class="dt">data =</span> dat)
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(apsrtable)</code></pre>
+<pre><code>## Loading required package: apsrtable</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">dat.lm2 &lt;-<span class="st"> </span><span class="kw">lm</span>(Y ~<span class="st"> </span>X +<span class="st"> </span><span class="dv">0</span>, <span class="dt">data =</span> dat)
 <span class="kw">apsrtable</span>(dat.lm, dat.lm2)</code></pre>
+<pre><code>## Note: no visible binding for global variable &#39;se&#39; 
+## Note: no visible binding for global variable &#39;se&#39; 
+## Note: no visible binding for global variable &#39;nmodels&#39; 
+## Note: no visible binding for global variable &#39;lev&#39;</code></pre>
 <pre><code>## \begin{table}[!ht]
 ## \caption{}
 ## \label{} 
@@ -952,16 +960,22 @@ dat.lm2 &lt;-<span class="st"> </span><span class="kw">lm</span>(Y ~<span class=
 img &lt;-<span class="st"> </span><span class="kw">readPNG</span>(<span class="st">&quot;apsrtable.png&quot;</span>)
 <span class="kw">grid.raster</span>(img)</code></pre>
 <figure>
-<img src="figure/unnamed-chunk-67.png" />
+<img src="figure/1-apsrtable.png" />
 </figure>
 </section>
 <section id="stargazer" class="slide level1">
 <h1>stargazer</h1>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(stargazer)
-<span class="kw">stargazer</span>(dat.lm, dat.lm2)</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(stargazer)</code></pre>
+<pre><code>## Loading required package: stargazer
+## 
+## Please cite as: 
+## 
+##  Hlavac, Marek (2013). stargazer: LaTeX code and ASCII text for well-formatted regression and summary statistics tables.
+##  R package version 4.5.3. http://CRAN.R-project.org/package=stargazer</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">stargazer</span>(dat.lm, dat.lm2)</code></pre>
 <pre><code>## 
 ## % Table created by stargazer v.4.5.3 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
-## % Date and time: Tue, Jan 28, 2014 - 23:20:04
+## % Date and time: Tue, Jan 28, 2014 - 23:38:48
 ## \begin{table}[!htbp] \centering 
 ##   \caption{} 
 ##   \label{} 
@@ -997,7 +1011,7 @@ img &lt;-<span class="st"> </span><span class="kw">readPNG</span>(<span class="s
 <pre class="sourceCode r"><code class="sourceCode r">img &lt;-<span class="st"> </span><span class="kw">readPNG</span>(<span class="st">&quot;stargazer.png&quot;</span>)
 <span class="kw">grid.raster</span>(img)</code></pre>
 <figure>
-<img src="figure/unnamed-chunk-69.png" />
+<img src="figure/1-stargazer.png" />
 </figure>
 </section>
 <section id="both" class="slide level1">
@@ -1031,7 +1045,7 @@ img &lt;-<span class="st"> </span><span class="kw">readPNG</span>(<span class="s
 y &lt;-<span class="st"> </span><span class="dv">3</span>/<span class="dv">4</span> *<span class="st"> </span>(<span class="dv">1</span> -<span class="st"> </span>x^<span class="dv">2</span>)
 <span class="kw">plot</span>(x, y, <span class="dt">type =</span> <span class="st">&quot;l&quot;</span>, <span class="dt">xlab =</span> <span class="st">&quot;h&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;weight&quot;</span>)</code></pre>
 <figure>
-<img src="figure/unnamed-chunk-70.png" />
+<img src="figure/1-llinbw.png" />
 </figure>
 </section>
 <section id="tying-it-together-1" class="slide level1">
@@ -1064,7 +1078,7 @@ dat.llm &lt;-<span class="st"> </span><span class="kw">sapply</span>(X.est, func
 <span class="kw">lines</span>(X.est, dat.llm[<span class="dv">1</span>, ] +<span class="st"> </span><span class="fl">1.96</span> *<span class="st"> </span>dat.llm[<span class="dv">2</span>, ], <span class="dt">col =</span> <span class="st">&quot;pink&quot;</span>)
 <span class="kw">lines</span>(X.est, dat.llm[<span class="dv">1</span>, ] -<span class="st"> </span><span class="fl">1.96</span> *<span class="st"> </span>dat.llm[<span class="dv">2</span>, ], <span class="dt">col =</span> <span class="st">&quot;pink&quot;</span>)</code></pre>
 <figure>
-<img src="figure/unnamed-chunk-72.png" />
+<img src="figure/1-llmfit.png" />
 </figure>
 </section>
     </div>
