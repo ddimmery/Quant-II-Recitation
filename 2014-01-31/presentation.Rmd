@@ -7,7 +7,7 @@
 - This presentation created using [knitr](http://yihui.name/knitr/) + [pandoc](http://johnmacfarlane.net/pandoc/) + [reveal.js](http://lab.hakim.se/reveal-js/)
 - I have created a recitation repository on github: [https://github.com/ddimmery/Quant-II-Recitation](https://github.com/ddimmery/Quant-II-Recitation)
 - The recitation website will also be on github, at [http://ddimmery.github.io/Quant-II-Recitation](http://ddimmery.github.io/Quant-II-Recitation)
-- This presentation is available on the course website.
+- This presentation is available on the course website, as is a handout version in pdf.
 - The raw .Rmd file is available in the repository. You can create a handout version of it with the following commands (assuming knitr and pandoc are installed), first in R:
 ```
 require(knitr)
