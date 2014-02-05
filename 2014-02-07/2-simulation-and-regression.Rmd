@@ -1,0 +1,167 @@
+% Simulation and Regression
+% Drew Dimmery <drewd@nyu.edu>
+% February 7, 2014
+
+# Today's Plan
+- Homework
+- Regression Adjustment
+- Simulation
+- Regression in R
+
+# Homework
+
+- [C]onsider a stratiﬁed estimator that controls for $Z_i$ by 
+    (i) partitioning the sample by values of $Z_i$, then 
+    (ii) taking the difference in treated and control means within each of these strata, and then
+    (iii) combining these stratum-speciﬁc estimates with a weighted average, where we weight each stratum contribution by the share of the $P$ in each stratum
+
+# Notation and Setup
+- So we consider the following two expectations:
+    - $E[Y_i(1) - Y_i(0) | Z_i = 1]$ weighted by $p_Z = P(Z_i = 1)$
+    - $E[Y_i(1) - Y_i(0) | Z_i = 0]$ weighted by $1-p_Z$
+- Then we want the weighted sum to be $E[Y_i(1) - Y_i(0)]$
+- Homework: Is this possible?
+
+# The kink
+- We **do not** observe principal Strata (counterfactual treatments)
+- But we still need to think about them.
+
+# Decompose to Principal Strata
+- Within the stratum $Z=1$, we have the following:
+    - $p_{comp} = P(D_i(1)-D_i(0)=1)$
+    - $p_{NT} = P(D_i(1)=D_i(0)=0)$
+    - $p_{AT} = P(D_i(1)=D_i(0)=1)$
+    - $p_{def} = P(D_i(1)-D_i(0)=-1) =0$
+- And these probabilities are equal (in expectation) across strata defined by $Z$ due to random assignment
+
+# Principal Strata TEs
+- Each principal strata may have its own conditional average treatment effect
+    - $\rho_{comp} = E[Y_i(1) - Y_i(0) | D_i(1)-D_i(0)=1]$
+    - $\rho_{NT} = E[Y_i(1) - Y_i(0) | D_i(1)=D_i(0)=0]$
+    - $\rho_{AT} = E[Y_i(1) - Y_i(0) | D_i(1)=D_i(0)=1]$
+    - $\rho_{def} = E[Y_i(1) - Y_i(0) | D_i(1)-D_i(0)=-1]$
+- We don't assume anything about these effects.
+- Also note that these are equal across strata in $Z$ due to random assignment of $Z$.
+
+# Counterfactuals and Principal Strata
+- But those effects assume counterfactual conditions in treatment that we don't observe.
+- For instance, for never takers:
+    - $E[Y_i(D_i(1)) - Y_i(D_i(0)) | D_i(1)=D_i(0)=0]$
+    - This observed quantity may be simplified:
+    - $E[Y_i(0) - Y_i(0) | D_i(1)=D_i(0)=0]$
+    - Which is equal to zero.
+    - The same is true for always takers.
+- This isn't to say that Always-Takers wouldn't be affected by treatment: just that we never see them affected by treatment.
+
+# Complier TEs
+- This is not the case for compliers, though.
+    - $E[Y_i(D_i(1)) - Y_i(D_i(0)) | D_i(1)-D_i(0)=1]$
+    - This can be similar simplified to:
+    - $E[Y_i(1) - Y_i(0) | D_i(1)-D_i(0)=1]$
+- And we've assumed that there are no defiers.
+
+# Intention to Treat Effect
+- This part isn't necessary to fully grok, yet.
+- This shows what we can get with a simple difference in means:
+    - $ITT = E[Y_i(D_i(1))] - E[Y_i(D_i(0))] $
+    - $ITT = E[Y_i(D_i(1)) - Y_i(D_i(0)) | D_i(1)=D_i(0)=0] \times p_{NT} +$  
+    $E[Y_i(D_i(1)) - Y_i(D_i(0)) | D_i(1)=D_i(0)=1] \times p_{AT} +$  
+    $E[Y_i(D_i(1)) - Y_i(D_i(0)) | D_i(1)-D_i(0)=1]\times p_{comp} +$  
+    $E[Y_i(D_i(1)) - Y_i(D_i(0)) | D_i(1)-D_i(0)=-1]\times p_{def}$
+- Taking into account some things we know (observed effects of AT & NT is zero, $p_{def}=0$):
+    - $ITT = E[Y_i(1) - Y_i(0) | D_i(1)-D_i(0)=1]\times p_{comp}$
+    - We're close, now!
+    - We just need to think about $p_{comp}$.
+
+# Intention to Treat Effect (on D)
+- Given what we know, we can look at the following:
+    - $ITT_D = E[D_i(1) - D_i(0)] =$  
+    $E[D_i(1) - D_i(0) | D_i(1)=D_i(0)=0] p_{NT} +$  
+    $E[D_i(1) - D_i(0) | D_i(1)=D_i(0)=1] p_{AT} +$  
+    $E[D_i(1) - D_i(0) | D_i(1)-D_i(0)=1] p_{comp} +$  
+    $E[D_i(1) - D_i(0) | D_i(1)-D_i(0)=-1] p_{def}$
+    - Or simply:
+    - $ITT_D = 1 \times p_{comp}$
+    - Which is what we want.
+
+# And finally
+- The observed difference in treatment across $Z$ gives us $p_{comp}$.
+- So we can simply take $\frac{ITT}{ITT_D} = E[Y_i(1) - Y_i(0) | D_i(1)-D_i(0)=1]$
+- This is a LATE (Local Average Treatment Effect) or CACE (Complier Average Causal Effect) depending on who is talking about it.
+- It's the best we can do in the case of non-compliance like this. (More on this stuff later in the semester)
+
+# Back to the homework!
+- But the homework had even more significant issues, as we were looking WITHIN strata.
+- To get a good estimate for the population using this method, we have to get a good estimate WITHIN each strata, too.
+- In other words, we must be able to recover $E[Y_i(1)-Y_i(0)|Z=1$ and vice versa within each strata. This allows:
+    - $E[Y_i(1)-Y_i(0)|Z=0] (1-p_Z) + E[Y_i(1)-Y_i(0)|Z=1] p_Z$
+- But can we get that?
+
+# What can we get in a strata?
+- For $Z=0$, and our three principal strata, we have:
+    - Always Takers will be $D_i=1$
+    - Never takers will be $D_i=0$
+    - Compliers will be $D_i=0$
+- So we can decompose the difference in means is as follows:
+    - $E[Y_i(1)|Z=0] - E[Y_i(0)|Z=0] = E[Y_i(1) | D_i(1)=D_i(0)=1] - $
+    - $E[Y_i(0) | D_i(1)-D_i(0)=1] \frac{p_{comp}}{p_{NT} + p_{comp}} -$
+    - $E[Y_i(0) | D_i(1)=D_i(0)=0] \frac{p_{NT}}{p_{NT} + p_{comp}} $
+- The key point is that these counterfactuals are not the ones we want.
+- For this to equal $E[Y_i(1) -Y_i(0)|Z=0]$, we would need to make some strong assumptions directly on the potential outcomes.
+
+# What sort of assumptions work?
+- If complier and never taker proportions are equal, then we get:
+    - $E[Y_i(1) | D_i(1)=D_i(0)=1]-$
+    - $\frac{1}{2} E[Y_i(0) | D_i(1)-D_i(0)=1] + \frac{1}{2} E[Y_i(0) | D_i(1)=D_i(0)=0]$
+    - This isn't enough.
+- The assumption we'd need would be on the equality of potential outcomes across all principal strata (ludicrously strong):
+    - $E[Y_i(1)|D_i(1)=D_i(0)=1] = E[Y_i(1)|D_i(1)=D_i(0)=0] = E[Y_i(1)|D_i(1)-D_i(0)=1] = E[Y_i(1)]$
+    - And $E[Y_i(0)|D_i(1)=D_i(0)=1] = E[Y_i(0)|D_i(1)=D_i(0)=0] = E[Y_i(0)|D_i(1)-D_i(0)=1] = E[Y_i(0)]$
+    - (Since we randomized over $Z_i$, it doesn't help us to only assume this only in strata of $Z_i$)
+    - This allows us to get at the common causal effect.
+
+# Graphically
+
+. . .
+
+```{r 2-hw1,fig.cap='', fig.width=6, fig.height=6}
+library(png)
+library(grid)
+img <- readPNG("2-hw1.png")
+grid.raster(img)
+```
+
+This is a ridiculous amount of regularity to assume, though.
+
+# Example
+- What if we had **all** the data? (- Don Rubin)
+- Assume a balanced design $p_Z = {1\over 2}$ and constant TE $\rho = 20$, with expected potential outcomes as follows:
+
+|   | $Y_1$ | $Y_2$ | size |
+|---:|:-------:|:-------:|:------:|
+|Always-taker| 10 | 30| 20% |
+|Never-taker| 0 | 20 | 30% |
+|Complier | 65 | 85 | 50% |
+
+- The given estimator will target the following parameter (using the decomposition from before):
+
+|  | $Z=1$ | $Z=0$ |
+|--|-------|-------|
+|$Y_1$|$85\cdot {.2 \over .7} + 30 \cdot {.2 \over .7} = 69.286$ | $30$ |
+|$Y_0$|$0$| $65\cdot {.5\over .8} = 40.625$|
+|$\rho$| $69.286$ | $-10.626$ |
+
+This setup gives an estimand of $29.33$. This is not the ATE (20). And we already assumed a lot of common issues away (balanced design, constant effects, etc)
+
+# Now for something completely different
+- Now we're going to switch gears to regression and covariate adjustment.
+- We'll also be getting some examples of how to work with linear models (in R)
+- This will include some consideration of partial regression.
+
+# Covariate Adjustment in sampling
+- Lin, Winston. (2013) "Agnostic Notes on Regression Adjustments to Experimental Data: Reexamining Freedman's Critique" *Annals of Applied Statistics*. 7(1):295-318.
+- Imagine that we are biologists. We are really interested in leaf size.
+- Finding the size of leaves is hard.
+- Weighing leaves is easy.
+- Key insight is that we can use a regression estimator:
+    - $Y
