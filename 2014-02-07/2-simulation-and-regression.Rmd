@@ -226,7 +226,7 @@ EffSD <- 3
 # Simulate data
 set.seed(1977)
 Yr1ClassType <- rep(c(1,0),nclass*nstudent)
-Yr2ClassType <- sample(Yr1Class,replace=FALSE)
+Yr2ClassType <- sample(Yr1ClassType,replace=FALSE)
 Yr1Score <- rnorm(2*nclass*nstudent,76+Yr1ClassType*5,9)
 # Fixed margins randomization
 Trt  <- sample(Yr1ClassType,replace=FALSE)
@@ -322,6 +322,32 @@ sweeplm <- function(formula,dat,ind) {
   newd <- apply(newd,2,function(x) unlist(tapply(x,ind,function(z) z-mean(z,na.rm=TRUE))))
   list(lm(newd[,1]~newd[,-1]-1,as.data.frame(newd)),newd,as.character(ind))
 }
+```
+
+# Testing linear Restrictions
+
+- $W=(R\hat{\beta} - r)'(R\hat{\boldsymbol V}R')^{-1}(R\hat{\beta}-r) \sim \chi_q^2$
+- Or more conservatively: $W / q \sim F_{q,N-K}$
+- In R:
+
+. . .
+
+```{r 2-linear-restrict}
+R <- cbind(0,diag(2))
+b <- matrix(coef(lm(Yr2Obs~Trt+Yr1Score)),ncol=1)
+r <- matrix(0,nrow=2,ncol=1)
+V <- vcov(lm(Yr2Obs~Trt+Yr1Score))
+W <- t(R%*%b-r)%*%solve(R%*%V%*%t(R))%*%(R%*%b-r)
+2*pchisq(W,2,lower.tail=FALSE)
+2*pf(W/2,2,lm(Yr2Obs~Trt+Yr1Score)$df.residual,lower.tail=FALSE)
+```
+
+# Using linearHypothesis
+
+```{r 2-lin-hyp}
+require(car)
+linearHypothesis(lm(Yr2Obs~Trt+Yr1Score),c("Trt","Yr1Score"),test="Chisq")
+linearHypothesis(lm(Yr2Obs~Trt+Yr1Score),c("Trt","Yr1Score"),test="F")
 ```
 
 # Coefficient Plots
