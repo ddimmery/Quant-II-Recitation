@@ -93,7 +93,7 @@
 
 # Back to the homework!
 - But the homework had even more significant issues, as we were looking WITHIN strata.
-- This essentially gets rid of the randomization.
+- This essentially gets rid of the benefits of randomization.
 - To get a good estimate for the population using this method, we have to get a good estimate WITHIN each strata, too.
 - In other words, we must be able to recover $E[Y_i(1)-Y_i(0)|Z=1]$ and vice versa within each strata. This would allow:
     - $E[Y_i(1)-Y_i(0)|Z=0] (1-p_Z) + E[Y_i(1)-Y_i(0)|Z=1] p_Z$
@@ -167,8 +167,10 @@ This is a ridiculous amount of regularity to assume, though.
 |$\rho$| **69.286** | **-10.625** |
 </center>
 
-- This setup gives an estimand of $29.33$. This is *not* the ATE (20), and there is no uncertainty here to blame. That is, we've derived the population estimand, not an estimate.
-- And we already assumed a lot of common issues away (balanced design, constant effects, etc)
+- This setup gives an estimand of $29.33$. This is *not* the ATE (20).
+- That is, we've derived the population estimand under this stratified estimator.
+- And we already assumed a lot of common issues away (balanced design, constant effects)
+- If we knew population sizes within principal strata, would this help?
 
 # Now for something completely different
 - Now we're going to switch gears to regression and covariate adjustment.
@@ -198,6 +200,9 @@ This is a ridiculous amount of regularity to assume, though.
 - Only difference is that we are sampling for both treatment and control.
 - This means that we must adjust both groups separately.
 - This motivates the use of covariate-treatment interactions.
+- Remember! Freedman (2008) showed that regression is **biased** and can be **inconsistent** for an experimental parameter in the case when interactions aren't included.
+- This is something to consider in many different situations. There's no reason to expect treatment and control groups to exhibit identical effects (even ones that are orthogonal to the causal parameter of interest)
+- This is just a particular sort of omitted variable bias, which you should already be familiar with.
 
 # Covariate Adjustment in Experiments
 - Now imagine we are social scientists (hopefully this isn't hard)
@@ -206,8 +211,8 @@ This is a ridiculous amount of regularity to assume, though.
 - 250 students. Ten classes of 25 students each. Observed over two years.
 - First year has half good teachers and half bad.
 - We want to estimate the effect of the intervention in year 2.
-- Students are randomly assigned to classes.
-- Note: This setup demands an accounting of clustering, which I'm ignoring. Maybe I'll bring it back later in the semester when we discuss SUTVA.
+- Treatment is assigned randomly by **individual**
+- Note: This setup usually demands an accounting of clustering, which I'm ignoring. Maybe I'll bring it back later in the semester when we discuss SUTVA.
 
 
 # Simulation
@@ -220,29 +225,36 @@ Eff <- 5
 EffSD <- 3
 # Simulate data
 set.seed(1977)
-Yr1Class <- rep(c(1,0),nclass*nstudent)
-Yr2Class <- sample(Yr1Class,replace=FALSE)
-Yr1Score <- rnorm(2*nclass*nstudent,76+Yr1Class*5,9)
-Trt  <- sample(Yr1Class,replace=FALSE)
-# There is an independent effect of class in each year
-# Variance is different across classes in year 2
-CtlOutcome <- rnorm(2*nclass*nstudent,Yr1Score+Yr2Class*3,9-Yr2Class*4)
+Yr1ClassType <- rep(c(1,0),nclass*nstudent)
+Yr2ClassType <- sample(Yr1Class,replace=FALSE)
+Yr1Score <- rnorm(2*nclass*nstudent,76+Yr1ClassType*5,9)
+# Fixed margins randomization
+Trt  <- sample(Yr1ClassType,replace=FALSE)
+# There is an independent effect of class type in each year
+# Variance is different across class types in year 2
+CtlOutcome <- rnorm(2*nclass*nstudent,Yr1Score+Yr2ClassType*3,9-Yr2ClassType*4)
 # Treatment effect is random, but with expectation Eff
 Yr2Obs <- CtlOutcome + Trt * rnorm(2*nclass*nstudent,Eff,EffSD)
 
 summary(lm(Yr2Obs~Trt))$coefficients[2,]
 summary(lm(Yr2Obs~Trt+Yr1Score))$coefficients[2,]
-summary(lm(Yr2Obs~Trt+Yr1Score+Yr1Class+Yr2Class))$coefficients[2,]
+
+# *IF* we trust the model-based SEs,
+# then we could pull SEs for a TE estimate with:
+summary(lm(Yr2Obs~Trt))$coefficients["Trt",2]
 ```
 
-# Plot
-```{r 2-educ-plot, fig.cap=''}
-plot(jitter(Yr2Class),Yr2Obs,axes=F,xlab="Treatment",ylab="Test Result (Yr 2)")
+# Plot Data
+```{r 2-educ-plot, fig.cap='',fig.width=4,fig.height=4}
+plot(jitter(Trt),Yr2Obs,axes=F,xlab="Treatment",ylab="Test Result (Yr 2)",col="grey")
 axis(2)
 axis(1,at=c(0,1))
+# Calculate quantities for plotting CIs
 mns <- tapply(Yr2Obs,Trt,mean)
+# SEs could also be pulled from the linear models we fit above with:
 ses <- tapply(Yr2Obs,Trt,function(x) sd(x)/sqrt(length(x)))
 points(c(0,1),mns,col="red",pch=19)
+# Note the loop so that I only write this code once
 for(tr in unique(Trt)) {
   for(q in c(.25,.025)) {
     upr<-mns[as.character(tr)]+qnorm(1-q)*ses[as.character(tr)]
@@ -251,3 +263,136 @@ for(tr in unique(Trt)) {
   }
 }
 ```
+
+# Partial Regression
+
+- Can we make that plot a little more friendly?
+- Let's residualize our outcome based on scores in the first period. This should remove a substantial amount of the variance in the outcome.
+- A few things to check, though.
+
+. . .
+
+```{r 2-resid-it, fig.cap='',fig.width=12,fig.height=3.75}
+OutcomeRes <- residuals(lm(Yr2Obs~Yr1Score+0))
+TrtRes <- residuals(lm(Trt~Yr1Score+0))
+c(sd(OutcomeRes),sd(Yr2Obs))
+# Diagnostics
+par(mfrow=c(1,4))
+plot(Yr1Score,Yr2Obs)
+plot(Yr1Score,jitter(Trt))
+hist(OutcomeRes)
+hist(TrtRes)
+```
+
+# Residualized Plot
+
+```{r 2-educ-resid-plot, fig.cap='',fig.width=4,fig.height=4}
+par(mfrow=c(1,1))
+plot(jitter(TrtRes),OutcomeRes,axes=F,xlab="Treatment (residuals)",ylab="Test Result (residuals)",col="grey")
+axis(2)
+axis(1)
+# Pull information from the new bivariate model
+mns<-coef(lm(OutcomeRes~TrtRes))
+ses<-summary(lm(OutcomeRes~TrtRes))$coefficients[,2]
+TrtResMns<-tapply(TrtRes,Trt,mean)
+names(ses)<-names(mns)<-names(TrtResMns)
+points(TrtResMns,mns,col="red",pch=19)
+for(tr in names(TrtResMns)) {
+  for(q in c(.25,.025)) {
+    upr<-mns[tr]+qnorm(1-q)*ses[tr]
+    lwr <- mns[tr]-qnorm(1-q)*ses[tr]
+    segments(TrtResMns[tr],upr,TrtResMns[tr],lwr,lwd=(-4/log(q)))
+  }
+}
+```
+
+# Partial Regression for FEs
+- We'll get to this later in the semester.
+- The point is, partial regression is a fundamentally important tool that let's us do things that would otherwise be very hard.
+
+. . .
+
+```{r 2-sweep-fes}
+sweeplm <- function(formula,dat,ind) {
+  newd <- model.matrix(~.,model.frame(formula,dat,na.action=na.pass))
+  newd <- newd[,-1]
+  ok <- complete.cases(newd)
+  newd <- newd[ok,]
+  ind <- ind[ok]
+  newd <- apply(newd,2,function(x) unlist(tapply(x,ind,function(z) z-mean(z,na.rm=TRUE))))
+  list(lm(newd[,1]~newd[,-1]-1,as.data.frame(newd)),newd,as.character(ind))
+}
+```
+
+# Coefficient Plots
+- We only really care about one causal parameter at a time, usually.
+- When we're in the causal inference mindset, we very rarely want to see long lists of covariates that are causally meaningless.
+- In general, it is often worthwhile to make simple plots of your coefficients.
+- I'll put some example code on the next page.
+- It assumes a couple vectors exist:
+
+. . .
+
+```{r 2-coef-plot-code}
+ests <- c(coef(lm(Yr2Obs~Trt))[2],coef(lm(Yr2Obs~Trt+Yr1Score))[2])
+ses <- c(summary(lm(Yr2Obs~Trt))$coefficients[2,2],summary(lm(Yr2Obs~Trt+Yr1Score))$coefficients[2,2])
+var.names <- c("Unadjusted","Adjusted")
+```
+
+# Coefficient Plot Code
+```{r 2-coef-plots,eval=FALSE}
+par(
+  family = "serif",
+  oma = c(0,0,0,0),
+  mar = c(5,10,4,2)
+)
+  
+plot(NULL,
+  xlim = c(-0.2, 8),
+  ylim = c(.7, length(ests) + .3),
+  axes = F, xlab = NA, ylab = NA)
+  
+for (i in 1:length(ests)) {
+  points(ests[i], i, pch = 19, cex = .5)
+  lines(c(ests[i] + 1.64*ses[i], ests[i] - 1.64*ses[i]), c(i, i))
+  lines(c(ests[i] + .67*ses[i], ests[i] - .67*ses[i]), c(i, i), lwd = 3)
+  text(-1.1, i, var.names[i], xpd = T, cex = .8,pos=2)
+}
+
+axis(side = 1)
+abline(v = 0, lty = 3, col = "black")
+mtext(side = 1, "Estimated Effect", line = 3)
+mtext(side = 3, "Adjusted vs Unadjusted Regression", line = 1)
+box()    
+```
+
+# Plotted
+
+```{r 2-coef-plots-show,echo=FALSE,fig.cap='',fig.width=7,fig.height=7}
+par(
+  family = "serif",
+  oma = c(0,0,0,0),
+  mar = c(5,10,4,2)
+)
+  
+plot(NULL,
+  xlim = c(-0.2, 8),
+  ylim = c(.7, length(ests) + .3),
+  axes = F, xlab = NA, ylab = NA)
+  
+for (i in 1:length(ests)) {
+  points(ests[i], i, pch = 19, cex = .5)
+  lines(c(ests[i] + 1.64*ses[i], ests[i] - 1.64*ses[i]), c(i, i))
+  lines(c(ests[i] + .67*ses[i], ests[i] - .67*ses[i]), c(i, i), lwd = 3)
+  text(-1.1, i, var.names[i], xpd = T, cex = .8,pos=2)
+}
+
+axis(side = 1)
+abline(v = 0, lty = 3, col = "black")
+abline(v=Eff, lty = 5, col = "blue")
+mtext(side = 1, "Estimated Effect", line = 3)
+mtext(side = 3, "Adjusted vs Unadjusted Regression", line = 1)
+box()    
+```
+
+- Think about how these two might differ for different starting parameters (ex. sample size)
