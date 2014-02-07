@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="Drew Dimmery drewd@nyu.edu" />
+  <title>Simulation and Regression</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="reveal.js/css/reveal.min.css"/>
+    <style type="text/css">code{white-space: pre;}</style>
+    <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+    </style>
+    <link rel="stylesheet" href="reveal.js/css/theme/simple.css" id="theme">
+  <link rel="stylesheet" media="print" href="reveal.js/css/print/pdf.css" />
+  <!--[if lt IE 9]>
+  <script src="reveal.js/lib/js/html5shiv.js"></script>
+  <![endif]-->
+    <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section>
+    <h1 class="title">Simulation and Regression</h1>
+    <h2 class="author">Drew Dimmery <script type="text/javascript">
+<!--
+h='&#110;&#x79;&#x75;&#46;&#x65;&#100;&#x75;';a='&#64;';n='&#100;&#114;&#x65;&#x77;&#100;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#100;&#114;&#x65;&#x77;&#100;&#32;&#x61;&#116;&#32;&#110;&#x79;&#x75;&#32;&#100;&#x6f;&#116;&#32;&#x65;&#100;&#x75;</noscript></h2>
+    <h3 class="date">February 7, 2014</h3>
+</section>
+
+<section id="todays-plan" class="slide level1">
+<h1>Today's Plan</h1>
+<ul>
+<li class="fragment">Homework</li>
+<li class="fragment">Regression Adjustment</li>
+<li class="fragment">Simulation</li>
+<li class="fragment">Regression in R</li>
+</ul>
+</section>
+<section id="homework" class="slide level1">
+<h1>Homework</h1>
+<ul>
+<li class="fragment">[C]onsider a stratified estimator that controls for <span class="math">\(Z_i\)</span> by
+<ol type="i">
+<li class="fragment">partitioning the sample by values of <span class="math">\(Z_i\)</span>, then</li>
+<li class="fragment">taking the difference in treated and control means within each of these strata, and then</li>
+<li class="fragment">combining these stratum-specific estimates with a weighted average, where we weight each stratum contribution by the share of the <span class="math">\(P\)</span> in each stratum</li>
+</ol></li>
+</ul>
+</section>
+<section id="notation-and-setup" class="slide level1">
+<h1>Notation and Setup</h1>
+<ul>
+<li class="fragment">So we consider the following two expectations:
+<ul>
+<li class="fragment"><span class="math">\(E[Y_i(1) - Y_i(0) | Z_i = 1]\)</span> weighted by <span class="math">\(p_Z = P(Z_i = 1)\)</span></li>
+<li class="fragment"><span class="math">\(E[Y_i(1) - Y_i(0) | Z_i = 0]\)</span> weighted by <span class="math">\(1-p_Z\)</span></li>
+</ul></li>
+<li class="fragment">Then we want the weighted sum to be <span class="math">\(E[Y_i(1) - Y_i(0)]\)</span></li>
+<li class="fragment">Homework: Is this possible?</li>
+</ul>
+</section>
+<section id="the-kink" class="slide level1">
+<h1>The kink</h1>
+<ul>
+<li class="fragment">We <strong>do not</strong> observe principal Strata (counterfactual treatments)</li>
+<li class="fragment">But we still need to think about them.</li>
+<li class="fragment">If you talked about them on the homework, you were probably on the right track.</li>
+</ul>
+</section>
+<section id="decompose-to-principal-strata" class="slide level1">
+<h1>Decompose to Principal Strata</h1>
+<ul>
+<li class="fragment">Within the stratum <span class="math">\(Z=1\)</span>, we have the following:
+<ul>
+<li class="fragment"><span class="math">\(p_{comp} = P(D_i(1)-D_i(0)=1)\)</span></li>
+<li class="fragment"><span class="math">\(p_{NT} = P(D_i(1)=D_i(0)=0)\)</span></li>
+<li class="fragment"><span class="math">\(p_{AT} = P(D_i(1)=D_i(0)=1)\)</span></li>
+<li class="fragment"><span class="math">\(p_{def} = P(D_i(1)-D_i(0)=-1) =0\)</span></li>
+</ul></li>
+<li class="fragment">And these probabilities are equal (in expectation) across strata defined by <span class="math">\(Z\)</span> due to random assignment</li>
+</ul>
+</section>
+<section id="principal-strata-tes" class="slide level1">
+<h1>Principal Strata TEs</h1>
+<ul>
+<li class="fragment">Each principal strata may have its own conditional average treatment effect
+<ul>
+<li class="fragment"><span class="math">\(\rho_{comp} = E[Y_i(1) - Y_i(0) | D_i(1)-D_i(0)=1]\)</span></li>
+<li class="fragment"><span class="math">\(\rho_{NT} = E[Y_i(1) - Y_i(0) | D_i(1)=D_i(0)=0]\)</span></li>
+<li class="fragment"><span class="math">\(\rho_{AT} = E[Y_i(1) - Y_i(0) | D_i(1)=D_i(0)=1]\)</span></li>
+<li class="fragment"><span class="math">\(\rho_{def} = E[Y_i(1) - Y_i(0) | D_i(1)-D_i(0)=-1]\)</span></li>
+</ul></li>
+<li class="fragment">We don't assume anything about these effects.</li>
+<li class="fragment">Also note that these are equal across strata in <span class="math">\(Z\)</span> due to random assignment of <span class="math">\(Z\)</span>.</li>
+</ul>
+</section>
+<section id="counterfactuals-and-principal-strata" class="slide level1">
+<h1>Counterfactuals and Principal Strata</h1>
+<ul>
+<li class="fragment">But those effects assume counterfactual conditions in treatment that we don't observe.</li>
+<li class="fragment">For instance, for never takers:
+<ul>
+<li class="fragment"><span class="math">\(E[Y_i(D_i(1)) - Y_i(D_i(0)) | D_i(1)=D_i(0)=0]\)</span></li>
+<li class="fragment">This observed quantity may be simplified:<br /><span class="math">\(E[Y_i(0) - Y_i(0) | D_i(1)=D_i(0)=0]\)</span></li>
+<li class="fragment">Which is equal to zero.</li>
+<li class="fragment">The same is true for always takers.</li>
+</ul></li>
+<li class="fragment">This isn't to say that Always-Takers wouldn't be affected by treatment: just that we never see them affected by treatment.</li>
+</ul>
+</section>
+<section id="complier-tes" class="slide level1">
+<h1>Complier TEs</h1>
+<ul>
+<li class="fragment">This is not the case for compliers, though.
+<ul>
+<li class="fragment"><span class="math">\(E[Y_i(D_i(1)) - Y_i(D_i(0)) | D_i(1)-D_i(0)=1]\)</span></li>
+<li class="fragment">This can be similar simplified to:</li>
+<li class="fragment"><span class="math">\(E[Y_i(1) - Y_i(0) | D_i(1)-D_i(0)=1]\)</span></li>
+</ul></li>
+<li class="fragment">And we've assumed that there are no defiers.</li>
+</ul>
+</section>
+<section id="intention-to-treat-effect" class="slide level1">
+<h1>Intention to Treat Effect</h1>
+<ul>
+<li class="fragment">This part isn't necessary to fully grok, yet.</li>
+<li class="fragment">This shows what we can get with a simple difference in means:
+<ul>
+<li class="fragment"><span class="math">\(ITT = E[Y_i(D_i(1))] - E[Y_i(D_i(0))] \)</span></li>
+<li class="fragment"><span class="math">\(ITT = E[Y_i(D_i(1)) - Y_i(D_i(0)) | D_i(1)=D_i(0)=0] \times p_{NT} +\)</span><br /><span class="math">\(E[Y_i(D_i(1)) - Y_i(D_i(0)) | D_i(1)=D_i(0)=1] \times p_{AT} +\)</span><br /><span class="math">\(E[Y_i(D_i(1)) - Y_i(D_i(0)) | D_i(1)-D_i(0)=1]\times p_{comp} +\)</span><br /><span class="math">\(E[Y_i(D_i(1)) - Y_i(D_i(0)) | D_i(1)-D_i(0)=-1]\times p_{def}\)</span></li>
+</ul></li>
+<li class="fragment">Taking into account some things we know (observed effects of AT &amp; NT is zero, <span class="math">\(p_{def}=0\)</span>):
+<ul>
+<li class="fragment"><span class="math">\(ITT = E[Y_i(1) - Y_i(0) | D_i(1)-D_i(0)=1]\times p_{comp}\)</span></li>
+<li class="fragment">We're close, now!</li>
+<li class="fragment">We just need to think about <span class="math">\(p_{comp}\)</span>.</li>
+</ul></li>
+</ul>
+</section>
+<section id="intention-to-treat-effect-on-d" class="slide level1">
+<h1>Intention to Treat Effect (on D)</h1>
+<ul>
+<li class="fragment">Given what we know, we can look at the following:
+<ul>
+<li class="fragment"><span class="math">\(ITT_D = E[D_i(1) - D_i(0)] =\)</span><br /><span class="math">\(E[D_i(1) - D_i(0) | D_i(1)=D_i(0)=0] p_{NT} +\)</span><br /><span class="math">\(E[D_i(1) - D_i(0) | D_i(1)=D_i(0)=1] p_{AT} +\)</span><br /><span class="math">\(E[D_i(1) - D_i(0) | D_i(1)-D_i(0)=1] p_{comp} +\)</span><br /><span class="math">\(E[D_i(1) - D_i(0) | D_i(1)-D_i(0)=-1] p_{def}\)</span></li>
+<li class="fragment">Or simply:</li>
+<li class="fragment"><span class="math">\(ITT_D = 1 \times p_{comp}\)</span></li>
+<li class="fragment">Which is what we want.</li>
+</ul></li>
+</ul>
+</section>
+<section id="and-finally" class="slide level1">
+<h1>And finally</h1>
+<ul>
+<li class="fragment">The observed difference in treatment across <span class="math">\(Z\)</span> gives us <span class="math">\(p_{comp}\)</span>.</li>
+<li class="fragment">So we can simply take <span class="math">\(\frac{ITT}{ITT_D} = E[Y_i(1) - Y_i(0) | D_i(1)-D_i(0)=1]\)</span></li>
+<li class="fragment">This is a LATE (Local Average Treatment Effect) or CACE (Complier Average Causal Effect) depending on who is talking about it.</li>
+<li class="fragment">It's the best we can do in the case of non-compliance like this. (More on this stuff later in the semester)</li>
+</ul>
+</section>
+<section id="back-to-the-homework" class="slide level1">
+<h1>Back to the homework!</h1>
+<ul>
+<li class="fragment">But the homework had even more significant issues, as we were looking WITHIN strata.</li>
+<li class="fragment">This essentially gets rid of the benefits of randomization.</li>
+<li class="fragment">To get a good estimate for the population using this method, we have to get a good estimate WITHIN each strata, too.</li>
+<li class="fragment">In other words, we must be able to recover <span class="math">\(E[Y_i(1)-Y_i(0)|Z=1]\)</span> and vice versa within each strata. This would allow:
+<ul>
+<li class="fragment"><span class="math">\(E[Y_i(1)-Y_i(0)|Z=0] (1-p_Z) + E[Y_i(1)-Y_i(0)|Z=1] p_Z\)</span></li>
+</ul></li>
+<li class="fragment">But can we get that?</li>
+<li class="fragment">No. Not even a little bit.</li>
+</ul>
+</section>
+<section id="whats-in-a-strata" class="slide level1">
+<h1>What's in a strata?</h1>
+<ul>
+<li class="fragment">For <span class="math">\(Z=0\)</span>, and our three principal strata, we have:
+<ul>
+<li class="fragment">Always Takers will be <span class="math">\(D_i=1\)</span></li>
+<li class="fragment">Never takers will be <span class="math">\(D_i=0\)</span></li>
+<li class="fragment">Compliers will be <span class="math">\(D_i=0\)</span></li>
+</ul></li>
+<li class="fragment">So we can decompose the difference in means is as follows:
+<ul>
+<li class="fragment"><span class="math">\(E[Y_i(1)|Z=0] - E[Y_i(0)|Z=0] = E[Y_i(1) | D_i(1)=D_i(0)=1] - \)</span><br /><span class="math">\(E[Y_i(0) | D_i(1)-D_i(0)=1] \frac{p_{comp}}{p_{NT} + p_{comp}} -\)</span><br /><span class="math">\(E[Y_i(0) | D_i(1)=D_i(0)=0] \frac{p_{NT}}{p_{NT} + p_{comp}} \)</span></li>
+</ul></li>
+<li class="fragment">The key point is that these counterfactuals are not the ones we want.</li>
+<li class="fragment">Even if they were, we still wouldn't know what we were estimating without knowing proportions in each strata (which we wouldn't).</li>
+<li class="fragment">For this to equal <span class="math">\(E[Y_i(1) -Y_i(0)|Z=0]\)</span>, we would need to make some strong assumptions directly on the potential outcomes.</li>
+</ul>
+</section>
+<section id="what-sort-of-assumptions-work" class="slide level1">
+<h1>What sort of assumptions work?</h1>
+<ul>
+<li class="fragment">If complier and never taker proportions are equal, then we get:
+<ul>
+<li class="fragment"><span class="math">\(E[Y_i(1) | D_i(1)=D_i(0)=1]-\)</span><br /><span class="math">\(\frac{1}{2} E[Y_i(0) | D_i(1)-D_i(0)=1] + \frac{1}{2} E[Y_i(0) | D_i(1)=D_i(0)=0]\)</span></li>
+<li class="fragment">This isn't enough.</li>
+</ul></li>
+<li class="fragment">The assumption we'd need would be on the equality of potential outcomes across all principal strata (ludicrously strong):
+<ul>
+<li class="fragment"><span class="math">\(E[Y_i(1)|D_i(1)=D_i(0)=1] = E[Y_i(1)|D_i(1)=D_i(0)=0] = E[Y_i(1)|D_i(1)-D_i(0)=1] =\)</span><br /><span class="math">\(E[Y_i(1)]\)</span></li>
+<li class="fragment">And <span class="math">\(E[Y_i(0)|D_i(1)=D_i(0)=1] = E[Y_i(0)|D_i(1)=D_i(0)=0] = E[Y_i(0)|D_i(1)-D_i(0)=1] =\)</span><br /><span class="math">\(E[Y_i(0)]\)</span></li>
+<li class="fragment">(Since we randomized over <span class="math">\(Z_i\)</span>, it doesn't help us to only assume this only in strata of <span class="math">\(Z_i\)</span>)</li>
+<li class="fragment">This WOULD allow us to get at the common causal effect. (But at what cost?)</li>
+<li class="fragment">For all practical purposes, this estimation strategy is DOUBLY not identified.</li>
+</ul></li>
+</ul>
+</section>
+<section id="graphically" class="slide level1">
+<h1>Graphically</h1>
+<div class="fragment">
+<figure>
+<img src="figure/2-hw1.png" />
+</figure>
+<p>This is a ridiculous amount of regularity to assume, though.</p>
+</div>
+</section>
+<section id="example" class="slide level1">
+<h1>Example</h1>
+<ul>
+<li class="fragment">What if we had <strong>all</strong> the data? (- Don Rubin)</li>
+<li class="fragment">Assume a balanced design <span class="math">\(p_Z = {1\over 2}\)</span> and constant TE <span class="math">\(\rho = 20\)</span>, with expected potential outcomes as follows:</li>
+</ul>
+<div class="fragment">
+<center>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: right;"></th>
+<th style="text-align: center;"><span class="math">\(Y_1\)</span></th>
+<th style="text-align: center;"><span class="math">\(Y_2\)</span></th>
+<th style="text-align: center;">size</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">Always-taker</td>
+<td style="text-align: center;">10</td>
+<td style="text-align: center;">30</td>
+<td style="text-align: center;">20%</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">Never-taker</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">20</td>
+<td style="text-align: center;">30%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">Complier</td>
+<td style="text-align: center;">65</td>
+<td style="text-align: center;">85</td>
+<td style="text-align: center;">50%</td>
+</tr>
+</tbody>
+</table>
+</center>
+
+<ul>
+<li class="fragment">The given estimator will target the following parameter (using the decomposition from before):</li>
+</ul>
+</div>
+<div class="fragment">
+<center> 
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: right;"></th>
+<th style="text-align: center;"><span class="math">\(Z=1\)</span></th>
+<th style="text-align: center;"><span class="math">\(Z=0\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;"><span class="math">\(Y_1\)</span></td>
+<td style="text-align: center;"><span class="math">\(85\cdot {.2 \over .7} + 30 \cdot {.2 \over .7}\)</span></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"></td>
+<td style="text-align: center;"><code>69.286</code></td>
+<td style="text-align: center;"><code>30</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><span class="math">\(Y_0\)</span></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><span class="math">\(65\cdot {.5\over .8}\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"></td>
+<td style="text-align: center;"><code>0</code></td>
+<td style="text-align: center;"><code>40.625</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><span class="math">\(\rho\)</span></td>
+<td style="text-align: center;"><strong>69.286</strong></td>
+<td style="text-align: center;"><strong>-10.625</strong></td>
+</tr>
+</tbody>
+</table>
+</center>
+
+<ul>
+<li class="fragment">This setup gives an estimand of <span class="math">\(29.33\)</span>. This is <em>not</em> the ATE (20).</li>
+<li class="fragment">That is, we've derived the population estimand under this stratified estimator.</li>
+<li class="fragment">And we already assumed a lot of common issues away (balanced design, constant effects)</li>
+<li class="fragment">If we knew population sizes within principal strata, would this help?</li>
+</ul>
+</div>
+</section>
+<section id="now-for-something-completely-different" class="slide level1">
+<h1>Now for something completely different</h1>
+<ul>
+<li class="fragment">Now we're going to switch gears to regression and covariate adjustment.</li>
+<li class="fragment">We'll also be getting some examples of how to work with linear models (in R)</li>
+<li class="fragment">This will include some consideration of partial regression.</li>
+<li class="fragment">All of which should make your homework easier to work with.</li>
+</ul>
+</section>
+<section id="covariate-adjustment-in-sampling" class="slide level1">
+<h1>Covariate Adjustment in sampling</h1>
+<ul>
+<li class="fragment">Lin, Winston. (2013) &quot;Agnostic Notes on Regression Adjustments to Experimental Data: Reexamining Freedman's Critique&quot; <em>Annals of Applied Statistics</em>. 7(1):295-318.</li>
+<li class="fragment">Imagine that we are biologists. We are interested in leaf size.</li>
+<li class="fragment">Finding the size of leaves is hard, but weighing leaves is easy.</li>
+<li class="fragment">Key insight is that we can use auxilliary information to be smarter:
+<ul>
+<li class="fragment">Sample from leaves on a tree.</li>
+<li class="fragment">Measure their size and weight.</li>
+<li class="fragment">Let <span class="math">\(\hat{y}_s\)</span> be the average size in the sample.</li>
+<li class="fragment">Let <span class="math">\(\hat{x}_s\)</span> be the average weight in the sample.</li>
+<li class="fragment">Population averages drop the subscript.</li>
+<li class="fragment">We know that <span class="math">\(\hat{y}_s\)</span> unbiased and consistent for <span class="math">\(\hat{y}\)</span></li>
+<li class="fragment">But we have extra information!</li>
+<li class="fragment">We also have <span class="math">\(\hat{x}\)</span> (all the weights)</li>
+<li class="fragment">This motivates the regression estimator:<br /><span class="math">\(\hat{\bar{y}}_{reg} = \hat{y}_s + \beta(\hat{x}-\hat{x}_s)\)</span></li>
+<li class="fragment">We get <span class="math">\(\beta\)</span> by a regression of leaf area on weight in the sample.</li>
+</ul></li>
+</ul>
+</section>
+<section id="connection-to-multiple-regression" class="slide level1">
+<h1>Connection to Multiple Regression</h1>
+<ul>
+<li class="fragment">In the case of OLS for the analysis of experiments, we have nearly the same setup.</li>
+<li class="fragment">Only difference is that we are sampling for both treatment and control.</li>
+<li class="fragment">This means that we must adjust both groups separately.</li>
+<li class="fragment">This motivates the use of covariate-treatment interactions.</li>
+<li class="fragment">Remember! Freedman (2008) showed that regression is <strong>biased</strong> and can be <strong>inconsistent</strong> for an experimental parameter in the case when interactions aren't included.</li>
+<li class="fragment">This is something to consider in many different situations. There's no reason to expect treatment and control groups to exhibit identical effects (even ones that are orthogonal to the causal parameter of interest)</li>
+<li class="fragment">This is just a particular sort of omitted variable bias, which you should already be familiar with.</li>
+</ul>
+</section>
+<section id="covariate-adjustment-in-experiments" class="slide level1">
+<h1>Covariate Adjustment in Experiments</h1>
+<ul>
+<li class="fragment">Now imagine we are social scientists (hopefully this isn't hard)</li>
+<li class="fragment">We are interested in the effects of a binary treatment on education, measured by a test.</li>
+<li class="fragment">Let's set up a simulation.</li>
+<li class="fragment">250 students. Ten classes of 25 students each. Observed over two years.</li>
+<li class="fragment">First year has half good teachers and half bad.</li>
+<li class="fragment">We want to estimate the effect of the intervention in year 2.</li>
+<li class="fragment">Treatment is assigned randomly by <strong>individual</strong></li>
+<li class="fragment">Note: This setup usually demands an accounting of clustering, which I'm ignoring. Maybe I'll bring it back later in the semester when we discuss SUTVA.</li>
+</ul>
+</section>
+<section id="simulation" class="slide level1">
+<h1>Simulation</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Variables which govern the size of the simulation (and our causal effects)</span>
+nclass &lt;-<span class="st"> </span><span class="dv">5</span>
+nstudent &lt;-<span class="st"> </span><span class="dv">25</span>
+Eff &lt;-<span class="st"> </span><span class="dv">5</span>
+EffSD &lt;-<span class="st"> </span><span class="dv">3</span>
+<span class="co"># Simulate data</span>
+<span class="kw">set.seed</span>(<span class="dv">1977</span>)
+Yr1ClassType &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">0</span>), nclass *<span class="st"> </span>nstudent)
+Yr2ClassType &lt;-<span class="st"> </span><span class="kw">sample</span>(Yr1Class, <span class="dt">replace =</span> <span class="ot">FALSE</span>)
+Yr1Score &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="dv">2</span> *<span class="st"> </span>nclass *<span class="st"> </span>nstudent, <span class="dv">76</span> +<span class="st"> </span>Yr1ClassType *<span class="st"> </span><span class="dv">5</span>, <span class="dv">9</span>)
+<span class="co"># Fixed margins randomization</span>
+Trt &lt;-<span class="st"> </span><span class="kw">sample</span>(Yr1ClassType, <span class="dt">replace =</span> <span class="ot">FALSE</span>)
+<span class="co"># There is an independent effect of class type in each year Variance is</span>
+<span class="co"># different across class types in year 2</span>
+CtlOutcome &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="dv">2</span> *<span class="st"> </span>nclass *<span class="st"> </span>nstudent, Yr1Score +<span class="st"> </span>Yr2ClassType *<span class="st"> </span><span class="dv">3</span>, <span class="dv">9</span> -<span class="st"> </span>
+<span class="st">    </span>Yr2ClassType *<span class="st"> </span><span class="dv">4</span>)
+<span class="co"># Treatment effect is random, but with expectation Eff</span>
+Yr2Obs &lt;-<span class="st"> </span>CtlOutcome +<span class="st"> </span>Trt *<span class="st"> </span><span class="kw">rnorm</span>(<span class="dv">2</span> *<span class="st"> </span>nclass *<span class="st"> </span>nstudent, Eff, EffSD)
+
+<span class="kw">summary</span>(<span class="kw">lm</span>(Yr2Obs ~<span class="st"> </span>Trt))$coefficients[<span class="dv">2</span>, ]</code></pre>
+<pre><code>##   Estimate Std. Error    t value   Pr(&gt;|t|) 
+##   4.307282   1.558184   2.764296   0.006133</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(<span class="kw">lm</span>(Yr2Obs ~<span class="st"> </span>Trt +<span class="st"> </span>Yr1Score))$coefficients[<span class="dv">2</span>, ]</code></pre>
+<pre><code>##   Estimate Std. Error    t value   Pr(&gt;|t|) 
+##  3.5206647  1.0064194  3.4982082  0.0005554</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">
+<span class="co"># *IF* we trust the model-based SEs, then we could pull SEs for a TE</span>
+<span class="co"># estimate with:</span>
+<span class="kw">summary</span>(<span class="kw">lm</span>(Yr2Obs ~<span class="st"> </span>Trt))$coefficients[<span class="st">&quot;Trt&quot;</span>, <span class="dv">2</span>]</code></pre>
+<pre><code>## [1] 1.558</code></pre>
+</section>
+<section id="plot-data" class="slide level1">
+<h1>Plot Data</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(<span class="kw">jitter</span>(Trt), Yr2Obs, <span class="dt">axes =</span> F, <span class="dt">xlab =</span> <span class="st">&quot;Treatment&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;Test Result (Yr 2)&quot;</span>, 
+    <span class="dt">col =</span> <span class="st">&quot;grey&quot;</span>)
+<span class="kw">axis</span>(<span class="dv">2</span>)
+<span class="kw">axis</span>(<span class="dv">1</span>, <span class="dt">at =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>))
+<span class="co"># Calculate quantities for plotting CIs</span>
+mns &lt;-<span class="st"> </span><span class="kw">tapply</span>(Yr2Obs, Trt, mean)
+<span class="co"># SEs could also be pulled from the linear models we fit above with:</span>
+ses &lt;-<span class="st"> </span><span class="kw">tapply</span>(Yr2Obs, Trt, function(x) <span class="kw">sd</span>(x)/<span class="kw">sqrt</span>(<span class="kw">length</span>(x)))
+<span class="kw">points</span>(<span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), mns, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">pch =</span> <span class="dv">19</span>)
+<span class="co"># Note the loop so that I only write this code once</span>
+for (tr in <span class="kw">unique</span>(Trt)) {
+    for (q in <span class="kw">c</span>(<span class="fl">0.25</span>, <span class="fl">0.025</span>)) {
+        upr &lt;-<span class="st"> </span>mns[<span class="kw">as.character</span>(tr)] +<span class="st"> </span><span class="kw">qnorm</span>(<span class="dv">1</span> -<span class="st"> </span>q) *<span class="st"> </span>ses[<span class="kw">as.character</span>(tr)]
+        lwr &lt;-<span class="st"> </span>mns[<span class="kw">as.character</span>(tr)] -<span class="st"> </span><span class="kw">qnorm</span>(<span class="dv">1</span> -<span class="st"> </span>q) *<span class="st"> </span>ses[<span class="kw">as.character</span>(tr)]
+        <span class="kw">segments</span>(tr, upr, tr, lwr, <span class="dt">lwd =</span> (-<span class="dv">4</span>/<span class="kw">log</span>(q)))
+    }
+}</code></pre>
+<figure>
+<img src="figure/2-educ-plot.png" />
+</figure>
+</section>
+<section id="partial-regression" class="slide level1">
+<h1>Partial Regression</h1>
+<ul>
+<li class="fragment">Can we make that plot a little more friendly?</li>
+<li class="fragment">Let's residualize our outcome based on scores in the first period. This should remove a substantial amount of the variance in the outcome.</li>
+<li class="fragment">A few things to check, though.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">OutcomeRes &lt;-<span class="st"> </span><span class="kw">residuals</span>(<span class="kw">lm</span>(Yr2Obs ~<span class="st"> </span>Yr1Score +<span class="st"> </span><span class="dv">0</span>))
+TrtRes &lt;-<span class="st"> </span><span class="kw">residuals</span>(<span class="kw">lm</span>(Trt ~<span class="st"> </span>Yr1Score +<span class="st"> </span><span class="dv">0</span>))
+<span class="kw">c</span>(<span class="kw">sd</span>(OutcomeRes), <span class="kw">sd</span>(Yr2Obs))</code></pre>
+<pre><code>## [1]  8.131 12.482</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Diagnostics</span>
+<span class="kw">par</span>(<span class="dt">mfrow =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">4</span>))
+<span class="kw">plot</span>(Yr1Score, Yr2Obs)
+<span class="kw">plot</span>(Yr1Score, <span class="kw">jitter</span>(Trt))
+<span class="kw">hist</span>(OutcomeRes)
+<span class="kw">hist</span>(TrtRes)</code></pre>
+<figure>
+<img src="figure/2-resid-it.png" />
+</figure>
+</div>
+</section>
+<section id="residualized-plot" class="slide level1">
+<h1>Residualized Plot</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">par</span>(<span class="dt">mfrow =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))
+<span class="kw">plot</span>(<span class="kw">jitter</span>(TrtRes), OutcomeRes, <span class="dt">axes =</span> F, <span class="dt">xlab =</span> <span class="st">&quot;Treatment (residuals)&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;Test Result (residuals)&quot;</span>, 
+    <span class="dt">col =</span> <span class="st">&quot;grey&quot;</span>)
+<span class="kw">axis</span>(<span class="dv">2</span>)
+<span class="kw">axis</span>(<span class="dv">1</span>)
+<span class="co"># Pull information from the new bivariate model</span>
+mns &lt;-<span class="st"> </span><span class="kw">coef</span>(<span class="kw">lm</span>(OutcomeRes ~<span class="st"> </span>TrtRes))
+ses &lt;-<span class="st"> </span><span class="kw">summary</span>(<span class="kw">lm</span>(OutcomeRes ~<span class="st"> </span>TrtRes))$coefficients[, <span class="dv">2</span>]
+TrtResMns &lt;-<span class="st"> </span><span class="kw">tapply</span>(TrtRes, Trt, mean)
+<span class="kw">names</span>(ses) &lt;-<span class="st"> </span><span class="kw">names</span>(mns) &lt;-<span class="st"> </span><span class="kw">names</span>(TrtResMns)
+<span class="kw">points</span>(TrtResMns, mns, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">pch =</span> <span class="dv">19</span>)
+for (tr in <span class="kw">names</span>(TrtResMns)) {
+    for (q in <span class="kw">c</span>(<span class="fl">0.25</span>, <span class="fl">0.025</span>)) {
+        upr &lt;-<span class="st"> </span>mns[tr] +<span class="st"> </span><span class="kw">qnorm</span>(<span class="dv">1</span> -<span class="st"> </span>q) *<span class="st"> </span>ses[tr]
+        lwr &lt;-<span class="st"> </span>mns[tr] -<span class="st"> </span><span class="kw">qnorm</span>(<span class="dv">1</span> -<span class="st"> </span>q) *<span class="st"> </span>ses[tr]
+        <span class="kw">segments</span>(TrtResMns[tr], upr, TrtResMns[tr], lwr, <span class="dt">lwd =</span> (-<span class="dv">4</span>/<span class="kw">log</span>(q)))
+    }
+}</code></pre>
+<figure>
+<img src="figure/2-educ-resid-plot.png" />
+</figure>
+</section>
+<section id="partial-regression-for-fes" class="slide level1">
+<h1>Partial Regression for FEs</h1>
+<ul>
+<li class="fragment">We'll get to this later in the semester.</li>
+<li class="fragment">The point is, partial regression is a fundamentally important tool that let's us do things that would otherwise be very hard.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">sweeplm &lt;-<span class="st"> </span>function(formula, dat, ind) {
+    newd &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(~., <span class="kw">model.frame</span>(formula, dat, <span class="dt">na.action =</span> na.pass))
+    newd &lt;-<span class="st"> </span>newd[, -<span class="dv">1</span>]
+    ok &lt;-<span class="st"> </span><span class="kw">complete.cases</span>(newd)
+    newd &lt;-<span class="st"> </span>newd[ok, ]
+    ind &lt;-<span class="st"> </span>ind[ok]
+    newd &lt;-<span class="st"> </span><span class="kw">apply</span>(newd, <span class="dv">2</span>, function(x) <span class="kw">unlist</span>(<span class="kw">tapply</span>(x, ind, function(z) z -<span class="st"> </span>
+<span class="st">        </span><span class="kw">mean</span>(z, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>))))
+    <span class="kw">list</span>(<span class="kw">lm</span>(newd[, <span class="dv">1</span>] ~<span class="st"> </span>newd[, -<span class="dv">1</span>] -<span class="st"> </span><span class="dv">1</span>, <span class="kw">as.data.frame</span>(newd)), newd, <span class="kw">as.character</span>(ind))
+}</code></pre>
+</div>
+</section>
+<section id="coefficient-plots" class="slide level1">
+<h1>Coefficient Plots</h1>
+<ul>
+<li class="fragment">We only really care about one causal parameter at a time, usually.</li>
+<li class="fragment">When we're in the causal inference mindset, we very rarely want to see long lists of covariates that are causally meaningless.</li>
+<li class="fragment">In general, it is often worthwhile to make simple plots of your coefficients.</li>
+<li class="fragment">I'll put some example code on the next page.</li>
+<li class="fragment">It assumes a couple vectors exist:</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">ests &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">coef</span>(<span class="kw">lm</span>(Yr2Obs ~<span class="st"> </span>Trt))[<span class="dv">2</span>], <span class="kw">coef</span>(<span class="kw">lm</span>(Yr2Obs ~<span class="st"> </span>Trt +<span class="st"> </span>Yr1Score))[<span class="dv">2</span>])
+ses &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">summary</span>(<span class="kw">lm</span>(Yr2Obs ~<span class="st"> </span>Trt))$coefficients[<span class="dv">2</span>, <span class="dv">2</span>], <span class="kw">summary</span>(<span class="kw">lm</span>(Yr2Obs ~<span class="st"> </span>Trt +<span class="st"> </span>
+<span class="st">    </span>Yr1Score))$coefficients[<span class="dv">2</span>, <span class="dv">2</span>])
+var.names &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;Unadjusted&quot;</span>, <span class="st">&quot;Adjusted&quot;</span>)</code></pre>
+</div>
+</section>
+<section id="coefficient-plot-code" class="slide level1">
+<h1>Coefficient Plot Code</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">par</span>(<span class="dt">family =</span> <span class="st">&quot;serif&quot;</span>, <span class="dt">oma =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>), <span class="dt">mar =</span> <span class="kw">c</span>(<span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">4</span>, <span class="dv">2</span>))
+
+<span class="kw">plot</span>(<span class="ot">NULL</span>, <span class="dt">xlim =</span> <span class="kw">c</span>(-<span class="fl">0.2</span>, <span class="dv">8</span>), <span class="dt">ylim =</span> <span class="kw">c</span>(<span class="fl">0.7</span>, <span class="kw">length</span>(ests) +<span class="st"> </span><span class="fl">0.3</span>), <span class="dt">axes =</span> F, <span class="dt">xlab =</span> <span class="ot">NA</span>, 
+    <span class="dt">ylab =</span> <span class="ot">NA</span>)
+
+for (i in <span class="dv">1</span>:<span class="kw">length</span>(ests)) {
+    <span class="kw">points</span>(ests[i], i, <span class="dt">pch =</span> <span class="dv">19</span>, <span class="dt">cex =</span> <span class="fl">0.5</span>)
+    <span class="kw">lines</span>(<span class="kw">c</span>(ests[i] +<span class="st"> </span><span class="fl">1.64</span> *<span class="st"> </span>ses[i], ests[i] -<span class="st"> </span><span class="fl">1.64</span> *<span class="st"> </span>ses[i]), <span class="kw">c</span>(i, i))
+    <span class="kw">lines</span>(<span class="kw">c</span>(ests[i] +<span class="st"> </span><span class="fl">0.67</span> *<span class="st"> </span>ses[i], ests[i] -<span class="st"> </span><span class="fl">0.67</span> *<span class="st"> </span>ses[i]), <span class="kw">c</span>(i, i), <span class="dt">lwd =</span> <span class="dv">3</span>)
+    <span class="kw">text</span>(-<span class="fl">1.1</span>, i, var.names[i], <span class="dt">xpd =</span> T, <span class="dt">cex =</span> <span class="fl">0.8</span>, <span class="dt">pos =</span> <span class="dv">2</span>)
+}
+
+<span class="kw">axis</span>(<span class="dt">side =</span> <span class="dv">1</span>)
+<span class="kw">abline</span>(<span class="dt">v =</span> <span class="dv">0</span>, <span class="dt">lty =</span> <span class="dv">3</span>, <span class="dt">col =</span> <span class="st">&quot;black&quot;</span>)
+<span class="kw">mtext</span>(<span class="dt">side =</span> <span class="dv">1</span>, <span class="st">&quot;Estimated Effect&quot;</span>, <span class="dt">line =</span> <span class="dv">3</span>)
+<span class="kw">mtext</span>(<span class="dt">side =</span> <span class="dv">3</span>, <span class="st">&quot;Adjusted vs Unadjusted Regression&quot;</span>, <span class="dt">line =</span> <span class="dv">1</span>)
+<span class="kw">box</span>()</code></pre>
+</section>
+<section id="plotted" class="slide level1">
+<h1>Plotted</h1>
+<figure>
+<img src="figure/2-coef-plots-show.png" />
+</figure>
+<ul>
+<li class="fragment">Think about how these two might differ for different starting parameters (ex. sample size)</li>
+</ul>
+</section>
+    </div>
+  </div>
+
+  <script src="reveal.js/lib/js/head.min.js"></script>
+  <script src="reveal.js/js/reveal.min.js"></script>
+
+  <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        theme: 'simple', // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          { src: 'reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'reveal.js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+          { src: 'reveal.js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } },
+//          { src: 'reveal.js/plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; }, }
+//          { src: 'reveal.js/plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+]});
+    </script>
+  </body>
+</html>
