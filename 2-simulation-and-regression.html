@@ -398,7 +398,7 @@ EffSD &lt;-<span class="st"> </span><span class="dv">3</span>
 <span class="co"># Simulate data</span>
 <span class="kw">set.seed</span>(<span class="dv">1977</span>)
 Yr1ClassType &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">0</span>), nclass *<span class="st"> </span>nstudent)
-Yr2ClassType &lt;-<span class="st"> </span><span class="kw">sample</span>(Yr1Class, <span class="dt">replace =</span> <span class="ot">FALSE</span>)
+Yr2ClassType &lt;-<span class="st"> </span><span class="kw">sample</span>(Yr1ClassType, <span class="dt">replace =</span> <span class="ot">FALSE</span>)
 Yr1Score &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="dv">2</span> *<span class="st"> </span>nclass *<span class="st"> </span>nstudent, <span class="dv">76</span> +<span class="st"> </span>Yr1ClassType *<span class="st"> </span><span class="dv">5</span>, <span class="dv">9</span>)
 <span class="co"># Fixed margins randomization</span>
 Trt &lt;-<span class="st"> </span><span class="kw">sample</span>(Yr1ClassType, <span class="dt">replace =</span> <span class="ot">FALSE</span>)
@@ -509,6 +509,61 @@ for (tr in <span class="kw">names</span>(TrtResMns)) {
     <span class="kw">list</span>(<span class="kw">lm</span>(newd[, <span class="dv">1</span>] ~<span class="st"> </span>newd[, -<span class="dv">1</span>] -<span class="st"> </span><span class="dv">1</span>, <span class="kw">as.data.frame</span>(newd)), newd, <span class="kw">as.character</span>(ind))
 }</code></pre>
 </div>
+</section>
+<section id="testing-linear-restrictions" class="slide level1">
+<h1>Testing linear Restrictions</h1>
+<ul>
+<li class="fragment"><span class="math">\(W=(R\hat{\beta} - r)&#39;(R\hat{\boldsymbol V}R&#39;)^{-1}(R\hat{\beta}-r) \sim \chi_q^2\)</span></li>
+<li class="fragment">Or more conservatively: <span class="math">\(W / q \sim F_{q,N-K}\)</span></li>
+<li class="fragment">In R:</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">R &lt;-<span class="st"> </span><span class="kw">cbind</span>(<span class="dv">0</span>, <span class="kw">diag</span>(<span class="dv">2</span>))
+b &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">coef</span>(<span class="kw">lm</span>(Yr2Obs ~<span class="st"> </span>Trt +<span class="st"> </span>Yr1Score)), <span class="dt">ncol =</span> <span class="dv">1</span>)
+r &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">0</span>, <span class="dt">nrow =</span> <span class="dv">2</span>, <span class="dt">ncol =</span> <span class="dv">1</span>)
+V &lt;-<span class="st"> </span><span class="kw">vcov</span>(<span class="kw">lm</span>(Yr2Obs ~<span class="st"> </span>Trt +<span class="st"> </span>Yr1Score))
+W &lt;-<span class="st"> </span><span class="kw">t</span>(R %*%<span class="st"> </span>b -<span class="st"> </span>r) %*%<span class="st"> </span><span class="kw">solve</span>(R %*%<span class="st"> </span>V %*%<span class="st"> </span><span class="kw">t</span>(R)) %*%<span class="st"> </span>(R %*%<span class="st"> </span>b -<span class="st"> </span>r)
+<span class="dv">2</span> *<span class="st"> </span><span class="kw">pchisq</span>(W, <span class="dv">2</span>, <span class="dt">lower.tail =</span> <span class="ot">FALSE</span>)</code></pre>
+<pre><code>##           [,1]
+## [1,] 4.339e-80</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="dv">2</span> *<span class="st"> </span><span class="kw">pf</span>(W/<span class="dv">2</span>, <span class="dv">2</span>, <span class="kw">lm</span>(Yr2Obs ~<span class="st"> </span>Trt +<span class="st"> </span>Yr1Score)$df.residual, <span class="dt">lower.tail =</span> <span class="ot">FALSE</span>)</code></pre>
+<pre><code>##           [,1]
+## [1,] 2.966e-49</code></pre>
+</div>
+</section>
+<section id="using-linearhypothesis" class="slide level1">
+<h1>Using linearHypothesis</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(car)
+<span class="kw">linearHypothesis</span>(<span class="kw">lm</span>(Yr2Obs ~<span class="st"> </span>Trt +<span class="st"> </span>Yr1Score), <span class="kw">c</span>(<span class="st">&quot;Trt&quot;</span>, <span class="st">&quot;Yr1Score&quot;</span>), <span class="dt">test =</span> <span class="st">&quot;Chisq&quot;</span>)</code></pre>
+<pre><code>## Linear hypothesis test
+## 
+## Hypothesis:
+## Trt = 0
+## Yr1Score = 0
+## 
+## Model 1: restricted model
+## Model 2: Yr2Obs ~ Trt + Yr1Score
+## 
+##   Res.Df   RSS Df Sum of Sq Chisq Pr(&gt;Chisq)    
+## 1    249 38793                                  
+## 2    247 15609  2     23184   367     &lt;2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">linearHypothesis</span>(<span class="kw">lm</span>(Yr2Obs ~<span class="st"> </span>Trt +<span class="st"> </span>Yr1Score), <span class="kw">c</span>(<span class="st">&quot;Trt&quot;</span>, <span class="st">&quot;Yr1Score&quot;</span>), <span class="dt">test =</span> <span class="st">&quot;F&quot;</span>)</code></pre>
+<pre><code>## Linear hypothesis test
+## 
+## Hypothesis:
+## Trt = 0
+## Yr1Score = 0
+## 
+## Model 1: restricted model
+## Model 2: Yr2Obs ~ Trt + Yr1Score
+## 
+##   Res.Df   RSS Df Sum of Sq   F Pr(&gt;F)    
+## 1    249 38793                            
+## 2    247 15609  2     23184 183 &lt;2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 </section>
 <section id="coefficient-plots" class="slide level1">
 <h1>Coefficient Plots</h1>
