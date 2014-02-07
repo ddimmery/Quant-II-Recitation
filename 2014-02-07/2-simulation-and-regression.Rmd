@@ -10,10 +10,10 @@
 
 # Homework
 
-- [C]onsider a stratiﬁed estimator that controls for $Z_i$ by 
+- [C]onsider a stratified estimator that controls for $Z_i$ by 
     (i) partitioning the sample by values of $Z_i$, then 
     (ii) taking the difference in treated and control means within each of these strata, and then
-    (iii) combining these stratum-speciﬁc estimates with a weighted average, where we weight each stratum contribution by the share of the $P$ in each stratum
+    (iii) combining these stratum-specific estimates with a weighted average, where we weight each stratum contribution by the share of the $P$ in each stratum
 
 # Notation and Setup
 - So we consider the following two expectations:
