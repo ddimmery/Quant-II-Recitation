@@ -1,0 +1,595 @@
+\documentclass[notitlepage,10pt,twocolumn]{article}
+\usepackage[left=.7in,top=.5in,right=.5in,bottom=.5in,nohead]{geometry}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{xfrac}
+
+\usepackage[T1]{fontenc}
+\usepackage{palatino}
+\renewcommand*{\sfdefault}{uop}		% Use \sffamily for sans serif family
+\usepackage[sc,osf]{mathpazo}
+\usepackage{undertilde}
+\newcommand\listee{\begin{listie}}
+\newcommand\listeeend{\end{listie}}
+\newcommand\enum{\begin{enumerate}}
+\newcommand\enumend{\end{enumerate}}
+\newcommand\imp{\textbf}
+\newcommand\theo{\begin{theorem}}
+\newcommand\theoend{\end{theorem}}
+\newcommand\examp{\begin{example}}
+\newcommand\exampend{\end{example}}
+\newcommand\define{\begin{definition}}
+\newcommand\defineend{\end{definition}}
+\newcommand\bin{\text{Bin}}
+\newcommand\eq{\begin{equation}}
+\newcommand\eqend{\end{equation}}
+\newcommand\cali[1]{\ensuremath{\mathcal{#1}}}
+\newcommand\ds{\displaystyle}
+\newcommand\reals{\ensuremath{\mathbb{R}}}
+\newcommand*\circled[1]{\tikz[baseline=(char.base)]{
+            \node[shape=circle,draw,inner sep=.8pt] (char) {#1};}}
+\newcommand\meas{\circled{\emph{m}} }
+\def\eqd{\,{\buildrel d \over =}\,}
+\def\neqd{\,{\buildrel d \over \ne}\,}
+\def\iid{\,{\buildrel iid \over \sim}\,}
+\newcommand\sumn{\sum_{i=1}^n}
+\newcommand\sums{\sum_{i=1}^s}
+\newcommand\prodn{\prod_{i=1}^n}
+\renewcommand\exp[1]{\text{exp}\left\{ #1 \right\}}
+\newcommand\indep{\protect\mathpalette{\protect\independenT}{\perp}} \def\independenT#1#2{\mathrel{\rlap{$#1#2$}\mkern2mu{#1#2}}}
+\newcommand\Xsamp{\ensuremath{(X_1,\dots,X_n)}}
+\renewcommand\top{\,{\buildrel p \over \to}\,}
+\newcommand\tod{\,{\buildrel \cali{D} \over \to}\,}
+\newcommand\toas{\,{\buildrel a.s. \over \to}\,}
+\linespread{1.05}
+
+
+\pagestyle{empty}
+\newenvironment{listie}{
+  \begin{list}{\guilsinglright}{%
+      \setlength{\itemsep}{0in}
+      \setlength{\parsep}{0in} \setlength{\parskip}{0in}
+      \setlength{\topsep}{0in} \setlength{\partopsep}{0in} 
+      \setlength{\leftmargin}{0.2in}}}{\end{list}}
+\setlength{\parindent}{-.1in}
+\setlength{\columnsep}{.3in}
+\begin{document}
+\hrule \vspace{.15cm}
+$\sinh(\theta) = \frac{e^\theta-e^{-\theta}}{2} = \frac{e^{2\theta}-1}{2e^\theta}$
+\quad $\cosh(\theta) = \frac{e^\theta+e^{-\theta}}{2} = \frac{e^{2\theta}+1}{2e^\theta}$
+
+$\tanh (\theta) = \frac{\sinh(\theta)}{\cosh(\theta)}$ \quad \quad $\coth(\theta) = \tanh (\theta)^{-1}$
+
+$\text{sech}(\theta) = \cosh(\theta)^{-1}$ \quad \quad $\text{csch}(\theta) = \sinh(\theta)^{-1}$
+
+\vspace{.15cm} \hrule \vspace{.15cm}
+Ordered Draws with repetition: $n^r$
+
+Ordered Draws without repetition (Permutation): $\frac{n!}{(n-r)!}$
+
+Unordered Draws without repetition (Combination):\\ $\binom{n}{r} = \frac{n!}{r!(n-r)!}$
+
+Unordered Draws with repetition (multichoose): $\binom{n+r-1}{r}$
+
+$\binom{n}{r} = \frac{n!}{r!(n-r)!} = \frac{n^r}{r!}$
+\quad \quad
+$\sum_{r=0}^n \binom{n}{r} = 2^n$
+
+$\binom{n}{k} = \frac{n}{k} \binom{n-1}{k-1}$
+\quad \quad
+$\binom{n}{h}\binom{n-h}{k} = \binom{n}{k}\binom{n-k}{h}$
+
+$\binom{n}{k_1,k_2,\dots,k_r} = \frac{n!}{k_1! k_2!\dots k_r!}$
+\quad 
+$\binom{z}{m}\binom{z}{n} = \sum_{k=0}^m \binom{m+n-k}{k,m-k,n-k}\binom{z}{m+n-k}$
+
+\vspace{.2cm} \hrule \vspace{.2cm}
+
+$\Gamma(n) = (n-1)!$
+\quad \quad 
+$\Gamma(z) = \int_0^\infty e^{-t} t^{z-1} dt$
+
+$\Gamma(\sfrac{1}{2}) = \sqrt{\pi}$ \quad \quad $\alpha \Gamma(\alpha) = \Gamma(1+\alpha)$
+
+$n! \approx \sqrt{2n\pi}n^ne^{-n}$ \quad \quad $n! = \sqrt{2\pi n}(\sfrac{n}{e})^n (1+ O(\sfrac{1}{n}))$
+
+$B(x,y) = \int_0^1 t^{x-1}(1-t)^{y-1}dt$ \quad $B(x,y) = \frac{\Gamma(x)\Gamma(y)}{\Gamma(x+y)}$
+
+$B(x,y) = \int_0^\infty \frac{t^{x-1}}{(1+t)^{x+y}}dt$
+
+\vspace{.15cm} \hrule \vspace{.15cm}
+
+Conditional probability: $P(A|B) = \frac{P(A\cap B)}{P(B)}$
+
+Independent if: $P(A|B) = P(A)$ and $P(B|A) = P(B)$\\ Which means $P(A\cap B)=P(A)P(B)$
+
+Multiplicative: $P(A\cap B) = P(A)P(B|A) = P(B)P(A|B)$
+
+Associative: $P(A\cap B\cap C) =P((A\cap B)\cap C)$\\ $=P(A\cap B)P(C|A\cap B) = P(A)P(B|A)P(C|A\cap B)$
+
+Additive: $P(A\cup B) = P(A) + P(B) - P(A\cap B)$
+
+Law of total probability: $B_i \cap B_j = \emptyset\; \forall i \ne j$ and \\ $B_i > 0\; \forall i=1,2,\dots,k$ Then $P(A)=\sum_{i=1}^k P(A|B_i)P(B_i)$
+
+Bayes` Rule: $P(B_j | A) = \frac{P(A\cap B_j)}{P(A)} = \frac{P(A|B_j)P(B_j)}{\sum_{i=1}^k P(A|B_i)P(B_i)}$\\
+	$P(B|A) = \frac{P(A|B)P(B)}{P(A)}$\\
+	$P(B|A) \propto P(A|B)P(A)$
+
+\vspace{.2cm} \hrule \vspace{.2cm}
+
+Expected Value (Discrete): $E(Y) = \sum_y  y \cdot p(y) = \mu$\\
+	(Continuous): $E(Y) = \int_{-\infty}^{\infty} y\cdot f(y)\;\textrm{d}y$\\
+	$E(a) = a$ for a constant $a$\\
+	$E(X+Y) = E(X)+E(Y)$\\
+	$E(ax+b) = a\cdot E(x)+b$\\
+	(Discrete) $E(g(y)) = \sum_x g(x)\cdot f(x)$\\
+	(Continuous) $E(g(y)) = \int_{-\infty}^{\infty} g(y)\cdot f(y)\; \textrm{d}y$\\
+	$E(XY) = E(X)\cdot E(Y) + \text{cov}(X,Y)$\\
+	$E(XY)^2 \le E(X^2)E(Y^2)$
+
+Variance: var$(X) = E((X-\mu)^2) = \sigma_X^2 = E(X^2) - E(X)^2$\\
+	Std.\ Dev.: $\sigma_X = +\sqrt{\text{var}(X)}$\\
+	(Discrete) var$(X) = \sum_{x_i} [x_i-\mu]^2 p(x)$\\
+	(Continuous) var$(X) = \int_{-\infty}^{\infty} (y-\mu)^2f(y)\; \textrm{d}y$\\
+	$\text{var}(aX +b) = a^2\text{var}(X)$\\
+	$\text{var}(X +Y) = \text{var}(X) + \text{var}(Y) + 2\text{cov}(X,Y)$\\
+	$\text{var}(X -Y) = \text{var}(X) + \text{var}(Y)+ 2\text{cov}(X,Y)$\\
+	var$(E(X)) = \frac{\text{var}(X)}{n}$
+
+Covariance: cov$(Y_1, Y_2) = E((Y_1-\mu_1)(Y_2-\mu_2))$\\
+	Independence $\Rightarrow \text{cov}(X,Y) = 0$ but not vice versa
+
+$\text{Cov}(X,Y)=E_Z[\text{Cov}(X,Y|Z)] + \text{Cov}(E[X|Z],E[Y|Z])$
+
+$E[S^r] = \frac{\sigma^r 2^{\sfrac{r}{2}} \Gamma(\frac{r+n-1}{2})}{(n-1)^{\sfrac{r}{2}} \Gamma(\frac{n-1}{2})}$
+
+\vspace{.2cm} \hrule \vspace{.2cm}
+
+Moment generating function: $M_X(u) = E[e^{ux}]$
+
+$S_n = \sum a_i X_i$, then $M_{S_n} = \prod M_{X_i}(a_i t)$
+
+$E[X^n] = \frac{d^n M_X}{dt^n}(0)$ \quad $\phi_X^{(n)}(0) = i^n E[X^n]$
+
+Cumulant generating function: $K_X(u) = \log M_X(u)$
+
+\vspace{.2cm} \hrule \vspace{.2cm}
+
+$f_{X_{(k)}}(x) = n! \frac{F_X(x)^{k-1}}{(k-1)!} \frac{(1-F_X(x))^{n-k}}{(n-k)!}f_X(x)$
+
+$f_{X_{(j)},X_{(k)}}(x,y) =$\\ $n! \frac{F_X(x)^{j-1}}{(j-1)!} \frac{(F_X(y)-F_X(x))^{k-1-j}}{(k-1-j)!} \frac{(1-F_X(y))^{n-k}}{(n-k)!}f_X(x)f_X(y)$
+
+$f_{X_{(1)},\dots,X_{(n)}}(x_1,\dots,x_n) = n! f_X(x_1) \dots f_X(x_n)$
+
+\vspace{.15cm} \hrule \vspace{.15cm}
+
+$X_n \top X$ if $\forall \epsilon > 0 \quad \Pr(|X_n - X| > \epsilon) \to 0$ as $n \to \infty$
+
+$X_n \tod X$ if $ F_{X_n}(x) \to F_X(x) \quad \forall x \in C(F_X)$ as $n\to \infty$
+
+$X_n \toas X$ if $\Pr(\lim_{n\to\infty} X_n\to X) =1$
+
+$X_n \toas X \implies X_n \top X$ \quad \quad  $X_n \top X \implies X_n \tod X$
+
+If $c \in \reals^d$ and $X_n \tod c$ then $X_n \top c$
+
+$X_n \top X$ iff every subseq. has a subsubseq. st $X_{m_j} \to X$ a.s. $j \to \infty$. If $X_n \toas X$ then $g(X_n) \toas g(X)$ as $n\to\infty$ for continuous $g$. Then $X_n \top X$, $X_{m_j} \toas X \implies g(X_{m_j}) \toas g(X)$
+
+\vspace{.15cm} \hrule \vspace{.15cm}
+
+$X_n \tod X$
+
+$\equiv E[g(X_n) \to E[g(X)]\; \forall g$ continuous sup on compact set.
+
+$\equiv E[g(X_n)] \to E[g(X)]\; \forall g$ continuous and bounded
+
+$\equiv E[g(X_n)] \to E[g(X)]\; \forall g$ bounded and measurable st $\Pr(X\in C(g)) = 1$
+
+\vspace{.15cm} \hrule \vspace{.15cm}
+
+$\Xsamp$, $iid$ \quad \quad $\bar{X}_n = \frac{1}{n} \sumn X$
+
+Weak LLN: If $E[X] < \infty$ then $\bar{X}_n \top E[X]=\mu$
+
+Strong LLN: $\bar{X}_n \toas E[X]=\mu \iff E[X] < \infty$
+
+CLT: $Y_i$ iid. $E(Y_i)=\mu$ and var$(Y_i) = \sigma^2$. $U_n = \frac{\sum_{i=1}^n Y_i -n\mu}{\sigma \sqrt{n}}$\\ $ = \frac{\bar{Y} - \mu}{\sfrac{\sigma}{\sqrt{n}}}$ converges to the standard normal as $n\to \infty$. \\
+	That is, $\lim_{n\to\infty} P(U_n \le u) = \int_{-\infty}^u \frac{1}{\sqrt{2\pi}}e^{\sfrac{-t^2}{2}}\textrm{d}t\quad \forall u$\\
+	$\bar{Y}$ is asymptotically distributed with mean $\mu$ and var $\sfrac{\sigma^2}{n}$
+
+\vspace{.15cm} \hrule \vspace{.15cm}
+
+If $X_n \in \reals^d, X_n \tod X$ if $f:\reals^d \to \reals^k$ st $\Pr(X\in C(f)) =1$ then $f(X_n)\tod f(X)$
+
+If $X_n \tod X$ and $(X_n - Y_n) \top 0$ then $Y_n \tod X$
+
+If $X_n \in \reals^d ,\quad Y_n \in \reals^k ,\quad X_n \tod X ,\quad Y_n \tod c$ then $\binom{X_n}{Y_n} \tod \binom{X}{c}$
+
+(Similar for convergence in probability and a.s.)
+
+If $X_n \top X ,\quad Y_n \top Y$ then $\binom{X_n}{Y_n} \tod \binom{X}{Y}$
+\vspace{.15cm} \hrule \vspace{.15cm}
+
+Correlation coefficient: $\rho^2 \le 1$, for $\rho_{Y_1,Y_2} = \frac{\text{cov}(Y_1,Y_2)}{\sigma_1 \sigma_2}$
+
+Bias: $E[\delta(g(\theta)) - g(\theta)]$
+\quad \quad 
+$MSE(\delta(g(\theta)))$ \\$ = E[(\delta(g(\theta))-g(\theta))^2]= \text{var}(\delta(g(\theta)))+B(\delta(g(\theta)))^2$
+
+Chebychev`s Inequality: $P(|Y-\mu| \ge k\sigma) \le \sfrac{1}{k^2}$ where $Y$ is RV with mean $\mu$, std.\ dev.\ $\sigma$, and $k\in \mathbb{R}$.\\
+	Also, $P(|Y-\mu|\le k\sigma) \ge 1- \sfrac{1}{k^2}$ or $P(\frac{|Y-\mu|}{\sigma}\ge k)\sfrac{1}{k^2}$
+
+\vspace{.15cm} \hrule \vspace{.15cm}
+
+RVs independent if $F(y_i,y_j) = F_i(y_i) F_j(y_j)$ for each $y_i, y_j$
+
+MLE $\Rightarrow \hat{\theta}_{mle} = \arg \max_{\theta} \ln L(\theta|y)$
+
+Conditional distrib.: $f(y_1|y_2) = \frac{f(y_1,y_2)}{f_2(y_2)}$
+
+\vspace{.2cm} \hrule \vspace{.2cm}
+
+Hypothesis - Statement about the distribution of a random vector. One on the null, $H_0$, one on the alternative, $H_1$. $H_0 \cap H_1 = \emptyset$. The truth is in $H_0 \cup H_1$.
+
+Neyman--Pearson approach: Assume identifiability, Let the test be:\\
+$\phi(\utilde{x}) = \begin{cases}
+1&\text{where we reject $H_0$}\\
+0&\text{otherwise}
+\end{cases}$
+
+Power function: \\$\beta(\theta) = P_\theta(\text{``reject $H_0$''}) = P_\theta(X\in C) = E_\theta[\phi(X)]$
+
+Likelihood-Ratio Test:\\ Let $H_0:\theta \in \Theta_0$ and $H_1 : \theta \in \Theta_1$, $\Theta_0\cup\Theta_1 = \Theta$\\
+$\lambda(\utilde{x}) = \frac{\sup_{\theta\in\Theta_0}L(\theta|\utilde{x})}{\sup_{\theta\in\Theta_1}L(\theta|\utilde{x})} = \frac{\sup_{\theta\in\Theta_0}L(\theta|T(\utilde{x}))}{\sup_{\theta\in\Theta_1}L(\theta|T(\utilde{x}))}$
+
+$\alpha = \sup_{\theta\in\Theta_0}P_0(X\in C) = \sup_{\theta\in\Theta_0} E_0[\phi(X)]$\\
+$\beta(\theta_0) = \alpha = E[\phi] = \int\phi p_0 d\mu$\\
+$\beta(\theta_1) = E[\phi] = \in\phi p_1 d\mu$
+
+Type I error: $\Pr(x\in C| \theta \in \Theta_0)$
+
+Type II error: $1 - \Pr(x \in C| \theta \in \Theta_1)$
+
+N-P approach: Fix $\Pr(\text{Type I error}) \le \alpha$ then minimize $\Pr(\text{Type II error})$.
+
+When testing a distribution that is approximately symmetric, consider the equal--tails test:\\
+$\int_{-\infty}^{C_1}f_n(x)dx = \int_{C_2}^{\infty}f_n(x)dx = \alpha /2$
+
+p-value is the smallest $\alpha$ at which you would reject $H_0$ given some data. The smallest critical region which would lead to rejection.
+
+Monotone LRs: $\theta_1<\theta2\quad \frac{p_{\theta_2}(x)}{p_{\theta_1}(x)}$ is nondecreasing in statistic T.
+
+UMP: if $E_\theta\phi^* \ge E_\theta \phi \quad \forall \theta \in \Theta_1$ for all $\phi$ with level $\alpha$.
+
+For MLRs: The test $\phi*$ is UMP for $H_0: \theta \le \theta_0$ and $H_1: \theta>\theta_0$ with level defined by $E_{\theta_0}[\phi^*]$.\\
+The power function is nondecreasing.\\
+$\phi^*$ minimizes the type I ($E_{\theta_1}[\phi^*]$) error for all tests with $E_{\theta_0}[\phi]=\alpha$\\
+$\phi^*(\utilde{x}) = \begin{cases}
+1&T(x)>c\\
+\gamma & T(x)=c\\
+0&T(x)<c
+\end{cases}$
+
+A test is unbiased if: $\beta(\theta') \ge \beta(\theta'')$ for all $\theta' \in \Theta_1$ and $\theta'' \in \Theta_0$
+
+Asymptotic distribution of LRT:\\ $2\log \lambda = 2(\ell_n(\hat{\theta}_n)-\ell_n(\theta_0)) \ge \chi^2_\alpha(r)$ is about size $\alpha$ (asymptotically) where r is the difference in parameter space of null and alt.
+
+Let $A(\theta_0)$ be the acceptance region of a level $\alpha$ test. For each $\utilde{x}$, let $S(\utilde{x}) \equiv \{\theta : \utilde{x} \in A(\theta), \theta \in \Omega \}$ be the $1-\alpha$ confidence level set.\\
+$\theta \in S(\utilde{x}) \iff \utilde{x} \in A(\theta)$
+
+Uniformly most accurate unbiased at level $1-\alpha$ (UMAU): minimizes $\Pr_\theta(\theta' \in S(x)) \le 1-\alpha$ for all $\theta' \ne \theta$ subject to $\Pr_\theta(\theta \in S(x)) \ge 1-\alpha$. Get by inverting UMPU tests.
+
+Family of CDFs $F(t|\theta)$ is stochastically increasing in $\theta$ if for $t\in T$, $F(t|\theta)$ is a decreasing function of $\theta$. (For fixed $t$, think about $F$ as $\theta$ changes.)
+
+If $X$ has a continuous CDF, stochastically increasing, let:\\
+$\theta_{u,\alpha}(x) = \sup_{\theta\in\Theta}\{F_X(x|\theta)=\alpha/2\}$\\
+$\theta_{l,\alpha}(x) = \inf_{\theta\in\Theta}\{F_X(x|\theta)=1-\alpha/2\}$\\
+then $(\theta_{l,\alpha}(X),\theta_{u,\alpha}(X))$ has coverage $1-\alpha$, for all $\theta \in \Theta$
+
+\vspace{.2cm} \hrule \vspace{.2cm}
+
+\emph{\sffamily Exponential Families}
+
+$p_\theta(x) = C(\theta)\exp{\sum_{j=1}^k Q_j(\theta)T_j(x)}h(x)$
+
+The sufficient statistics form a complete family of distributions.
+
+Have monotone LRs
+
+Look for terms like $ \frac{\mu}{\sigma^2}x$ and $-\frac{1}{2\sigma^2}x^2$ for normal
+
+\vspace{.15cm}\hrule \vspace{.15cm}
+
+\emph{\sffamily Bernoulli Distribution}
+
+$Y\sim \text{Bernoulli}(\pi) = \text{Binomial}(1,\pi)$\\
+$y\in \{0,1\}$\quad $\pi \in [0,1]$
+
+$p(y|\pi) = \pi^y (1-\pi)^{1-y}$ \quad $\phi(t;\pi) = 1-\pi+\pi e^{it}$
+
+$E(Y) = \pi$; var$(Y) = \pi(1-\pi)$
+
+$\kappa_1 = p$; $\kappa_2=p(1-p)$; $\kappa_{n+1} = p(1-p)\frac{d\kappa_n}{dp}$
+
+\vspace{.15cm}\hrule \vspace{.15cm}
+
+\emph{\sffamily Binomial Distribution}
+
+$Y \sim \text{Binomial}(n,\pi)$\\
+$y\in\mathbb{Z}_{+}$\quad
+$n \in \mathbb{N}$ \quad $\pi \in [0,1]$
+
+$p(y|n,\pi) = \binom{n}{y} \pi^y (1-\pi)^{n-y}$ \quad $\phi(t;\pi)=(1-\pi + \pi e^{it})^n)$
+
+$E(Y) = n \pi$; var$(Y) = n\pi(1-\pi)$
+
+$\kappa_{n,\textit{binom}} = n \kappa_{n,\textit{bernoulli}}$
+
+\vspace{.15cm}\hrule \vspace{.15cm}
+
+\emph{\sffamily Poisson Distribution}
+
+$Y \sim \text{Poisson}(\lambda)$\\
+	$\lambda > 0$
+
+$p(y|\lambda) = \frac{\lambda^y}{y!}e^{-\lambda}$ \quad $\phi(t;\lambda) = e^{\lambda(e^{it}-1)}$
+
+$E(Y) = \text{var}(Y) = \lambda$
+
+Poisson$(\lambda) = \lim_{n\to\infty}\text{Binom}(n,\pi= \sfrac{\lambda}{n})$
+
+$\kappa_n = \lambda$
+
+\vspace{.15cm}\hrule \vspace{.15cm}
+
+\emph{\sffamily Univariate Normal Distribution}
+
+$Y \sim Normal(\mu,\sigma^2)$\\
+	$y \in \mathbb{R}$ \quad $\mu \in \mathbb{R}$\quad $\sigma^2 >0$\\
+	$E(Y) = \mu$; var$(Y) = \sigma^2$
+
+$f(y|\mu,\sigma^2) = \frac{1}{\sqrt{2\pi \sigma^2}}e^{-\frac{(y-\mu)^2}{2\sigma^2}}$ \quad $\phi(t;\mu,\sigma^2) = e^{it\mu - \sfrac{\sigma^2 t^2}{2}}$
+
+$\kappa_1 = \mu$; $\kappa_2 = \sigma^2$; $\kappa_n = 0$
+
+\vspace{.15cm}
+
+\emph{\sffamily Multivariate Normal Distribution}
+
+$X \sim N_p(\boldsymbol\mu,\Sigma)$
+
+$f(x;\boldsymbol\mu,\Sigma) = \left(\frac{1}{\sqrt{2\pi}}\right)^p\frac{1}{|\Sigma|^{1/2}}\exp{-\frac{1}{2}(\boldsymbol x - \boldsymbol\mu)^T \Sigma^{-1}(\boldsymbol x - \boldsymbol\mu) }$
+
+$\Sigma = \text{diag}(d_1,\dots,d_n)$ iff mutually independent.
+
+$X = \begin{pmatrix}
+X_1\\
+X_2
+\end{pmatrix} \sim N_p\left( \begin{pmatrix}
+\mu_1 \\
+\mu_2
+\end{pmatrix}, \begin{pmatrix}
+\Sigma_{11} & \Sigma_{12} \\
+\Sigma_{21} & \Sigma_{22}
+\end{pmatrix}\right)$ independent if $\Sigma_{12} = \Sigma_{21}= 0$
+
+\vspace{.15cm}\hrule \vspace{.15cm}
+
+\emph{\sffamily Uniform Distribution}
+
+$Y \sim \text{Uniform}(\alpha,\beta)$\\
+	$y\in [\alpha,\beta]$
+
+$f(y|\alpha,\beta) = \frac{1}{\beta-\alpha}$ \quad $\phi(t;\alpha,\beta) = \frac{e^{it\beta}-e^{it\alpha}}{it(\beta-\alpha)}$
+
+$E(Y) = \frac{\alpha + \beta}{2}$; var$(Y) = \frac{(\beta-\alpha)^2}{12}$
+
+Unif($-a$, $a$) $\to$ $k_i = 0$ for $i$ odd; $\kappa_0 = 0$; $\kappa_2=a^2/3$
+
+$\kappa_4 = \frac{a^4}{5}-3\left(\frac{a^2}{3}\right)^2$; $\kappa_6 = \frac{a^6}{7}-15\frac{a^4}{5}\frac{a^2}{3}+30\left(\frac{a^2}{3}\right)^3$
+
+\vspace{.15cm}\hrule \vspace{.15cm}
+
+\emph{\sffamily Gamma Distribution}
+
+$Y \sim \text{Gamma}(\alpha,\beta)$\\
+	$y\in(0,\infty)$\\
+	Shape $\alpha > 0$, inverse scale $\beta > 0$ (i.e.\ $\beta = \sfrac{1}{\theta})$
+
+$f(y|\alpha,\beta) = \frac{\beta^\alpha y^{\alpha-1}}{\Gamma(\alpha)}e^{-\beta y}$ \quad $\phi(t;\alpha,\theta)=(1-it\theta)^{-\alpha}$
+
+$E(Y) = \sfrac{\alpha}{\beta} = \alpha\theta$; var$(Y) = \sfrac{\alpha}{\beta^2}=\alpha \theta^2$
+
+$\text{Gamma}(k,\frac{1}{\lambda} = \text{Erlang}(k,\lambda)$
+
+$\kappa_r = \alpha \Gamma(r)$
+
+\vspace{.15cm}\hrule \vspace{.15cm}
+
+\emph{\sffamily Beta Distribution}
+
+$Y \sim \text{Beta}(\alpha, \beta)$\\
+	$y \in [0,1]$\quad
+	Shape parameters: $\alpha, \beta > 0$
+
+pdf: $f(y|\alpha,\beta) = \frac{y^{\alpha-1}(1-y)^{\beta -1}}{B(\alpha,\beta)} = \frac{y^{\alpha-1}(1-y)^{\beta -1}}{\int_{0}^{1}t^{\alpha-1}(1-t)^{\beta -1}\; \textrm{d}t}$
+
+$E(Y) = \frac{\alpha}{\alpha+\beta}$; var$(Y) = \frac{\alpha\beta}{(\alpha+\beta)^2(\alpha + \beta +1)}$
+
+\vspace{.15cm}\hrule \vspace{.15cm}
+
+\emph{\sffamily Student`s t Distribution}
+
+$Y \sim t(n)$\\
+	$y \in \mathbb{R}$\quad
+	$n \in \mathbb{N}$ is the degrees of freedom.
+
+$f(y|n) = \frac{1}{\sqrt{n}B(\sfrac{1}{2},\sfrac{n}{2})}(1+\frac{t^2}{n})^{-\frac{n+1}{2}}$
+
+$E(Y) = 0$ for $n >1$; var$(Y) = \frac{n}{n-2}$ for $n > 2$
+
+$t(n-1) = \frac{\bar{x}-\mu}{s/\sqrt{n}}$ when $X \sim N(\mu,\sigma^2)$
+
+$Z \sim N(0,1)$ and $V \sim \chi^2_{n-1}$ then $\frac{Z}{\sqrt{V/(n-1)}} \sim t_{n-1}$
+
+\vspace{.15cm}\hrule \vspace{.15cm}
+
+\emph{\sffamily Exponential Distribution}
+
+$Y \sim \text{Exp}(\lambda)$\\
+	$y \in [0,\infty)$, \quad $\lambda > 0 $
+
+$f(y|\lambda) = \lambda e^{-\lambda y}$ \quad $\phi(t;\lambda) = (1-\sfrac{it}{\lambda})^{-1}$
+
+$E[Y]= \sfrac{1}{\lambda}$ \quad var$(Y) = \sfrac{1}{\lambda^2}$
+
+$\sumn \text{Exp}(\lambda) = \text{Erlang}(n,\lambda)$
+
+$k\text{Exp}(\lambda) = \text{Exp}(\frac{\lambda}{k})$
+
+Minimum of $n$ Exponentials: $\text{Exp}(n\lambda)$
+
+$\text{Exp}(\lambda) = \text{Gamma}(1, 1/\lambda)$
+
+$\lfloor\text{Exp}(\lambda)\rfloor = \text{Geometric}(1-e^{-\lambda})$
+
+$\kappa_r = \lambda^{-r}(r-1)!$
+
+\vspace{.15cm}\hrule \vspace{.15cm}
+
+\emph{\sffamily Erlang Distribution}
+
+$X \sim \text{Erlang}(k,\lambda)$\\
+$x,\lambda \in [0,\infty)$
+
+$f(x| k,\lambda)={\lambda^k x^{k-1} e^{-\lambda x} \over (k-1)!}$
+
+$E[X] = \frac{k}{\lambda}$\quad var$(X) = \frac{k}{\lambda^2}$
+
+%\vspace{.15cm}\hrule
+%\vspace{3cm}
+\vspace{.15cm}\hrule \vspace{.15cm}
+
+\emph{\sffamily Pareto Distribution}
+
+$X \sim \text{Pareto}(\nu,\theta)$\\
+$\theta,\nu>0$\quad$x>\nu$
+
+$f(x;\theta,\nu) = \frac{\theta \nu^\theta}{x^{\nu+1}}1(x\ge\nu)$
+
+$E[X] = \begin{cases}
+\infty & \theta \le 1\\
+\frac{\theta \nu}{\theta-1}&\theta>1
+\end{cases}$ \quad var$(X) = \begin{cases}
+\infty & \theta \in (1,2]\\
+\frac{\nu^2\theta}{(\theta-1)^2(\theta-2)} & \theta >2
+\end{cases}$
+
+$\log(\text{Pareto}(\nu,\theta)/\nu) = \text{Exp}(\theta)$
+
+\vspace{.15cm}\hrule \vspace{.15cm}
+
+\emph{\sffamily Rayleigh Distribution}
+
+$X \sim \text{Rayleigh}(\sigma)$\\
+$\sigma > 0$ \quad $x\in[0,\infty)$
+
+$f(x;\sigma) = \frac{x}{\sigma^2}e^{-x^2 / 2\sigma^2}$
+
+$E[X] = \sigma\sqrt{\frac{\pi}{2}}$ \quad var$(X) = \frac{4-\pi}{2}\sigma^2$
+
+$(\text{Rayleigh})^2 = \chi^2_2$
+
+\vspace{.15cm}\hrule \vspace{.15cm}
+
+\emph{\sffamily Chi-squared Distribution}
+
+$Y \sim \chi^2(n)$\\
+	$y\in [0,\infty)$ \quad $n \in \mathbb{N}$
+
+$f(y|n) = \frac{1}{2^{\sfrac{n}{2}}\Gamma(\sfrac{n}{2})}y^{\sfrac{n}{2}-1} e^{-\sfrac{y}{2}}$ \quad $\phi(t;n) = (1-2it)^{-\sfrac{n}{2}}$
+
+$E[Y] = n$ \quad var$(Y) = 2n$
+
+$\chi^2(n) +  \chi^2(k) =  \chi^2(n+k)$ if iid
+
+$ \chi^2(2) = \text{Exp}(\frac{1}{2})$
+
+$(n-1)\frac{s^2}{\sigma^2} \sim \chi^2_{n-1}$
+
+$\kappa_r = 2^{r-1}(r-1)! n$
+
+\vspace{.15cm}\hrule \vspace{.15cm}
+
+\emph{\sffamily Negative Binomial Distribution}
+
+$Y \sim NB(r,p)$\\
+	$y\in \{0,1,2,\dots \}$ \quad $r>0$\quad $p\in (0,1)$
+
+$p(y|r,p) = \binom{y+r-1}{y} (1-p)^r p^y$ \quad $\phi(t;r,p) = \left(\frac{1-p}{1-pe^{it}}\right)^r$
+
+$E[Y] = \frac{pr}{1-p}$ \quad var$(Y) = \frac{pr}{(1-p)^2}$
+
+\vspace{.15cm}\hrule \vspace{.15cm}
+
+\emph{\sffamily Dirichlet Distribution}
+
+$Y \sim \text{Dir}(\boldsymbol{\alpha})$\\
+	$y \in [0,1]; \sum y_i =1$\quad $a_i >0$
+
+$f(y|\boldsymbol{\alpha}) = \frac{\Gamma(\sum_{i=1}^K \alpha_i)}{\prod_{i=1}^K \Gamma(\alpha_i)} \prod_{i=1}^K y_i^{\alpha_i -1}$
+
+$E[Y_i] = \frac{\alpha_i}{\sum_k \alpha_k}$ \quad var$(Y_i) = \frac{\alpha_i(\alpha_0 - \alpha_i)}{\alpha_0^2 (\alpha_0 +1)}; \alpha_0=\sum_{i=1}^K \alpha_i$
+
+cov$(Y_i,Y_j) = \frac{-\alpha_i \alpha_j}{\alpha_0^2 (\alpha_0+1)} $
+
+\vspace{.15cm}\hrule \vspace{.15cm}
+
+\emph{\sffamily Multinomial Distribution}
+
+$Y \sim \text{Multinomial}(\boldsymbol{p})$\\
+	$\boldsymbol{y} \in \mathbb{N}^k$ \quad $\boldsymbol{p} \in (0,1)^k$, $\sum p_i =1$
+
+$p(\boldsymbol{y}|(\boldsymbol{p}) = \frac{n!}{y_1! \dots y_k!}p_1^{y_1} \dots p_k^{y_k}$ \quad $\phi(t;\boldsymbol{p})=\left( \sum_{j=1}^k p_j e^{it_j} \right)^n$
+
+$E[Y_i] = np_i$ \quad var$(Y_i) = np_i(1-p_i)$ \quad cov$(Y_i,Y_j) = -np_ip_j$
+
+\vspace{.15cm}\hrule \vspace{.15cm}
+
+\emph{\sffamily Geometric Distribution}
+
+$Y \sim \text{Geometric}(p)$\\
+	$y \in \mathbb{N}$ \quad $p \in (0,1]$
+
+$p(y|p) = (1-p)^{y-1} p$ \quad $\phi(t;p) = \frac{pe^{it}}{1-(1-p)e^{it}}$
+
+$E[Y] = \frac{1}{p}$ \quad var$(Y) = \frac{1-p}{p^2}$
+
+\vspace{.15cm}\hrule \vspace{.15cm}
+
+\emph{\sffamily Cauchy Distribution}
+
+$Y \sim \text{Cauchy}(\mu,\gamma)$\\
+	$y\in(-\infty,\infty)$ \quad $\mu \in \reals$ \quad $\gamma > 0$
+
+$f(y|\mu,\gamma) = \frac{1}{\pi\gamma \left[1+\left(\frac{y-\mu}{\gamma} \right) \right]}$\quad $\phi(t;\mu,\gamma) = \exp{\mu it - \gamma |t|}$
+
+$E[Y] = undefined$ \quad var$(Y) = undefined$ \quad median $= \mu$
+
+\vspace{.15cm}\hrule\vspace{.15cm}
+
+\emph{\sffamily F Distribution}
+
+$X \sim F(n_1,n_2)$\\
+$n_1,n_2 > 0$ \quad $x\ge 0$
+
+$f(x;n_1,n_2) = \frac{\sqrt{\frac{(n_1 x)^{n_1}n_2^{n_2}}{(n_1 x + n_2)^{n_1+n_2}}}}{x B(n_1/2,n_2/2)}$
+
+$E[X] = \frac{n_2}{n_2-2}$ \quad var$(X) = \frac{2n_2^2(n_1+n_2-2)}{n_1(n_2-2)^2(n_2-4)}$
+
+$F(n_1,n_2) = \frac{\chi^2_{n_1} / n_1}{\chi^2_{n_2} / n_2}$
+
+$F(n_1,n_2) = \frac{s^2_1}{\sigma^2_1} / \frac{s^2_2}{\sigma^2_2}$
+
+
+\end{document}
