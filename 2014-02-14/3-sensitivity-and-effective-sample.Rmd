@@ -91,7 +91,7 @@ $p(1-p)\left( E[Y_1 - Y_0] \right)$
 # Effective Samples
 - We're going to be investigating how to check the properties of your effective sample in regression.
 - The key result is:  
-$\hat{\rho}_{reg}\,{\buildrel p \over \to}\,\frac{E[w_i \rho_i]}{E[w_i]} \text{ where } w_i = \text{var}(D_i | X_i)$
+$\hat{\rho}_{reg}\,{\buildrel p \over \to}\,\frac{E[w_i \rho_i]}{E[w_i]} \text{ where } w_i = (D_i - E[D_i|X_i])^2$
 - We estimate these weights with:  
 $\hat{w}_i = \hat{D}_i^2$ where $D_i^2$ is the $i$th squared residual.
 - Because these estimates are "bad" for each unit, using them to reweight the sample is a bad idea.
@@ -439,14 +439,15 @@ abline(h=0,col="grey",lty=3)
 - You should probably use this for the homework.
 
 # Example
+- Remove the fixed effects to make it sensitive:
 ```{r 3-blackwell-setup}
 require(causalsens)
 d$ddt_week<-ifelse(d$ddt_week>0,1,0)
 out<-lm(paste0("getwarmord~ddt_week+",paste(vars,collapse="+")),data=d)
 coef(out)["ddt_week"]
 outD<-glm(paste0("ddt_week~",paste(vars,collapse="+")),data=d,family=binomial())
-alpha<-seq(-5, 5, by = .05)
-SensAnalysis<-causalsens(out,outD,~male+ideo_conservative+attend_1+educ_hsless,data=d,alpha=alpha,confound=one.sided)
+alpha<-seq(-.1, .1, by = .001)
+SensAnalysis<-causalsens(out,outD,as.formula(paste0("~",paste(vars,collapse="+"))),data=d,alpha=alpha,confound=one.sided)
 ```
 
 # Sensitivity Plots
