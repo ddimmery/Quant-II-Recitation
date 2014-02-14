@@ -121,7 +121,6 @@ pops$state <- tolower(pops$NAME)
 d$getwarmord <- as.double(d$getwarmord)
 # And estimate primary model of interest:
 out<-lm(getwarmord~ddt_week+educ_hsless+educ_coll+educ_postgrad+educ_dk+party_rep+party_leanrep+party_leandem+party_dem+male+raceeth_black+raceeth_hisp+raceeth_notwbh+raceeth_dkref+age_1824+age_2534+age_3544+age_5564+age_65plus+age_dk+ideo_vcons+ideo_conservative+ideo_liberal+ideo_vlib+ideo_dk+attend_1+attend_2+attend_3+attend_5+attend_6+attend_9+as.factor(doi)+as.factor(statenum)+as.factor(wbnid_num),d)
-# And partial regression:
 ```
 
 # Base Model
@@ -352,9 +351,11 @@ U2<-genConfound(10,10)
 c(D=cor(U1,d$ddt_week),Y=cor(U1,d$getwarmord))
 c(D=cor(U2,d$ddt_week),Y=cor(U2,d$getwarmord))
 ```
+```{r 3-ugly-X,echo=FALSE}
+X<-"educ_hsless+educ_coll+educ_postgrad+educ_dk+party_rep+party_leanrep+party_leandem+party_dem+male+raceeth_black+raceeth_hisp+raceeth_notwbh+raceeth_dkref+age_1824+age_2534+age_3544+age_5564+age_65plus+age_dk+ideo_vcons+ideo_conservative+ideo_liberal+ideo_vlib+ideo_dk+attend_1+attend_2+attend_3+attend_5+attend_6+attend_9+as.factor(doi)+as.factor(statenum)+as.factor(wbnid_num)"
+```
 
 ```{r 3-examine-partials}
-X<-"educ_hsless+educ_coll+educ_postgrad+educ_dk+party_rep+party_leanrep+party_leandem+party_dem+male+raceeth_black+raceeth_hisp+raceeth_notwbh+raceeth_dkref+age_1824+age_2534+age_3544+age_5564+age_65plus+age_dk+ideo_vcons+ideo_conservative+ideo_liberal+ideo_vlib+ideo_dk+attend_1+attend_2+attend_3+attend_5+attend_6+attend_9+as.factor(doi)+as.factor(statenum)+as.factor(wbnid_num)"
 c(D=coef(lm(paste0("ddt_week~U1+",X),d))["U1"],Y=coef(lm(paste0("getwarmord~U1+",X),d))["U1"])
 c(D=coef(lm(paste0("ddt_week~U2+",X),d))["U2"],Y=coef(lm(paste0("getwarmord~U2+",X),d))["U2"])
 ```
@@ -377,8 +378,8 @@ coef(lm(paste0("getwarmord~ddt_week+U2+",X),d))["ddt_week"]
 . . .
 
 ```{r 3-sim-alot}
-alphas<-rnorm(1000,0,.5)
-deltas<-rnorm(1000,0,.5)
+alphas<-rnorm(250,0,.5)
+deltas<-rnorm(250,0,.5)
 results<-NULL
 for(i in seq_len(length(alphas))) {
   U<-genConfound(alphas[i],deltas[i])
@@ -426,4 +427,31 @@ for(v in vars) {
 }
 abline(v=0,col="grey",lty=3)
 abline(h=0,col="grey",lty=3)
+```
+
+# Blackwell (2013)
+
+- Instead, imagine a function which defines the confounding.
+- $q(d,x) = E[Y_i(d)|D_i = d, X_i = x] - E[Y_i(d)|D_i = 1 - d, X_i = x]$
+- Treated counterfactuals always higher (lower): $q(d,x;\alpha) = \alpha$
+- Treated group potential outcomes always higher (lower): $q(d,x;\alpha) = \alpha(2 d - 1)$
+- Package on CRAN: `causalsens`
+- You should probably use this for the homework.
+
+# Example
+```{r 3-blackwell-setup}
+require(causalsens)
+d$ddt_week<-ifelse(d$ddt_week>0,1,0)
+out<-lm(paste0("getwarmord~ddt_week+",paste(vars,collapse="+")),data=d)
+coef(out)["ddt_week"]
+outD<-glm(paste0("ddt_week~",paste(vars,collapse="+")),data=d,family=binomial())
+alpha<-seq(-5, 5, by = .05)
+SensAnalysis<-causalsens(out,outD,~male+ideo_conservative+attend_1+educ_hsless,data=d,alpha=alpha,confound=one.sided)
+```
+
+# Sensitivity Plots
+```{r 3-blackwell-plots,fig.cap='',fig.width=10,fig.height=5}
+par(mfrow=c(1,2))
+plot(SensAnalysis,type="raw",bty="n")
+plot(SensAnalysis,type="r.squared",bty="n")
 ```
