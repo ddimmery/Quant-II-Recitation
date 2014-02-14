@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="Drew Dimmery drewd@nyu.edu" />
+  <meta name="dcterms.date" content="2014-02-14" />
+  <title>Sensitivity and Effective Samples</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="reveal.js/css/reveal.min.css"/>
+    <style type="text/css">code{white-space: pre;}</style>
+    <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+    </style>
+    <link rel="stylesheet" href="reveal.js/css/theme/simple.css" id="theme">
+  <link rel="stylesheet" media="print" href="reveal.js/css/print/pdf.css" />
+  <!--[if lt IE 9]>
+  <script src="reveal.js/lib/js/html5shiv.js"></script>
+  <![endif]-->
+    <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section>
+    <h1 class="title">Sensitivity and Effective Samples</h1>
+    <h2 class="author">Drew Dimmery <script type="text/javascript">
+<!--
+h='&#110;&#x79;&#x75;&#46;&#x65;&#100;&#x75;';a='&#64;';n='&#100;&#114;&#x65;&#x77;&#100;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#100;&#114;&#x65;&#x77;&#100;&#32;&#x61;&#116;&#32;&#110;&#x79;&#x75;&#32;&#100;&#x6f;&#116;&#32;&#x65;&#100;&#x75;</noscript></h2>
+    <h3 class="date">February 14, 2014</h3>
+</section>
+
+<section id="plan-for-today" class="slide level1">
+<h1>Plan for today</h1>
+<ul>
+<li class="fragment">First homework
+<ul>
+<li class="fragment">Some issues with identification / estimation</li>
+</ul></li>
+<li class="fragment">Second homework
+<ul>
+<li class="fragment">Some basic asymptotics</li>
+</ul></li>
+<li class="fragment">Effective Samples in regression
+<ul>
+<li class="fragment">Aronow &amp; Samii (2013)</li>
+</ul></li>
+<li class="fragment">Confounding &amp; Sensitivity Analysis
+<ul>
+<li class="fragment">Imbens (2003)</li>
+<li class="fragment">And generalizations (which are easy)</li>
+</ul></li>
+</ul>
+</section>
+<section id="identification-estimation" class="slide level1">
+<h1>Identification / Estimation</h1>
+<ul>
+<li class="fragment">The &quot;Four questions&quot; may have been a little confusing.</li>
+<li class="fragment">Let me re-break down the last two questions as &quot;Identification&quot; and &quot;Estimation&quot;</li>
+<li class="fragment">&quot;A regression is causal when the CEF it approximates is causal&quot; - MHE</li>
+<li class="fragment">Identification consists (in this context) as the set of things you need to believe in order to believe the CEF is causal.</li>
+<li class="fragment">Thus, when we think about identification, we should think about assumptions.</li>
+<li class="fragment">Estimation is the process you use to estimate the CEF.</li>
+</ul>
+</section>
+<section id="in-practice" class="slide level1">
+<h1>In practice</h1>
+<ul>
+<li class="fragment">The Conditional Independence Assumption would fall in identification.</li>
+<li class="fragment">I'd also throw in assumptions of additivity / linearity in this pot.</li>
+<li class="fragment">Estimation would include the populations/samples of interest, and all statistical inference.</li>
+<li class="fragment">But there's a close connection between the two.</li>
+<li class="fragment">Problems in estimation can lead to changes in identifying assumptions.</li>
+<li class="fragment">So they aren't completely separable.</li>
+</ul>
+</section>
+<section id="basic-identities-and-definitions" class="slide level1">
+<h1>Basic Identities and Definitions</h1>
+<ul>
+<li class="fragment">Convergence in probability:<br /><span class="math">\(X_n\,{\buildrel p \over \to}\,X \text{ if } \forall \epsilon &gt; 0 \quad \Pr(|X_n - X| &gt; \epsilon) \to 0\text{ as }n \to \infty\)</span></li>
+<li class="fragment">A very basic decomposition of variance:<br /><span class="math">\(\text{var}(X)=E[X^2]-E[X]^2\)</span></li>
+<li class="fragment">Something we do NOT know: <span class="math">\(E[XY]=E[X]\times E[Y]\)</span></li>
+<li class="fragment">Pretty much everybody assumed this to be true.</li>
+</ul>
+</section>
+<section id="problem-set-2" class="slide level1">
+<h1>Problem Set 2</h1>
+<ul>
+<li class="fragment">We want to find the probability limit of <span class="math">\({D_d&#39;D_d \over N}\)</span></li>
+<li class="fragment">Pretty much everyone correctly observed that this was:<br /><span class="math">\[\begin{pmatrix}
+\frac{1}{N}\sum_i (X_i - \bar{X})^2 &amp; \frac{1}{N}\sum_i (X_i - \bar{X})(Z_i - \bar{Z}) \\
+\frac{1}{N}\sum_i (X_i - \bar{X})(Z_i - \bar{Z}) &amp; \frac{1}{N}\sum_i (Z_i - \bar{Z})^2
+\end{pmatrix}\]</span></li>
+<li class="fragment">We can't simply say that this is equal to the following, though:<br /><span class="math">\[\begin{pmatrix}                                                                                                                                                                                                
+\frac{1}{N}\sum_i (X_i - p)^2 &amp; \frac{1}{N}\sum_i (X_i - p)(Z_i - q) \\                                                                                                                        
+\frac{1}{N}\sum_i (X_i - p)(Z_i - q) &amp; \frac{1}{N}\sum_i (Z_i - q)^2
+\end{pmatrix}\]</span></li>
+<li class="fragment">This is a fact which you should all be able to recognize as false IMMEDIATELY.</li>
+</ul>
+</section>
+<section id="continued" class="slide level1">
+<h1>Continued</h1>
+<ul>
+<li class="fragment">The sample variance is BIASED when divided by <span class="math">\(N\)</span> rather than <span class="math">\(N-1\)</span>.</li>
+<li class="fragment">It is still consistent, though, which is what is relevant to us.</li>
+<li class="fragment">The simple proof is as follows:<br /><span class="math">\({\sum_i (X_i - \bar{X})^2 \over N} = \frac{1}{N} \left( \sum_i X_i^2 - 2 \sum_i \bar{X}X_i + \sum_i \bar{X}^2\right)\)</span></li>
+<li class="fragment">We can pull out constants from the sums:<br /><span class="math">\(\frac{1}{N}\left(\sum_i X_i^2 - 2\bar{X}\sum_i X_i + \bar{X}^2 \sum_i 1 \right)\)</span></li>
+<li class="fragment">And simplify some things:<br /><span class="math">\(\frac{\sum_i X_i^2}{N} - 2\bar{X}^2 + \bar{X}^2 = \frac{\sum_i X_i^2}{N} - \frac{\sum_i \bar{X}^2}{N}\)</span></li>
+<li class="fragment">This is the point at which we can use the LLN. Averages converge in probability to their expectations.<br /><span class="math">\(E[X^2]-E[\bar{X}^2]\)</span></li>
+<li class="fragment">Use this identity: <span class="math">\(E[Z^2] = E[Z]^2+\text{var}(Z)\)</span><br /></li>
+<li class="fragment">Which gives us: <span class="math">\(E[X]^2+\text{var}(X)\)</span> and <span class="math">\(E[\bar{X}]^2+\text{var}(\bar{X})\)</span></li>
+<li class="fragment">Substituting in these identities:<br /><span class="math">\(E[X]^2+\text{var}(X)-E[\bar{X}]^2-\text{var}(\bar{X})\)</span></li>
+<li class="fragment">Which gives us: <span class="math">\(p^2+p(1-p)-p^2-\frac{p(1-p)}{N} = \frac{N-1}{N}p(1-p)\)</span></li>
+<li class="fragment">Which converges in probability to <span class="math">\(p(1-p)\)</span> (i.e. it is consistent)</li>
+</ul>
+</section>
+<section id="finishing-it-up" class="slide level1">
+<h1>Finishing it up:</h1>
+<ul>
+<li class="fragment">After that there weren't many issues</li>
+<li class="fragment">We know off-diagonals are zero because <span class="math">\(X\)</span> and <span class="math">\(Z\)</span> are independent.</li>
+<li class="fragment">This means we have a diagonal matrix, which is easy to invert (just take the inverse of the diagonal elements)</li>
+<li class="fragment">We then use a similar method to find <span class="math">\(D_d&#39;Y\)</span>, and multiply them together, which completes the first part.</li>
+<li class="fragment">For the next part, observe that we know <span class="math">\(\text{var}(X_i)=p(1-p)\)</span>, so we only need to think about the expectation of the numerator.</li>
+<li class="fragment">We end up with the following:<br /><span class="math">\(\text{cov}(X,Y)=E[XY]-E[X]E[Y] = E[Y|X=1]p(X=1)-pE[Y]\)</span></li>
+<li class="fragment">We then use the law of total probability on <span class="math">\(E[Y]\)</span>:<br /><span class="math">\(pE[Y|X=1] - p(pE[Y|X=1] + (1-p)E[Y|X=0])\)</span></li>
+<li class="fragment">Distribute and collect terms:<br /><span class="math">\(p(1-p)\left( E[Y|X=1] - E[Y|X=0]\right)\)</span></li>
+<li class="fragment">By random assignment of X, we have:<br /><span class="math">\(p(1-p)\left( E[Y_1 - Y_0] \right)\)</span></li>
+<li class="fragment">So dividing by <span class="math">\(p(1-p)\)</span> will leave us with <span class="math">\(\rho\)</span></li>
+</ul>
+</section>
+<section id="effective-samples" class="slide level1">
+<h1>Effective Samples</h1>
+<ul>
+<li class="fragment">We're going to be investigating how to check the properties of your effective sample in regression.</li>
+<li class="fragment">The key result is:<br /><span class="math">\(\hat{\rho}_{reg}\,{\buildrel p \over \to}\,\frac{E[w_i \rho_i]}{E[w_i]} \text{ where } w_i = \text{var}(D_i | X_i)\)</span></li>
+<li class="fragment">We estimate these weights with:<br /><span class="math">\(\hat{w}_i = \hat{D}_i^2\)</span> where <span class="math">\(D_i^2\)</span> is the <span class="math">\(i\)</span>th squared residual.</li>
+<li class="fragment">Because these estimates are &quot;bad&quot; for each unit, using them to reweight the sample is a bad idea.</li>
+<li class="fragment">Instead, we just use them to get a sense for what the effective sample is by examining the weight allocated to particular strata.</li>
+<li class="fragment">We will now explore how to do this.</li>
+</ul>
+</section>
+<section id="example-paper" class="slide level1">
+<h1>Example paper</h1>
+<ul>
+<li class="fragment">We will be looking at Egan and Mullin (2012)</li>
+<li class="fragment">This paper explores the effect of local weather variations on belief in global warming.</li>
+<li class="fragment">Very cool paper! With an interesting randomized treatment.</li>
+<li class="fragment">But what is the effective sample?</li>
+<li class="fragment">In other words, where is weather (conditional on covariates) most variable?</li>
+<li class="fragment">That's what we'll explore.</li>
+</ul>
+</section>
+<section id="load-in-data" class="slide level1">
+<h1>Load in data</h1>
+<ul>
+<li class="fragment">Get the data from Pat's <a href="http://politics.as.nyu.edu/docs/IO/4819/egan_mullin_replication.zip">replication materials here</a>.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(foreign)
+d &lt;-<span class="st"> </span><span class="kw">read.dta</span>(<span class="st">&quot;gwdataset.dta&quot;</span>)</code></pre>
+<pre><code>## Warning: value labels (&#39;q2&#39;) for &#39;jan07_q2&#39; are missing</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">zips &lt;-<span class="st"> </span><span class="kw">read.dta</span>(<span class="st">&quot;zipcodetostate.dta&quot;</span>)
+zips &lt;-<span class="st"> </span><span class="kw">unique</span>(zips[, <span class="kw">c</span>(<span class="st">&quot;statenum&quot;</span>, <span class="st">&quot;statefromzipfile&quot;</span>)])
+pops &lt;-<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">&quot;population_ests_2013.csv&quot;</span>)
+pops$state &lt;-<span class="st"> </span><span class="kw">tolower</span>(pops$NAME)
+d$getwarmord &lt;-<span class="st"> </span><span class="kw">as.double</span>(d$getwarmord)
+<span class="co"># And estimate primary model of interest:</span>
+out &lt;-<span class="st"> </span><span class="kw">lm</span>(getwarmord ~<span class="st"> </span>ddt_week +<span class="st"> </span>educ_hsless +<span class="st"> </span>educ_coll +<span class="st"> </span>educ_postgrad +<span class="st"> </span>
+<span class="st">    </span>educ_dk +<span class="st"> </span>party_rep +<span class="st"> </span>party_leanrep +<span class="st"> </span>party_leandem +<span class="st"> </span>party_dem +<span class="st"> </span>male +<span class="st"> </span>
+<span class="st">    </span>raceeth_black +<span class="st"> </span>raceeth_hisp +<span class="st"> </span>raceeth_notwbh +<span class="st"> </span>raceeth_dkref +<span class="st"> </span>age_1824 +<span class="st"> </span>
+<span class="st">    </span>age_2534 +<span class="st"> </span>age_3544 +<span class="st"> </span>age_5564 +<span class="st"> </span>age_65plus +<span class="st"> </span>age_dk +<span class="st"> </span>ideo_vcons +<span class="st"> </span>ideo_conservative +<span class="st"> </span>
+<span class="st">    </span>ideo_liberal +<span class="st"> </span>ideo_vlib +<span class="st"> </span>ideo_dk +<span class="st"> </span>attend_1 +<span class="st"> </span>attend_2 +<span class="st"> </span>attend_3 +<span class="st"> </span>attend_5 +<span class="st"> </span>
+<span class="st">    </span>attend_6 +<span class="st"> </span>attend_9 +<span class="st"> </span><span class="kw">as.factor</span>(doi) +<span class="st"> </span><span class="kw">as.factor</span>(statenum) +<span class="st"> </span><span class="kw">as.factor</span>(wbnid_num), 
+    d)
+<span class="co"># And partial regression:</span></code></pre>
+</div>
+</section>
+<section id="base-model" class="slide level1">
+<h1>Base Model</h1>
+<ul>
+<li class="fragment">We won't worry about standard errors yet.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(out)$coefficients[<span class="dv">1</span>:<span class="dv">10</span>, ]</code></pre>
+<pre><code>##                Estimate Std. Error t value  Pr(&gt;|t|)
+## (Intercept)    1.945740   0.771479  2.5221 1.169e-02
+## ddt_week       0.004858   0.002476  1.9621 4.980e-02
+## educ_hsless    0.057740   0.024484  2.3583 1.839e-02
+## educ_coll      0.021457   0.027095  0.7919 4.284e-01
+## educ_postgrad  0.049387   0.030734  1.6069 1.081e-01
+## educ_dk        0.102936   0.250495  0.4109 6.811e-01
+## party_rep     -0.243900   0.036627 -6.6591 2.992e-11
+## party_leanrep -0.092809   0.041812 -2.2197 2.648e-02
+## party_leandem  0.147409   0.039024  3.7774 1.600e-04
+## party_dem      0.175427   0.035267  4.9743 6.725e-07</code></pre>
+</div>
+</section>
+<section id="estimate-d2" class="slide level1">
+<h1>Estimate D^2</h1>
+<ul>
+<li class="fragment">We can simply square the residuals of a partial regression to get <span class="math">\(D^2\)</span>:</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">outD &lt;-<span class="st"> </span><span class="kw">lm</span>(ddt_week ~<span class="st"> </span>educ_hsless +<span class="st"> </span>educ_coll +<span class="st"> </span>educ_postgrad +<span class="st"> </span>educ_dk +<span class="st"> </span>party_rep +<span class="st"> </span>
+<span class="st">    </span>party_leanrep +<span class="st"> </span>party_leandem +<span class="st"> </span>party_dem +<span class="st"> </span>male +<span class="st"> </span>raceeth_black +<span class="st"> </span>raceeth_hisp +<span class="st"> </span>
+<span class="st">    </span>raceeth_notwbh +<span class="st"> </span>raceeth_dkref +<span class="st"> </span>age_1824 +<span class="st"> </span>age_2534 +<span class="st"> </span>age_3544 +<span class="st"> </span>age_5564 +<span class="st"> </span>
+<span class="st">    </span>age_65plus +<span class="st"> </span>age_dk +<span class="st"> </span>ideo_vcons +<span class="st"> </span>ideo_conservative +<span class="st"> </span>ideo_liberal +<span class="st"> </span>ideo_vlib +<span class="st"> </span>
+<span class="st">    </span>ideo_dk +<span class="st"> </span>attend_1 +<span class="st"> </span>attend_2 +<span class="st"> </span>attend_3 +<span class="st"> </span>attend_5 +<span class="st"> </span>attend_6 +<span class="st"> </span>attend_9 +<span class="st"> </span>
+<span class="st">    </span><span class="kw">as.factor</span>(doi) +<span class="st"> </span><span class="kw">as.factor</span>(statenum) +<span class="st"> </span><span class="kw">as.factor</span>(wbnid_num), d)
+D2 &lt;-<span class="st"> </span><span class="kw">residuals</span>(outD)^<span class="dv">2</span></code></pre>
+</div>
+</section>
+<section id="effective-sample-statistics" class="slide level1">
+<h1>Effective Sample Statistics</h1>
+<ul>
+<li class="fragment">We can use these estimated weights for examining the sample.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">compare_samples &lt;-<span class="st"> </span>d[, <span class="kw">c</span>(<span class="st">&quot;wave&quot;</span>, <span class="st">&quot;ddt_week&quot;</span>, <span class="st">&quot;ddt_twoweeks&quot;</span>, <span class="st">&quot;ddt_threeweeks&quot;</span>, 
+    <span class="st">&quot;party_rep&quot;</span>, <span class="st">&quot;attend_1&quot;</span>, <span class="st">&quot;ideo_conservative&quot;</span>, <span class="st">&quot;age_1824&quot;</span>, <span class="st">&quot;educ_hsless&quot;</span>)]
+compare_samples &lt;-<span class="st"> </span><span class="kw">apply</span>(compare_samples, <span class="dv">2</span>, function(x) <span class="kw">c</span>(<span class="kw">mean</span>(x), <span class="kw">sd</span>(x), <span class="kw">weighted.mean</span>(x, 
+    D2), <span class="kw">sqrt</span>(<span class="kw">weighted.mean</span>((x -<span class="st"> </span><span class="kw">weighted.mean</span>(x, D2))^<span class="dv">2</span>, D2))))
+compare_samples &lt;-<span class="st"> </span><span class="kw">t</span>(compare_samples)
+<span class="kw">colnames</span>(compare_samples) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;Nominal Mean&quot;</span>, <span class="st">&quot;Nominal SD&quot;</span>, <span class="st">&quot;Effective Mean&quot;</span>, 
+    <span class="st">&quot;Effective SD&quot;</span>)
+compare_samples</code></pre>
+<pre><code>##                   Nominal Mean Nominal SD Effective Mean Effective SD
+## wave                   3.09694     1.4253        3.20788       1.5609
+## ddt_week               3.83549     5.9047        5.11579      10.8980
+## ddt_twoweeks           3.85506     5.4572        5.00137       9.2263
+## ddt_threeweeks         3.96720     4.7690        5.10859       8.4348
+## party_rep              0.29527     0.4562        0.28978       0.4537
+## attend_1               0.11433     0.3182        0.12343       0.3289
+## ideo_conservative      0.31133     0.4631        0.29325       0.4553
+## age_1824               0.07196     0.2584        0.06881       0.2531
+## educ_hsless            0.34151     0.4743        0.31220       0.4634</code></pre>
+</div>
+</section>
+<section id="effective-sample-maps" class="slide level1">
+<h1>Effective Sample Maps</h1>
+<ul>
+<li class="fragment">But one of the most interesting things is to see this visually.</li>
+<li class="fragment">Where in the US does the effective sample emphasize?</li>
+<li class="fragment">To get at this, we'll use some tools in R that make this incredibly easy.</li>
+<li class="fragment">In particular, we'll do this in ggplot2.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Effective sample by state</span>
+wt.by.state &lt;-<span class="st"> </span><span class="kw">tapply</span>(D2, d$statenum, sum)
+wt.by.state &lt;-<span class="st"> </span>wt.by.state/<span class="kw">sum</span>(wt.by.state) *<span class="st"> </span><span class="dv">100</span>
+wt.by.state &lt;-<span class="st"> </span><span class="kw">cbind</span>(<span class="dt">D2 =</span> wt.by.state, <span class="dt">statenum =</span> <span class="kw">names</span>(wt.by.state))
+data_for_map &lt;-<span class="st"> </span><span class="kw">merge</span>(wt.by.state, zips, <span class="dt">by =</span> <span class="st">&quot;statenum&quot;</span>)
+<span class="co"># Nominal Sample by state</span>
+wt.by.state &lt;-<span class="st"> </span><span class="kw">tapply</span>(<span class="kw">rep</span>(<span class="dv">1</span>, <span class="dv">6726</span>), d$statenum, sum)
+wt.by.state &lt;-<span class="st"> </span>wt.by.state/<span class="kw">sum</span>(wt.by.state) *<span class="st"> </span><span class="dv">100</span>
+wt.by.state &lt;-<span class="st"> </span><span class="kw">cbind</span>(<span class="dt">Nom =</span> wt.by.state, <span class="dt">statenum =</span> <span class="kw">names</span>(wt.by.state))
+data_for_map &lt;-<span class="st"> </span><span class="kw">merge</span>(data_for_map, wt.by.state, <span class="dt">by =</span> <span class="st">&quot;statenum&quot;</span>)
+<span class="co"># Get correct state names</span>
+<span class="kw">require</span>(maps, <span class="dt">quietly =</span> <span class="ot">TRUE</span>)
+<span class="kw">data</span>(state.fips)
+data_for_map &lt;-<span class="st"> </span><span class="kw">merge</span>(state.fips, data_for_map, <span class="dt">by.x =</span> <span class="st">&quot;abb&quot;</span>, <span class="dt">by.y =</span> <span class="st">&quot;statefromzipfile&quot;</span>)
+data_for_map$D2 &lt;-<span class="st"> </span><span class="kw">as.double</span>(<span class="kw">as.character</span>(data_for_map$D2))
+data_for_map$Nom &lt;-<span class="st"> </span><span class="kw">as.double</span>(<span class="kw">as.character</span>(data_for_map$Nom))
+data_for_map$state &lt;-<span class="st"> </span><span class="kw">sapply</span>(<span class="kw">as.character</span>(data_for_map$polyname), function(x) <span class="kw">strsplit</span>(x, 
+    <span class="st">&quot;:&quot;</span>)[[<span class="dv">1</span>]][<span class="dv">1</span>])
+data_for_map$Diff &lt;-<span class="st"> </span>data_for_map$D2 -<span class="st"> </span>data_for_map$Nom
+data_for_map &lt;-<span class="st"> </span><span class="kw">merge</span>(data_for_map, pops, <span class="dt">by =</span> <span class="st">&quot;state&quot;</span>)
+data_for_map$PopPct &lt;-<span class="st"> </span>data_for_map$POPESTIMATE2013/<span class="kw">sum</span>(data_for_map$POPESTIMATE2013) *<span class="st"> </span>
+<span class="st">    </span><span class="dv">100</span>
+data_for_map$PopDiffEff &lt;-<span class="st"> </span>data_for_map$D2 -<span class="st"> </span>data_for_map$PopPct
+data_for_map$PopDiffNom &lt;-<span class="st"> </span>data_for_map$Nom -<span class="st"> </span>data_for_map$PopPct
+data_for_map$PopDiff &lt;-<span class="st"> </span>data_for_map$PopDiffEff -<span class="st"> </span>data_for_map$PopDiffNom
+<span class="kw">require</span>(ggplot2, <span class="dt">quietly =</span> <span class="ot">TRUE</span>)
+state_map &lt;-<span class="st"> </span><span class="kw">map_data</span>(<span class="st">&quot;state&quot;</span>)</code></pre>
+</div>
+</section>
+<section id="more-setup" class="slide level1">
+<h1>More setup</h1>
+<pre class="sourceCode r"><code class="sourceCode r">plotEff &lt;-<span class="st"> </span><span class="kw">ggplot</span>(data_for_map, <span class="kw">aes</span>(<span class="dt">map_id =</span> state))
+plotEff &lt;-<span class="st"> </span>plotEff +<span class="st"> </span><span class="kw">geom_map</span>(<span class="kw">aes</span>(<span class="dt">fill =</span> D2), <span class="dt">map =</span> state_map)
+plotEff &lt;-<span class="st"> </span>plotEff +<span class="st"> </span><span class="kw">expand_limits</span>(<span class="dt">x =</span> state_map$long, <span class="dt">y =</span> state_map$lat)
+plotEff &lt;-<span class="st"> </span>plotEff +<span class="st"> </span><span class="kw">scale_fill_continuous</span>(<span class="st">&quot;% Weight&quot;</span>, <span class="dt">limits =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">16</span>), <span class="dt">low =</span> <span class="st">&quot;white&quot;</span>, 
+    <span class="dt">high =</span> <span class="st">&quot;black&quot;</span>)
+plotEff &lt;-<span class="st"> </span>plotEff +<span class="st"> </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Effective Sample&quot;</span>)
+plotEff &lt;-<span class="st"> </span>plotEff +<span class="st"> </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="kw">c</span>(<span class="fl">0.2</span>, <span class="fl">0.1</span>), <span class="dt">legend.direction =</span> <span class="st">&quot;horizontal&quot;</span>, 
+    <span class="dt">axis.line =</span> <span class="kw">element_blank</span>(), <span class="dt">axis.text =</span> <span class="kw">element_blank</span>(), <span class="dt">axis.ticks =</span> <span class="kw">element_blank</span>(), 
+    <span class="dt">axis.title =</span> <span class="kw">element_blank</span>(), <span class="dt">panel.background =</span> <span class="kw">element_blank</span>(), <span class="dt">plot.background =</span> <span class="kw">element_blank</span>(), 
+    <span class="dt">panel.border =</span> <span class="kw">element_blank</span>(), <span class="dt">panel.grid =</span> <span class="kw">element_blank</span>())
+
+plotNom &lt;-<span class="st"> </span><span class="kw">ggplot</span>(data_for_map, <span class="kw">aes</span>(<span class="dt">map_id =</span> state))
+plotNom &lt;-<span class="st"> </span>plotNom +<span class="st"> </span><span class="kw">geom_map</span>(<span class="kw">aes</span>(<span class="dt">fill =</span> Nom), <span class="dt">map =</span> state_map)
+plotNom &lt;-<span class="st"> </span>plotNom +<span class="st"> </span><span class="kw">expand_limits</span>(<span class="dt">x =</span> state_map$long, <span class="dt">y =</span> state_map$lat)
+plotNom &lt;-<span class="st"> </span>plotNom +<span class="st"> </span><span class="kw">scale_fill_continuous</span>(<span class="st">&quot;% Weight&quot;</span>, <span class="dt">limits =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">16</span>), <span class="dt">low =</span> <span class="st">&quot;white&quot;</span>, 
+    <span class="dt">high =</span> <span class="st">&quot;black&quot;</span>)
+plotNom &lt;-<span class="st"> </span>plotNom +<span class="st"> </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Nominal Sample&quot;</span>)
+plotNom &lt;-<span class="st"> </span>plotNom +<span class="st"> </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="kw">c</span>(<span class="fl">0.2</span>, <span class="fl">0.1</span>), <span class="dt">legend.direction =</span> <span class="st">&quot;horizontal&quot;</span>, 
+    <span class="dt">axis.line =</span> <span class="kw">element_blank</span>(), <span class="dt">axis.text =</span> <span class="kw">element_blank</span>(), <span class="dt">axis.ticks =</span> <span class="kw">element_blank</span>(), 
+    <span class="dt">axis.title =</span> <span class="kw">element_blank</span>(), <span class="dt">panel.background =</span> <span class="kw">element_blank</span>(), <span class="dt">plot.background =</span> <span class="kw">element_blank</span>(), 
+    <span class="dt">panel.border =</span> <span class="kw">element_blank</span>(), <span class="dt">panel.grid =</span> <span class="kw">element_blank</span>())</code></pre>
+</section>
+<section id="and-the-maps" class="slide level1">
+<h1>And the maps</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(gridExtra, <span class="dt">quietly =</span> <span class="ot">TRUE</span>)
+<span class="kw">grid.arrange</span>(plotNom, plotEff, <span class="dt">ncol =</span> <span class="dv">2</span>)</code></pre>
+<figure>
+<img src="figure/3-raw-maps.png" />
+</figure>
+</section>
+<section id="setup-comparison-plot" class="slide level1">
+<h1>Setup Comparison Plot</h1>
+<pre class="sourceCode r"><code class="sourceCode r">plotDiff &lt;-<span class="st"> </span><span class="kw">ggplot</span>(data_for_map, <span class="kw">aes</span>(<span class="dt">map_id =</span> state))
+plotDiff &lt;-<span class="st"> </span>plotDiff +<span class="st"> </span><span class="kw">geom_map</span>(<span class="kw">aes</span>(<span class="dt">fill =</span> Diff), <span class="dt">map =</span> state_map)
+plotDiff &lt;-<span class="st"> </span>plotDiff +<span class="st"> </span><span class="kw">expand_limits</span>(<span class="dt">x =</span> state_map$long, <span class="dt">y =</span> state_map$lat)
+plotDiff &lt;-<span class="st"> </span>plotDiff +<span class="st"> </span><span class="kw">scale_fill_gradient2</span>(<span class="st">&quot;% Weight&quot;</span>, <span class="dt">low =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">mid =</span> <span class="st">&quot;white&quot;</span>, 
+    <span class="dt">high =</span> <span class="st">&quot;black&quot;</span>)
+plotDiff &lt;-<span class="st"> </span>plotDiff +<span class="st"> </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Effective Weight Minus Nominal Weight&quot;</span>)
+plotDiff &lt;-<span class="st"> </span>plotDiff +<span class="st"> </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="kw">c</span>(<span class="fl">0.2</span>, <span class="fl">0.1</span>), <span class="dt">legend.direction =</span> <span class="st">&quot;horizontal&quot;</span>, 
+    <span class="dt">axis.line =</span> <span class="kw">element_blank</span>(), <span class="dt">axis.text =</span> <span class="kw">element_blank</span>(), <span class="dt">axis.ticks =</span> <span class="kw">element_blank</span>(), 
+    <span class="dt">axis.title =</span> <span class="kw">element_blank</span>(), <span class="dt">panel.background =</span> <span class="kw">element_blank</span>(), <span class="dt">plot.background =</span> <span class="kw">element_blank</span>(), 
+    <span class="dt">panel.border =</span> <span class="kw">element_blank</span>(), <span class="dt">panel.grid =</span> <span class="kw">element_blank</span>())</code></pre>
+</section>
+<section id="difference-in-weights" class="slide level1">
+<h1>Difference in Weights</h1>
+<pre class="sourceCode r"><code class="sourceCode r">plotDiff</code></pre>
+<figure>
+<img src="figure/3-show-diff.png" />
+</figure>
+</section>
+<section id="population-comparison" class="slide level1">
+<h1>Population Comparison</h1>
+<pre class="sourceCode r"><code class="sourceCode r">plotEff &lt;-<span class="st"> </span><span class="kw">ggplot</span>(data_for_map, <span class="kw">aes</span>(<span class="dt">map_id =</span> state))
+plotEff &lt;-<span class="st"> </span>plotEff +<span class="st"> </span><span class="kw">geom_map</span>(<span class="kw">aes</span>(<span class="dt">fill =</span> PopDiffEff), <span class="dt">map =</span> state_map)
+plotEff &lt;-<span class="st"> </span>plotEff +<span class="st"> </span><span class="kw">expand_limits</span>(<span class="dt">x =</span> state_map$long, <span class="dt">y =</span> state_map$lat)
+plotEff &lt;-<span class="st"> </span>plotEff +<span class="st"> </span><span class="kw">scale_fill_gradient2</span>(<span class="st">&quot;% Weight&quot;</span>, <span class="dt">limits =</span> <span class="kw">c</span>(-<span class="dv">2</span>, <span class="dv">6</span>), <span class="dt">low =</span> <span class="st">&quot;red&quot;</span>, 
+    <span class="dt">mid =</span> <span class="st">&quot;white&quot;</span>, <span class="dt">high =</span> <span class="st">&quot;black&quot;</span>)
+plotEff &lt;-<span class="st"> </span>plotEff +<span class="st"> </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Effective Sample&quot;</span>)
+plotEff &lt;-<span class="st"> </span>plotEff +<span class="st"> </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="kw">c</span>(<span class="fl">0.2</span>, <span class="fl">0.1</span>), <span class="dt">legend.direction =</span> <span class="st">&quot;horizontal&quot;</span>, 
+    <span class="dt">axis.line =</span> <span class="kw">element_blank</span>(), <span class="dt">axis.text =</span> <span class="kw">element_blank</span>(), <span class="dt">axis.ticks =</span> <span class="kw">element_blank</span>(), 
+    <span class="dt">axis.title =</span> <span class="kw">element_blank</span>(), <span class="dt">panel.background =</span> <span class="kw">element_blank</span>(), <span class="dt">plot.background =</span> <span class="kw">element_blank</span>(), 
+    <span class="dt">panel.border =</span> <span class="kw">element_blank</span>(), <span class="dt">panel.grid =</span> <span class="kw">element_blank</span>())
+
+plotNom &lt;-<span class="st"> </span><span class="kw">ggplot</span>(data_for_map, <span class="kw">aes</span>(<span class="dt">map_id =</span> state))
+plotNom &lt;-<span class="st"> </span>plotNom +<span class="st"> </span><span class="kw">geom_map</span>(<span class="kw">aes</span>(<span class="dt">fill =</span> PopDiffNom), <span class="dt">map =</span> state_map)
+plotNom &lt;-<span class="st"> </span>plotNom +<span class="st"> </span><span class="kw">expand_limits</span>(<span class="dt">x =</span> state_map$long, <span class="dt">y =</span> state_map$lat)
+plotNom &lt;-<span class="st"> </span>plotNom +<span class="st"> </span><span class="kw">scale_fill_gradient2</span>(<span class="st">&quot;% Weight&quot;</span>, <span class="dt">limits =</span> <span class="kw">c</span>(-<span class="dv">2</span>, <span class="dv">6</span>), <span class="dt">low =</span> <span class="st">&quot;red&quot;</span>, 
+    <span class="dt">mid =</span> <span class="st">&quot;white&quot;</span>, <span class="dt">high =</span> <span class="st">&quot;black&quot;</span>)
+plotNom &lt;-<span class="st"> </span>plotNom +<span class="st"> </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Nominal Sample&quot;</span>)
+plotNom &lt;-<span class="st"> </span>plotNom +<span class="st"> </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="kw">c</span>(<span class="fl">0.2</span>, <span class="fl">0.1</span>), <span class="dt">legend.direction =</span> <span class="st">&quot;horizontal&quot;</span>, 
+    <span class="dt">axis.line =</span> <span class="kw">element_blank</span>(), <span class="dt">axis.text =</span> <span class="kw">element_blank</span>(), <span class="dt">axis.ticks =</span> <span class="kw">element_blank</span>(), 
+    <span class="dt">axis.title =</span> <span class="kw">element_blank</span>(), <span class="dt">panel.background =</span> <span class="kw">element_blank</span>(), <span class="dt">plot.background =</span> <span class="kw">element_blank</span>(), 
+    <span class="dt">panel.border =</span> <span class="kw">element_blank</span>(), <span class="dt">panel.grid =</span> <span class="kw">element_blank</span>())</code></pre>
+</section>
+<section id="population-comparison-plots" class="slide level1">
+<h1>Population Comparison Plots</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">grid.arrange</span>(plotNom, plotEff, <span class="dt">ncol =</span> <span class="dv">2</span>)</code></pre>
+<figure>
+<img src="figure/3-show-pop-comps.png" />
+</figure>
+</section>
+<section id="setup-new-comparison-plot" class="slide level1">
+<h1>Setup New Comparison Plot</h1>
+<pre class="sourceCode r"><code class="sourceCode r">plotDiff &lt;-<span class="st"> </span><span class="kw">ggplot</span>(data_for_map, <span class="kw">aes</span>(<span class="dt">map_id =</span> state))
+plotDiff &lt;-<span class="st"> </span>plotDiff +<span class="st"> </span><span class="kw">geom_map</span>(<span class="kw">aes</span>(<span class="dt">fill =</span> PopDiff), <span class="dt">map =</span> state_map)
+plotDiff &lt;-<span class="st"> </span>plotDiff +<span class="st"> </span><span class="kw">expand_limits</span>(<span class="dt">x =</span> state_map$long, <span class="dt">y =</span> state_map$lat)
+plotDiff &lt;-<span class="st"> </span>plotDiff +<span class="st"> </span><span class="kw">scale_fill_gradient2</span>(<span class="st">&quot;% Weight&quot;</span>, <span class="dt">low =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">mid =</span> <span class="st">&quot;white&quot;</span>, 
+    <span class="dt">high =</span> <span class="st">&quot;black&quot;</span>)
+plotDiff &lt;-<span class="st"> </span>plotDiff +<span class="st"> </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Effective Weight Minus Nominal Weight&quot;</span>)
+plotDiff &lt;-<span class="st"> </span>plotDiff +<span class="st"> </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="kw">c</span>(<span class="fl">0.2</span>, <span class="fl">0.1</span>), <span class="dt">legend.direction =</span> <span class="st">&quot;horizontal&quot;</span>, 
+    <span class="dt">axis.line =</span> <span class="kw">element_blank</span>(), <span class="dt">axis.text =</span> <span class="kw">element_blank</span>(), <span class="dt">axis.ticks =</span> <span class="kw">element_blank</span>(), 
+    <span class="dt">axis.title =</span> <span class="kw">element_blank</span>(), <span class="dt">panel.background =</span> <span class="kw">element_blank</span>(), <span class="dt">plot.background =</span> <span class="kw">element_blank</span>(), 
+    <span class="dt">panel.border =</span> <span class="kw">element_blank</span>(), <span class="dt">panel.grid =</span> <span class="kw">element_blank</span>())</code></pre>
+</section>
+<section id="plot-difference" class="slide level1">
+<h1>Plot Difference</h1>
+<pre class="sourceCode r"><code class="sourceCode r">plotDiff</code></pre>
+<figure>
+<img src="figure/3-plot-pop-diff.png" />
+</figure>
+</section>
+<section id="sensitivity-analysis" class="slide level1">
+<h1>Sensitivity Analysis</h1>
+<ul>
+<li class="fragment">The homework mentions a couple places to find pre existing code.</li>
+<li class="fragment">I'm going to walk you through how to do a generalized version of the Imbens (2003) method.</li>
+<li class="fragment">It may be easier to use one of the canned routines for your homework, though.</li>
+<li class="fragment">We're going to keep working with Pat's data, since we already have it handy.</li>
+<li class="fragment">Imbens process:
+<ul>
+<li class="fragment">Simulate (or imagine simulating) an unobserved confounder like the following:<br /><span class="math">\(Y_d | X, U \sim \mathcal{N}(\tau d + \boldsymbol\beta&#39;X + \delta U, \sigma^2)\)</span><br /><span class="math">\(D | X, U \sim f(\boldsymbol\gamma&#39;X + \alpha U)\)</span> (with <span class="math">\(f\)</span> known)</li>
+<li class="fragment">That is, <span class="math">\(Y_1, Y_0 \perp D | X, U\)</span></li>
+<li class="fragment">So we want to generate an additively linear confounder with both <span class="math">\(D\)</span> and <span class="math">\(Y\)</span>.</li>
+</ul></li>
+</ul>
+</section>
+<section id="generate-a-confounder" class="slide level1">
+<h1>Generate a confounder</h1>
+<ul>
+<li class="fragment">For our analysis, <span class="math">\(Y\)</span> is belief in global warming and <span class="math">\(D\)</span> is local variation in temperature.</li>
+<li class="fragment">We want to standardize these variables first.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">d$getwarmord &lt;-<span class="st"> </span><span class="kw">scale</span>(d$getwarmord)
+d$ddt_week &lt;-<span class="st"> </span><span class="kw">scale</span>(d$ddt_week)
+genConfound &lt;-<span class="st"> </span>function(alpha, delta) {
+    e &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="kw">nrow</span>(d), <span class="dv">0</span>, <span class="dv">1</span>)
+    U &lt;-<span class="st"> </span>alpha *<span class="st"> </span>d$ddt_week +<span class="st"> </span>delta *<span class="st"> </span>d$getwarmord +<span class="st"> </span>e
+    <span class="kw">return</span>(U)
+}</code></pre>
+</div>
+<div class="fragment">
+<ul>
+<li class="fragment">So we can vary partial correlations with <span class="math">\(D\)</span> and <span class="math">\(Y\)</span> by varying <code>alpha</code> and <code>delta</code>.</li>
+</ul>
+</div>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">U1 &lt;-<span class="st"> </span><span class="kw">genConfound</span>(<span class="dv">0</span>, <span class="dv">2</span>)
+U2 &lt;-<span class="st"> </span><span class="kw">genConfound</span>(<span class="dv">10</span>, <span class="dv">10</span>)
+<span class="kw">c</span>(<span class="dt">D =</span> <span class="kw">cor</span>(U1, d$ddt_week), <span class="dt">Y =</span> <span class="kw">cor</span>(U1, d$getwarmord))</code></pre>
+<pre><code>##      D      Y 
+## 0.0305 0.8913</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">c</span>(<span class="dt">D =</span> <span class="kw">cor</span>(U2, d$ddt_week), <span class="dt">Y =</span> <span class="kw">cor</span>(U2, d$getwarmord))</code></pre>
+<pre><code>##      D      Y 
+## 0.7192 0.7208</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">X &lt;-<span class="st"> &quot;educ_hsless+educ_coll+educ_postgrad+educ_dk+party_rep+party_leanrep+party_leandem+party_dem+male+raceeth_black+raceeth_hisp+raceeth_notwbh+raceeth_dkref+age_1824+age_2534+age_3544+age_5564+age_65plus+age_dk+ideo_vcons+ideo_conservative+ideo_liberal+ideo_vlib+ideo_dk+attend_1+attend_2+attend_3+attend_5+attend_6+attend_9+as.factor(doi)+as.factor(statenum)+as.factor(wbnid_num)&quot;</span>
+<span class="kw">c</span>(<span class="dt">D =</span> <span class="kw">coef</span>(<span class="kw">lm</span>(<span class="kw">paste0</span>(<span class="st">&quot;ddt_week~U1+&quot;</span>, X), d))[<span class="st">&quot;U1&quot;</span>], <span class="dt">Y =</span> <span class="kw">coef</span>(<span class="kw">lm</span>(<span class="kw">paste0</span>(<span class="st">&quot;getwarmord~U1+&quot;</span>, 
+    X), d))[<span class="st">&quot;U1&quot;</span>])</code></pre>
+<pre><code>##     D.U1     Y.U1 
+## 0.005302 0.388986</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">c</span>(<span class="dt">D =</span> <span class="kw">coef</span>(<span class="kw">lm</span>(<span class="kw">paste0</span>(<span class="st">&quot;ddt_week~U2+&quot;</span>, X), d))[<span class="st">&quot;U2&quot;</span>], <span class="dt">Y =</span> <span class="kw">coef</span>(<span class="kw">lm</span>(<span class="kw">paste0</span>(<span class="st">&quot;getwarmord~U2+&quot;</span>, 
+    X), d))[<span class="st">&quot;U2&quot;</span>])</code></pre>
+<pre><code>##    D.U2    Y.U2 
+## 0.03226 0.06704</code></pre>
+</div>
+</section>
+<section id="continued-1" class="slide level1">
+<h1>Continued</h1>
+<ul>
+<li class="fragment">More importantly, we can see how this changes our estimate of the treatment effect:</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">out &lt;-<span class="st"> </span><span class="kw">lm</span>(<span class="kw">paste0</span>(<span class="st">&quot;getwarmord~ddt_week+&quot;</span>, X), d)
+<span class="kw">coef</span>(out)[<span class="st">&quot;ddt_week&quot;</span>]</code></pre>
+<pre><code>## ddt_week 
+##  0.03618</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">coef</span>(<span class="kw">lm</span>(<span class="kw">paste0</span>(<span class="st">&quot;getwarmord~ddt_week+U1+&quot;</span>, X), d))[<span class="st">&quot;ddt_week&quot;</span>]</code></pre>
+<pre><code>## ddt_week 
+##  0.01399</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">coef</span>(<span class="kw">lm</span>(<span class="kw">paste0</span>(<span class="st">&quot;getwarmord~ddt_week+U2+&quot;</span>, X), d))[<span class="st">&quot;ddt_week&quot;</span>]</code></pre>
+<pre><code>## ddt_week 
+##  -0.9855</code></pre>
+<ul>
+<li class="fragment">Now we want to do this over a larger number of values of <code>alpha</code> and <code>delta</code></li>
+</ul>
+</div>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">alphas &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="dv">1000</span>, <span class="dv">0</span>, <span class="fl">0.5</span>)
+deltas &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="dv">1000</span>, <span class="dv">0</span>, <span class="fl">0.5</span>)
+results &lt;-<span class="st"> </span><span class="ot">NULL</span>
+for (i in <span class="kw">seq_len</span>(<span class="kw">length</span>(alphas))) {
+    U &lt;-<span class="st"> </span><span class="kw">genConfound</span>(alphas[i], deltas[i])
+    corD &lt;-<span class="st"> </span><span class="kw">cor</span>(U, d$ddt_week)
+    corY &lt;-<span class="st"> </span><span class="kw">cor</span>(U, d$getwarmord)
+    estTE &lt;-<span class="st"> </span><span class="kw">coef</span>(<span class="kw">lm</span>(<span class="kw">paste0</span>(<span class="st">&quot;getwarmord~ddt_week+U+&quot;</span>, X), d))[<span class="st">&quot;ddt_week&quot;</span>]
+    <span class="kw">names</span>(estTE) &lt;-<span class="st"> </span><span class="ot">NULL</span>
+    res &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dt">estTE =</span> estTE, <span class="dt">corD =</span> corD, <span class="dt">corY =</span> corY)
+    results &lt;-<span class="st"> </span><span class="kw">rbind</span>(results, res)
+}
+results &lt;-<span class="st"> </span><span class="kw">cbind</span>(results, <span class="dt">TEchange =</span> (results[, <span class="st">&quot;estTE&quot;</span>] -<span class="st"> </span><span class="kw">coef</span>(out)[<span class="st">&quot;ddt_week&quot;</span>]))</code></pre>
+</div>
+</section>
+<section id="plot-simulation-code" class="slide level1">
+<h1>Plot Simulation Code</h1>
+<pre class="sourceCode r"><code class="sourceCode r">color &lt;-<span class="st"> </span><span class="kw">ifelse</span>(results[, <span class="st">&quot;estTE&quot;</span>] &lt;=<span class="st"> </span><span class="fl">0.5</span> *<span class="st"> </span><span class="kw">coef</span>(out)[<span class="st">&quot;ddt_week&quot;</span>], <span class="st">&quot;red&quot;</span>, <span class="ot">NA</span>)
+color &lt;-<span class="st"> </span><span class="kw">ifelse</span>(<span class="kw">is.na</span>(color) &amp;<span class="st"> </span>results[, <span class="st">&quot;estTE&quot;</span>] &gt;=<span class="st"> </span><span class="fl">1.5</span> *<span class="st"> </span><span class="kw">coef</span>(out)[<span class="st">&quot;ddt_week&quot;</span>], 
+    <span class="st">&quot;blue&quot;</span>, color)
+color &lt;-<span class="st"> </span><span class="kw">ifelse</span>(<span class="kw">is.na</span>(color), <span class="st">&quot;green&quot;</span>, color)
+<span class="kw">plot</span>(results[, <span class="st">&quot;corD&quot;</span>], results[, <span class="st">&quot;corY&quot;</span>], <span class="dt">col =</span> color, <span class="dt">xlab =</span> <span class="st">&quot;correlation with D&quot;</span>, 
+    <span class="dt">ylab =</span> <span class="st">&quot;correlation with Y&quot;</span>, <span class="dt">xlim =</span> <span class="kw">c</span>(-<span class="dv">1</span>, <span class="dv">1</span>), <span class="dt">ylim =</span> <span class="kw">c</span>(-<span class="dv">1</span>, <span class="dv">1</span>))
+vars &lt;-<span class="st"> </span><span class="kw">strsplit</span>(X, <span class="st">&quot;[+]&quot;</span>, <span class="dt">perl =</span> <span class="ot">TRUE</span>)[[<span class="dv">1</span>]]
+vars &lt;-<span class="st"> </span>vars[<span class="kw">grep</span>(<span class="st">&quot;factor&quot;</span>, vars, <span class="dt">invert =</span> <span class="ot">TRUE</span>)]
+for (v in vars) {
+    corD &lt;-<span class="st"> </span><span class="kw">with</span>(d, <span class="kw">cor</span>(<span class="kw">get</span>(v), d$ddt_week))
+    corY &lt;-<span class="st"> </span><span class="kw">with</span>(d, <span class="kw">cor</span>(<span class="kw">get</span>(v), d$getwarmord))
+    <span class="kw">points</span>(corD, corY, <span class="dt">pch =</span> <span class="st">&quot;+&quot;</span>, <span class="dt">col =</span> <span class="st">&quot;black&quot;</span>)
+}
+<span class="kw">abline</span>(<span class="dt">v =</span> <span class="dv">0</span>, <span class="dt">col =</span> <span class="st">&quot;grey&quot;</span>, <span class="dt">lty =</span> <span class="dv">3</span>)
+<span class="kw">abline</span>(<span class="dt">h =</span> <span class="dv">0</span>, <span class="dt">col =</span> <span class="st">&quot;grey&quot;</span>, <span class="dt">lty =</span> <span class="dv">3</span>)</code></pre>
+</section>
+<section id="plot-of-the-results" class="slide level1">
+<h1>Plot of the Results</h1>
+<figure>
+<img src="figure/3-conf-sim-plot.png" />
+</figure>
+</section>
+    </div>
+  </div>
+
+  <script src="reveal.js/lib/js/head.min.js"></script>
+  <script src="reveal.js/js/reveal.min.js"></script>
+
+  <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        theme: 'simple', // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          { src: 'reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'reveal.js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+          { src: 'reveal.js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } },
+//          { src: 'reveal.js/plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; }, }
+//          { src: 'reveal.js/plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+]});
+    </script>
+  </body>
+</html>
