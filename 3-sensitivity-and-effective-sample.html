@@ -155,7 +155,7 @@ document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
 <h1>Effective Samples</h1>
 <ul>
 <li class="fragment">We're going to be investigating how to check the properties of your effective sample in regression.</li>
-<li class="fragment">The key result is:<br /><span class="math">\(\hat{\rho}_{reg}\,{\buildrel p \over \to}\,\frac{E[w_i \rho_i]}{E[w_i]} \text{ where } w_i = \text{var}(D_i | X_i)\)</span></li>
+<li class="fragment">The key result is:<br /><span class="math">\(\hat{\rho}_{reg}\,{\buildrel p \over \to}\,\frac{E[w_i \rho_i]}{E[w_i]} \text{ where } w_i = (D_i - E[D_i|X_i])^2\)</span></li>
 <li class="fragment">We estimate these weights with:<br /><span class="math">\(\hat{w}_i = \hat{D}_i^2\)</span> where <span class="math">\(D_i^2\)</span> is the <span class="math">\(i\)</span>th squared residual.</li>
 <li class="fragment">Because these estimates are &quot;bad&quot; for each unit, using them to reweight the sample is a bad idea.</li>
 <li class="fragment">Instead, we just use them to get a sense for what the effective sample is by examining the weight allocated to particular strata.</li>
@@ -439,18 +439,18 @@ genConfound &lt;-<span class="st"> </span>function(alpha, delta) {
 U2 &lt;-<span class="st"> </span><span class="kw">genConfound</span>(<span class="dv">10</span>, <span class="dv">10</span>)
 <span class="kw">c</span>(<span class="dt">D =</span> <span class="kw">cor</span>(U1, d$ddt_week), <span class="dt">Y =</span> <span class="kw">cor</span>(U1, d$getwarmord))</code></pre>
 <pre><code>##       D       Y 
-## 0.03082 0.89341</code></pre>
+## 0.04399 0.89670</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">c</span>(<span class="dt">D =</span> <span class="kw">cor</span>(U2, d$ddt_week), <span class="dt">Y =</span> <span class="kw">cor</span>(U2, d$getwarmord))</code></pre>
-<pre><code>##      D      Y 
-## 0.7199 0.7199</code></pre>
+<pre><code>##    D    Y 
+## 0.72 0.72</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">c</span>(<span class="dt">D =</span> <span class="kw">coef</span>(<span class="kw">lm</span>(<span class="kw">paste0</span>(<span class="st">&quot;ddt_week~U1+&quot;</span>, X), d))[<span class="st">&quot;U1&quot;</span>], <span class="dt">Y =</span> <span class="kw">coef</span>(<span class="kw">lm</span>(<span class="kw">paste0</span>(<span class="st">&quot;getwarmord~U1+&quot;</span>, 
     X), d))[<span class="st">&quot;U1&quot;</span>])</code></pre>
 <pre><code>##     D.U1     Y.U1 
-## 0.004253 0.391284</code></pre>
+## 0.008375 0.390998</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">c</span>(<span class="dt">D =</span> <span class="kw">coef</span>(<span class="kw">lm</span>(<span class="kw">paste0</span>(<span class="st">&quot;ddt_week~U2+&quot;</span>, X), d))[<span class="st">&quot;U2&quot;</span>], <span class="dt">Y =</span> <span class="kw">coef</span>(<span class="kw">lm</span>(<span class="kw">paste0</span>(<span class="st">&quot;getwarmord~U2+&quot;</span>, 
     X), d))[<span class="st">&quot;U2&quot;</span>])</code></pre>
 <pre><code>##    D.U2    Y.U2 
-## 0.03234 0.06689</code></pre>
+## 0.03238 0.06690</code></pre>
 </div>
 </section>
 <section id="continued-1" class="slide level1">
@@ -464,11 +464,11 @@ U2 &lt;-<span class="st"> </span><span class="kw">genConfound</span>(<span class
 <pre><code>## ddt_week 
 ##  0.03618</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">coef</span>(<span class="kw">lm</span>(<span class="kw">paste0</span>(<span class="st">&quot;getwarmord~ddt_week+U1+&quot;</span>, X), d))[<span class="st">&quot;ddt_week&quot;</span>]</code></pre>
-<pre><code>## ddt_week 
-##  0.01833</code></pre>
+<pre><code>##  ddt_week 
+## 0.0008224</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">coef</span>(<span class="kw">lm</span>(<span class="kw">paste0</span>(<span class="st">&quot;getwarmord~ddt_week+U2+&quot;</span>, X), d))[<span class="st">&quot;ddt_week&quot;</span>]</code></pre>
 <pre><code>## ddt_week 
-##  -0.9897</code></pre>
+##  -0.9914</code></pre>
 <ul>
 <li class="fragment">Now we want to do this over a larger number of values of <code>alpha</code> and <code>delta</code></li>
 </ul>
@@ -526,6 +526,9 @@ for (v in vars) {
 </section>
 <section id="example" class="slide level1">
 <h1>Example</h1>
+<ul>
+<li class="fragment">Remove the fixed effects to make it sensitive:</li>
+</ul>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(causalsens)
 d$ddt_week &lt;-<span class="st"> </span><span class="kw">ifelse</span>(d$ddt_week &gt;<span class="st"> </span><span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>)
 out &lt;-<span class="st"> </span><span class="kw">lm</span>(<span class="kw">paste0</span>(<span class="st">&quot;getwarmord~ddt_week+&quot;</span>, <span class="kw">paste</span>(vars, <span class="dt">collapse =</span> <span class="st">&quot;+&quot;</span>)), <span class="dt">data =</span> d)
@@ -533,9 +536,9 @@ out &lt;-<span class="st"> </span><span class="kw">lm</span>(<span class="kw">pa
 <pre><code>## ddt_week 
 ##  0.04557</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r">outD &lt;-<span class="st"> </span><span class="kw">glm</span>(<span class="kw">paste0</span>(<span class="st">&quot;ddt_week~&quot;</span>, <span class="kw">paste</span>(vars, <span class="dt">collapse =</span> <span class="st">&quot;+&quot;</span>)), <span class="dt">data =</span> d, <span class="dt">family =</span> <span class="kw">binomial</span>())
-alpha &lt;-<span class="st"> </span><span class="kw">seq</span>(-<span class="dv">4500</span>, <span class="dv">4500</span>, <span class="dt">by =</span> <span class="dv">250</span>)
-SensAnalysis &lt;-<span class="st"> </span><span class="kw">causalsens</span>(out, outD, ~male +<span class="st"> </span>ideo_conservative +<span class="st"> </span>attend_1 +<span class="st"> </span>
-<span class="st">    </span>educ_hsless, <span class="dt">data =</span> d, <span class="dt">alpha =</span> alpha, <span class="dt">confound =</span> one.sided)</code></pre>
+alpha &lt;-<span class="st"> </span><span class="kw">seq</span>(-<span class="fl">0.1</span>, <span class="fl">0.1</span>, <span class="dt">by =</span> <span class="fl">0.001</span>)
+SensAnalysis &lt;-<span class="st"> </span><span class="kw">causalsens</span>(out, outD, <span class="kw">as.formula</span>(<span class="kw">paste0</span>(<span class="st">&quot;~&quot;</span>, <span class="kw">paste</span>(vars, <span class="dt">collapse =</span> <span class="st">&quot;+&quot;</span>))), 
+    <span class="dt">data =</span> d, <span class="dt">alpha =</span> alpha, <span class="dt">confound =</span> one.sided)</code></pre>
 </section>
 <section id="sensitivity-plots" class="slide level1">
 <h1>Sensitivity Plots</h1>
