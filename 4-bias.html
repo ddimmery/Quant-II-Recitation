@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="Drew Dimmery drewd@nyu.edu" />
+  <meta name="dcterms.date" content="2014-02-21" />
+  <title>Bias</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="reveal.js/css/reveal.min.css"/>
+    <style type="text/css">code{white-space: pre;}</style>
+    <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+    </style>
+    <link rel="stylesheet" href="reveal.js/css/theme/simple.css" id="theme">
+  <link rel="stylesheet" media="print" href="reveal.js/css/print/pdf.css" />
+  <!--[if lt IE 9]>
+  <script src="reveal.js/lib/js/html5shiv.js"></script>
+  <![endif]-->
+    <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section>
+    <h1 class="title">Bias</h1>
+    <h2 class="author">Drew Dimmery <script type="text/javascript">
+<!--
+h='&#110;&#x79;&#x75;&#46;&#x65;&#100;&#x75;';a='&#64;';n='&#100;&#114;&#x65;&#x77;&#100;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#100;&#114;&#x65;&#x77;&#100;&#32;&#x61;&#116;&#32;&#110;&#x79;&#x75;&#32;&#100;&#x6f;&#116;&#32;&#x65;&#100;&#x75;</noscript></h2>
+    <h3 class="date">February 21, 2014</h3>
+</section>
+
+<section id="structure-of-class" class="slide level1">
+<h1>Structure of Class</h1>
+<ul>
+<li class="fragment">Today we're going to talk about:
+<ol type="1">
+<li class="fragment">*apply functions</li>
+<li class="fragment">Marginal Effects</li>
+<li class="fragment">Sensitivity analysis for post-treament bias</li>
+</ol></li>
+</ul>
+</section>
+<section id="the-apply-family" class="slide level1">
+<h1>The *apply family</h1>
+<ul>
+<li class="fragment">These functions allow one to <em>efficiently</em> perform a large number of actions on data.</li>
+<li class="fragment"><code>apply</code> - performs actions on the rows or columns of a matrix/array (1 for rows, 2 for columns, 3 for ??)</li>
+<li class="fragment"><code>sapply</code> - performs actions on every element of a vector</li>
+<li class="fragment"><code>tapply</code> - performs actions on a vector by group</li>
+<li class="fragment"><code>replicate</code> - performs the same action a given number of times</li>
+</ul>
+</section>
+<section id="apply" class="slide level1">
+<h1>apply</h1>
+<pre class="sourceCode r"><code class="sourceCode r">A</code></pre>
+<pre><code>##   c d
+## a 1 3
+## b 2 4</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">apply</span>(A, <span class="dv">1</span>, sum)</code></pre>
+<pre><code>## a b 
+## 4 6</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">apply</span>(A, <span class="dv">2</span>, mean)</code></pre>
+<pre><code>##   c   d 
+## 1.5 3.5</code></pre>
+</section>
+<section id="sapply" class="slide level1">
+<h1>sapply</h1>
+<pre class="sourceCode r"><code class="sourceCode r">vec</code></pre>
+<pre><code>## [1] &quot;a&quot; &quot;b&quot; &quot;c&quot;</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sapply</span>(vec, function(x) <span class="kw">paste0</span>(x, <span class="st">&quot;.vec&quot;</span>))</code></pre>
+<pre><code>##       a       b       c 
+## &quot;a.vec&quot; &quot;b.vec&quot; &quot;c.vec&quot;</code></pre>
+<ul>
+<li class="fragment">Can be accomplished more simply with:</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">paste0</span>(vec, <span class="st">&quot;.vec&quot;</span>)</code></pre>
+<pre><code>## [1] &quot;a.vec&quot; &quot;b.vec&quot; &quot;c.vec&quot;</code></pre>
+<ul>
+<li class="fragment"><p>Why?</p></li>
+<li class="fragment"><p><code>replicate</code> is basically just <code>sapply(1:N,funct)</code> where <code>funct</code> never uses the index.</p></li>
+</ul>
+</div>
+</section>
+<section id="tapply" class="slide level1">
+<h1>tapply</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">tapply</span>(<span class="dv">1</span>:<span class="dv">10</span>, <span class="kw">makeGroups</span>(<span class="dv">5</span>, <span class="dv">2</span>), mean)</code></pre>
+<pre><code>##   1   2   3   4   5 
+## 1.5 3.5 5.5 7.5 9.5</code></pre>
+</section>
+<section id="local-linear-regression" class="slide level1">
+<h1>Local Linear Regression</h1>
+<ul>
+<li class="fragment"><span class="math">\(W\)</span> is an <span class="math">\(n\times p\)</span> diagonal weighting matrix, <span class="math">\(h\)</span> is a &quot;bandwidth&quot;.</li>
+<li class="fragment">Diagonal entries are <span class="math">\(\frac{3}{4}\cdot(1-d^2)\cdot 1_{\{|d|\le 1\}}\)</span> where <span class="math">\(d = \frac{X-c}{h}\)</span></li>
+<li class="fragment"><span class="math">\(\hat{\beta}_c = (X&#39;WX)^{-1}X&#39;WY\)</span></li>
+<li class="fragment">Covariance matrix is <span class="math">\(s^2(X&#39;WX)^{-1}\)</span></li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">loc.lin &lt;-<span class="st"> </span>function(Y, X, <span class="dt">c =</span> <span class="dv">0</span>, <span class="dt">bw =</span> <span class="kw">sd</span>(X)/<span class="dv">2</span>) {
+    d &lt;-<span class="st"> </span>(X -<span class="st"> </span>c)/bw
+    W &lt;-<span class="st"> </span><span class="dv">3</span>/<span class="dv">4</span> *<span class="st"> </span>(<span class="dv">1</span> -<span class="st"> </span>d^<span class="dv">2</span>) *<span class="st"> </span>(<span class="kw">abs</span>(d) &lt;<span class="st"> </span><span class="dv">1</span>)
+    W &lt;-<span class="st"> </span><span class="kw">diag</span>(W)
+    X &lt;-<span class="st"> </span><span class="kw">cbind</span>(<span class="dv">1</span>, d)
+    b &lt;-<span class="st"> </span><span class="kw">solve</span>(<span class="kw">t</span>(X) %*%<span class="st"> </span>W %*%<span class="st"> </span>X) %*%<span class="st"> </span><span class="kw">t</span>(X) %*%<span class="st"> </span>W %*%<span class="st"> </span>Y
+    sigma &lt;-<span class="st"> </span><span class="kw">t</span>(Y -<span class="st"> </span>X %*%<span class="st"> </span>b) %*%<span class="st"> </span>W %*%<span class="st"> </span>(Y -<span class="st"> </span>X %*%<span class="st"> </span>b)/(<span class="kw">sum</span>(<span class="kw">diag</span>(W) &gt;<span class="st"> </span><span class="dv">0</span>) -<span class="st"> </span><span class="dv">2</span>)
+    sigma &lt;-<span class="st"> </span><span class="kw">solve</span>(<span class="kw">t</span>(X) %*%<span class="st"> </span>W %*%<span class="st"> </span>X) *<span class="st"> </span><span class="kw">c</span>(sigma)
+    <span class="kw">return</span>(<span class="kw">c</span>(<span class="dt">est =</span> b[<span class="dv">1</span>], <span class="dt">se =</span> <span class="kw">sqrt</span>(<span class="kw">diag</span>(sigma))[<span class="dv">1</span>]))
+}</code></pre>
+</div>
+</section>
+<section id="simulate-some-data" class="slide level1">
+<h1>Simulate some Data</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">1023</span>)  <span class="co"># Important for replication</span>
+X &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="dv">1000</span>, <span class="dv">0</span>, <span class="dv">5</span>)
+Y &lt;-<span class="st"> </span><span class="kw">sin</span>(<span class="dv">5</span> *<span class="st"> </span>X) *<span class="st"> </span><span class="kw">exp</span>(<span class="kw">abs</span>(X)) +<span class="st"> </span><span class="kw">rnorm</span>(<span class="dv">1000</span>)
+dat &lt;-<span class="st"> </span><span class="kw">data.frame</span>(X, Y)
+<span class="kw">plot</span>(X, Y, <span class="dt">xlim =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">5</span>), <span class="dt">ylim =</span> <span class="kw">c</span>(-<span class="dv">50</span>, <span class="dv">50</span>))</code></pre>
+<figure>
+<img src="figure/4-simdata.png" />
+</figure>
+</section>
+<section id="look-at-the-kernel" class="slide level1">
+<h1>Look at the Kernel</h1>
+<pre class="sourceCode r"><code class="sourceCode r">x &lt;-<span class="st"> </span><span class="kw">seq</span>(-<span class="dv">1</span>, <span class="dv">1</span>, <span class="fl">0.01</span>)
+y &lt;-<span class="st"> </span><span class="dv">3</span>/<span class="dv">4</span> *<span class="st"> </span>(<span class="dv">1</span> -<span class="st"> </span>x^<span class="dv">2</span>)
+<span class="kw">plot</span>(x, y, <span class="dt">type =</span> <span class="st">&quot;l&quot;</span>, <span class="dt">xlab =</span> <span class="st">&quot;h&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;weight&quot;</span>)</code></pre>
+<figure>
+<img src="figure/4-llinbw.png" />
+</figure>
+</section>
+<section id="fit-the-surface" class="slide level1">
+<h1>Fit the Surface</h1>
+<pre class="sourceCode r"><code class="sourceCode r">X.est &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">5</span>, <span class="fl">0.1</span>)
+dat.llm &lt;-<span class="st"> </span><span class="kw">sapply</span>(X.est, function(x) <span class="kw">loc.lin</span>(Y, X, <span class="dt">c =</span> x, <span class="dt">bw =</span> <span class="fl">0.25</span>))
+<span class="kw">plot</span>(X, Y, <span class="dt">xlim =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">5</span>), <span class="dt">ylim =</span> <span class="kw">c</span>(-<span class="dv">50</span>, <span class="dv">50</span>), <span class="dt">pch =</span> <span class="dv">20</span>)
+<span class="kw">lines</span>(X.est, dat.llm[<span class="dv">1</span>, ], <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)
+<span class="kw">lines</span>(X.est, dat.llm[<span class="dv">1</span>, ] +<span class="st"> </span><span class="fl">1.96</span> *<span class="st"> </span>dat.llm[<span class="dv">2</span>, ], <span class="dt">col =</span> <span class="st">&quot;pink&quot;</span>)
+<span class="kw">lines</span>(X.est, dat.llm[<span class="dv">1</span>, ] -<span class="st"> </span><span class="fl">1.96</span> *<span class="st"> </span>dat.llm[<span class="dv">2</span>, ], <span class="dt">col =</span> <span class="st">&quot;pink&quot;</span>)</code></pre>
+<figure>
+<img src="figure/4-llmfit.png" />
+</figure>
+</section>
+<section id="introduce-example" class="slide level1">
+<h1>Introduce Example</h1>
+<ul>
+<li class="fragment">We'll be working with data from a paper in the most recent issue of IO.</li>
+<li class="fragment">Helfer, L.R. and E. Voeten. (2014) &quot;International Courts as Agents of Legal Change: Evidence from LGBT Rights in Europe&quot;</li>
+<li class="fragment">The treatment we are interested in is the presence of absence of a ECtHR judgment.</li>
+<li class="fragment">The outcome is the adoption of progressive LGBT policy.</li>
+<li class="fragment">And there's a battery of controls, of course.</li>
+<li class="fragment">Voeten has helpfully put all <a href="http://hdl.handle.net/1902.1/19324">replication materials online</a>.</li>
+</ul>
+</section>
+<section id="prepare-example" class="slide level1">
+<h1>Prepare example</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(foreign, <span class="dt">quietly =</span> <span class="ot">TRUE</span>)
+d &lt;-<span class="st"> </span><span class="kw">read.dta</span>(<span class="st">&quot;replicationdataIOLGBT.dta&quot;</span>)
+<span class="co"># Base specification</span>
+d$ecthrpos &lt;-<span class="st"> </span><span class="kw">as.double</span>(d$ecthrpos) -<span class="st"> </span><span class="dv">1</span>
+d.lm &lt;-<span class="st"> </span><span class="kw">lm</span>(policy ~<span class="st"> </span>ecthrpos +<span class="st"> </span>pubsupport +<span class="st"> </span>ecthrcountry +<span class="st"> </span>lgbtlaws +<span class="st"> </span>cond +<span class="st"> </span>
+<span class="st">    </span>eumember0 +<span class="st"> </span>euemploy +<span class="st"> </span>coemembe +<span class="st"> </span>lngdp +<span class="st"> </span>year +<span class="st"> </span>issue +<span class="st"> </span>ccode, d)
+d &lt;-<span class="st"> </span>d[-d.lm$na.action, ]
+d$issue &lt;-<span class="st"> </span><span class="kw">as.factor</span>(d$issue)
+d$ccode &lt;-<span class="st"> </span><span class="kw">as.factor</span>(d$ccode)
+<span class="kw">summary</span>(d.lm)$coefficients[<span class="dv">1</span>:<span class="dv">11</span>, ]</code></pre>
+<pre><code>##                Estimate Std. Error t value  Pr(&gt;|t|)
+## (Intercept)  -1.589e+00  4.956e-01 -3.2052 1.360e-03
+## ecthrpos      6.501e-02  1.056e-02  6.1537 8.289e-10
+## pubsupport    6.549e-03  2.743e-03  2.3877 1.700e-02
+## ecthrcountry  1.297e-01  3.584e-02  3.6201 2.980e-04
+## lgbtlaws      2.358e-02  6.281e-03  3.7548 1.759e-04
+## cond          9.277e-02  1.796e-02  5.1657 2.509e-07
+## eumember0    -8.586e-03  8.498e-03 -1.0105 3.123e-01
+## euemploy      3.659e-03  1.269e-02  0.2883 7.731e-01
+## coemembe      2.083e-02  7.277e-03  2.8623 4.227e-03
+## lngdp        -7.522e-07  4.501e-07 -1.6711 9.477e-02
+## year          8.020e-04  2.522e-04  3.1799 1.484e-03</code></pre>
+</section>
+<section id="marginal-effects" class="slide level1">
+<h1>Marginal Effects</h1>
+<ul>
+<li class="fragment">There has seemed to be a bit of confusion over marginal effects.</li>
+<li class="fragment">The Blattman paper in HW3 uses marginal effects &quot;well&quot; in the sense of causal inference.</li>
+<li class="fragment">The Huber et al. paper uses them in a very standard way, but perhaps not the way we'd want to think about them in THIS class.</li>
+<li class="fragment">Use the builtin <code>predict</code> function; it will make your life easier.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">d.lm.interact &lt;-<span class="st"> </span><span class="kw">lm</span>(policy ~<span class="st"> </span>ecthrpos *<span class="st"> </span>pubsupport +<span class="st"> </span>ecthrcountry +<span class="st"> </span>lgbtlaws +<span class="st"> </span>
+<span class="st">    </span>cond +<span class="st"> </span>eumember0 +<span class="st"> </span>euemploy +<span class="st"> </span>coemembe +<span class="st"> </span>lngdp +<span class="st"> </span>year +<span class="st"> </span>issue +<span class="st"> </span>ccode, d)
+frame0 &lt;-<span class="st"> </span>frame1 &lt;-<span class="st"> </span><span class="kw">model.frame</span>(d.lm.interact)
+frame0[, <span class="st">&quot;ecthrpos&quot;</span>] &lt;-<span class="st"> </span><span class="dv">0</span>
+frame1[, <span class="st">&quot;ecthrpos&quot;</span>] &lt;-<span class="st"> </span><span class="dv">1</span>
+meff &lt;-<span class="st"> </span><span class="kw">mean</span>(<span class="kw">predict</span>(d.lm.interact, <span class="dt">newd =</span> frame1) -<span class="st"> </span><span class="kw">predict</span>(d.lm.interact, 
+    <span class="dt">newd =</span> frame0))
+meff</code></pre>
+<pre><code>## [1] 0.08197</code></pre>
+<ul>
+<li class="fragment">Why might this be preferable to &quot;setting things at their means/medians&quot;?</li>
+<li class="fragment">It's essentially integrating over the sample's distribution of observed characteristics.</li>
+<li class="fragment">(And if the sample is a SRS from the population [or survey weights make it LOOK like it is], this will then get you the marginal effect on the population of interest)</li>
+</ul>
+</div>
+</section>
+<section id="delta-method" class="slide level1">
+<h1>Delta Method</h1>
+<ul>
+<li class="fragment">Note 1: We know that our vector of coefficients are asymptotically multivariate normal.</li>
+<li class="fragment">Note 2: We can approximate the distribution of many (not just linear) functions of these coefficients using the delta method.</li>
+<li class="fragment">Delta method says that you can approximate the distribution of <span class="math">\(h(b_n)\)</span> with <span class="math">\(\bigtriangledown{h}(b)&#39;\Omega\bigtriangledown{h}(b)\)</span> Where <span class="math">\(\Omega\)</span> is the asymptotic variance of <span class="math">\(b\)</span>.</li>
+<li class="fragment">In practice, this means that we just need to be able to derive the function whose distribution we wish to approximate.</li>
+</ul>
+</section>
+<section id="trivial-example" class="slide level1">
+<h1>Trivial Example</h1>
+<ul>
+<li class="fragment">We're interested in the ratio of the coefficient on <code>ecthrpos</code> to that of <code>pubsupport</code>.</li>
+<li class="fragment">Call it <span class="math">\(b_2 \over b_3\)</span>. The gradient is <span class="math">\((\frac{1}{b_3}, \frac{b_2}{b_3^2})\)</span></li>
+<li class="fragment">Estimate this easily in R with:</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">grad &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">1</span>/<span class="kw">coef</span>(d.lm)[<span class="dv">3</span>], <span class="kw">coef</span>(d.lm)[<span class="dv">2</span>]/<span class="kw">coef</span>(d.lm)[<span class="dv">3</span>]^<span class="dv">2</span>)
+grad</code></pre>
+<pre><code>## pubsupport   ecthrpos 
+##        334       8046</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">se &lt;-<span class="st"> </span><span class="kw">sqrt</span>(<span class="kw">t</span>(grad) %*%<span class="st"> </span><span class="kw">vcov</span>(d.lm)[<span class="dv">2</span>:<span class="dv">3</span>, <span class="dv">2</span>:<span class="dv">3</span>] %*%<span class="st"> </span>grad)
+est &lt;-<span class="st"> </span><span class="kw">coef</span>(d.lm)[<span class="dv">2</span>]/<span class="kw">coef</span>(d.lm)[<span class="dv">3</span>]
+<span class="kw">c</span>(<span class="dt">estimate =</span> est, <span class="dt">std.error =</span> se)</code></pre>
+<pre><code>## estimate.ecthrpos         std.error 
+##             24.09             35.33</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(car)
+<span class="kw">deltaMethod</span>(d.lm, <span class="st">&quot;ecthrpos/pubsupport&quot;</span>)</code></pre>
+<pre><code>##                     Estimate    SE
+## ecthrpos/pubsupport    24.09 35.55</code></pre>
+</div>
+</section>
+<section id="linear-functions" class="slide level1">
+<h1>Linear Functions</h1>
+<ul>
+<li class="fragment">But for most &quot;marginal effects&quot;, you don't need to use the delta method.</li>
+<li class="fragment">Just remember your rules for variances.</li>
+<li class="fragment"><span class="math">\(\text{var}(aX+bY) = a^2\text{var}(X) + b^2\text{var}(Y) + 2ab\text{cov}(X,Y)\)</span></li>
+<li class="fragment">If you are just looking at changes with respect to a single variable, you can just multiply standard errors.</li>
+<li class="fragment">That is, a change in a variable of 3 units means that the standard error for the marginal effect would be 3 times the standard error of the coefficient.</li>
+<li class="fragment">This isn't what Clarify does, though. It is weird.</li>
+</ul>
+</section>
+<section id="zelig-for-marginal-effects" class="slide level1">
+<h1>Zelig for Marginal Effects</h1>
+<ul>
+<li class="fragment">(Zelig works like Clarify. [gee, I wonder why?])</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># install.packages(&#39;Zelig&#39;, repos=&#39;http://r.iq.harvard.edu&#39;, type=&#39;source&#39;)</span>
+<span class="kw">require</span>(Zelig, <span class="dt">quietly =</span> <span class="ot">TRUE</span>)
+d.zg &lt;-<span class="st"> </span><span class="kw">zelig</span>(policy ~<span class="st"> </span>ecthrpos *<span class="st"> </span>pubsupport +<span class="st"> </span>ecthrcountry +<span class="st"> </span>lgbtlaws +<span class="st"> </span>cond +<span class="st"> </span>
+<span class="st">    </span>eumember0 +<span class="st"> </span>euemploy +<span class="st"> </span>coemembe +<span class="st"> </span>lngdp +<span class="st"> </span>year +<span class="st"> </span>issue +<span class="st"> </span>ccode, d, <span class="dt">model =</span> <span class="st">&quot;ls&quot;</span>, 
+    <span class="dt">cite =</span> <span class="ot">FALSE</span>)
+x0 &lt;-<span class="st"> </span><span class="kw">setx</span>(d.zg, <span class="dt">ecthrpos =</span> <span class="dv">0</span>)
+x1 &lt;-<span class="st"> </span><span class="kw">setx</span>(d.zg, <span class="dt">ecthrpos =</span> <span class="dv">1</span>)
+out &lt;-<span class="st"> </span><span class="kw">sim</span>(d.zg, <span class="dt">x =</span> x0, <span class="dt">x1 =</span> x1)
+<span class="kw">c</span>(<span class="kw">mean</span>(out$qi$fd), meff)</code></pre>
+<pre><code>## [1] 0.08150 0.08197</code></pre>
+</div>
+</section>
+<section id="sensitivity-analysis" class="slide level1">
+<h1>Sensitivity Analysis</h1>
+<ul>
+<li class="fragment">We're adding to Cyrus's discussion on post-treatment bias with a sensitivity analysis.</li>
+<li class="fragment">This is also in Rosenbaum (1984), which he mentioned in class.</li>
+<li class="fragment">The variable which one might think could induce post-treatment bias in our example is that of &quot;public acceptance&quot;.</li>
+</ul>
+</section>
+<section id="rosenbaum-bounding" class="slide level1">
+<h1>Rosenbaum Bounding</h1>
+<ul>
+<li class="fragment">In general Rosenbaum is a proponent of trying to &quot;bound&quot; biases.</li>
+<li class="fragment">He does this in his &quot;normal&quot; sensitivity analysis method, and we do the same, here.</li>
+<li class="fragment">We will assume a &quot;surrogate&quot; for <span class="math">\(U\)</span> (necessary for CIA), which is observed post-treatment.</li>
+<li class="fragment">The surrogate has two potential outcomes: <span class="math">\(S_1\)</span> and <span class="math">\(S_0\)</span></li>
+<li class="fragment">It is presumed to have a linear response on the outcome.</li>
+<li class="fragment">(As are the other observed covariates)</li>
+<li class="fragment">This gives us the following two regression models: <span class="math">\(E[Y_1|S_1 = s , X = x] = \mu_1 + \beta&#39; x + \gamma&#39;s\)</span> and<br /><span class="math">\(E[Y_0|S_0 = s , X = x] = \mu_0 + \beta&#39; x + \gamma&#39;s\)</span></li>
+<li class="fragment">This gives us:<br /><span class="math">\(\tau = E[ (\mu_1 + \beta&#39; X + \gamma&#39;S_1) - (\mu_0 + \beta&#39; X + \gamma&#39;S_0)]\)</span></li>
+<li class="fragment">Which is equal to the following useful expression:<br /><span class="math">\(\tau = \mu_1 - \mu_0 + \gamma&#39;( E[S_1 - S_0])\)</span></li>
+<li class="fragment">For us, this means that <span class="math">\(\tau = \beta_1 + \beta_2 E[S_1 - S_0]\)</span></li>
+</ul>
+</section>
+<section id="back-to-example" class="slide level1">
+<h1>Back to example</h1>
+<ul>
+<li class="fragment">Our surrogate is public acceptance.</li>
+<li class="fragment">But it can be swayed by court opinions, right? This is at least plausible.</li>
+<li class="fragment">Let's try and get some reasonable bounds on <span class="math">\(\tau\)</span>.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">sdS &lt;-<span class="st"> </span><span class="kw">sd</span>(d$pubsupport)
+Ediff &lt;-<span class="st"> </span><span class="kw">c</span>(-<span class="fl">1.5</span> *<span class="st"> </span>sdS, -sdS, -sdS/<span class="dv">2</span>, <span class="dv">0</span>, sdS/<span class="dv">2</span>, sdS, <span class="fl">1.5</span> *<span class="st"> </span>sdS)
+tau &lt;-<span class="st"> </span><span class="kw">coef</span>(d.lm)[<span class="dv">2</span>] +<span class="st"> </span><span class="kw">coef</span>(d.lm)[<span class="dv">3</span>] *<span class="st"> </span>Ediff
+<span class="kw">names</span>(tau) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;-1.5&quot;</span>, <span class="st">&quot;-1&quot;</span>, <span class="st">&quot;-.5&quot;</span>, <span class="st">&quot;0&quot;</span>, <span class="st">&quot;.5&quot;</span>, <span class="st">&quot;1&quot;</span>, <span class="st">&quot;1.5&quot;</span>)
+tau</code></pre>
+<pre><code>##    -1.5      -1     -.5       0      .5       1     1.5 
+## 0.06621 0.06818 0.07015 0.07212 0.07409 0.07606 0.07803</code></pre>
+<ul>
+<li class="fragment">But with this method, you don't necessarily have to assume that the regression functions are this rigid.</li>
+<li class="fragment">Can you think about how one might relax some assumptions?</li>
+</ul>
+</div>
+</section>
+    </div>
+  </div>
+
+  <script src="reveal.js/lib/js/head.min.js"></script>
+  <script src="reveal.js/js/reveal.min.js"></script>
+
+  <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        theme: 'simple', // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          { src: 'reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'reveal.js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+          { src: 'reveal.js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } },
+//          { src: 'reveal.js/plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; }, }
+//          { src: 'reveal.js/plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+]});
+    </script>
+  </body>
+</html>
