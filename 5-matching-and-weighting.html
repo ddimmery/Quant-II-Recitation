@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="Drew Dimmery drewd@nyu.edu" />
+  <meta name="dcterms.date" content="2014-02-28" />
+  <title>Matching and Weighting</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="reveal.js/css/reveal.min.css"/>
+    <style type="text/css">code{white-space: pre;}</style>
+    <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+    </style>
+    <link rel="stylesheet" href="reveal.js/css/theme/simple.css" id="theme">
+  <link rel="stylesheet" media="print" href="reveal.js/css/print/pdf.css" />
+  <!--[if lt IE 9]>
+  <script src="reveal.js/lib/js/html5shiv.js"></script>
+  <![endif]-->
+    <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section>
+    <h1 class="title">Matching and Weighting</h1>
+    <h2 class="author">Drew Dimmery <script type="text/javascript">
+<!--
+h='&#110;&#x79;&#x75;&#46;&#x65;&#100;&#x75;';a='&#64;';n='&#100;&#114;&#x65;&#x77;&#100;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#100;&#114;&#x65;&#x77;&#100;&#32;&#x61;&#116;&#32;&#110;&#x79;&#x75;&#32;&#100;&#x6f;&#116;&#32;&#x65;&#100;&#x75;</noscript></h2>
+    <h3 class="date">February 28, 2014</h3>
+</section>
+
+<section id="structure" class="slide level1">
+<h1>Structure</h1>
+<ul>
+<li class="fragment">IPW and Sampling</li>
+<li class="fragment">Matching
+<ul>
+<li class="fragment">Nearest Neighbor</li>
+<li class="fragment">Mahalanobis distance</li>
+<li class="fragment">Genetic Matching</li>
+<li class="fragment">CEM</li>
+</ul></li>
+<li class="fragment">Beyond Matching
+<ul>
+<li class="fragment">Entropy balancing, etc</li>
+</ul></li>
+</ul>
+</section>
+<section id="big-picture" class="slide level1">
+<h1>Big Picture</h1>
+<ul>
+<li class="fragment">ahem -</li>
+<li class="fragment">MATCHING IS NOT AN IDENTIFICATION STRATEGY.</li>
+<li class="fragment">Heckman, Ichimura, Smith and Todd (1998) provide a nice decomposition:
+<ul>
+<li class="fragment"><span class="math">\(B = \int_{S_{1X}} E[Y_0|X, D=1] dF(X|D=1) -\)</span><br /><span class="math">\(\int_{S_{0X}} E[Y_0 | X, D=0] dF(X|D=0)\)</span></li>
+<li class="fragment"><span class="math">\(B = B_1 + B_2 + B_3\)</span></li>
+<li class="fragment"><span class="math">\(B_1 = \int_{S_{1X} \setminus S_X} E[Y_0 |X, D=1] dF(X|D=1) -\)</span><br /><span class="math">\(\int_{S_{0X} \setminus S_X} E[Y_0 |X, D=0] dF(X|D=0)\)</span></li>
+<li class="fragment"><span class="math">\(B_2 = \int_{S_X} E[Y_0 |X, D=0] (dF(X|D=1)-dF(X|D=0))\)</span></li>
+<li class="fragment"><span class="math">\(B_3 = P_X\bar{B}_{S_X}\)</span></li>
+<li class="fragment">Matching addresses <span class="math">\(B_1\)</span> and <span class="math">\(B_2\)</span>. CIA requires an assumptions to control <span class="math">\(B_3\)</span>.</li>
+<li class="fragment">Relative magnitudes are unknown.</li>
+</ul></li>
+<li class="fragment">This gets to the question Cyrus has been repeating a lot: How could two seemingly identical units receive <em>different</em> treatments?</li>
+</ul>
+</section>
+<section id="slightly-smaller-picture" class="slide level1">
+<h1>Slightly Smaller Picture</h1>
+<ul>
+<li class="fragment">Okay, we have some random mechanism that exists after controlling for covariates.</li>
+<li class="fragment">Why don't we just put them in a regression?
+<ul>
+<li class="fragment">There's an intuitive appeal to be able to do all of this controlling while keeping the outcome in a lockbox.</li>
+<li class="fragment">Separating the procedures mean that you can address two types of confounding separately.
+<ol type="1">
+<li class="fragment">Different treatment groups may have different chances of getting treated.</li>
+<li class="fragment">Different treatment groups may have different baseline (control) potential outcomes.</li>
+</ol></li>
+<li class="fragment">A design which addresses both of these options separately is called &quot;doubly robust&quot;.</li>
+<li class="fragment">Double robustness means that we only have to get ONE of these right for consistent estimation.</li>
+<li class="fragment">(What's the probability of getting a one out of two independent bernoulli trials with <span class="math">\(\pi =0\)</span>?)</li>
+</ul></li>
+<li class="fragment">I'm going to do most matching by hand to show you what's under the hood. You should use <code>MatchIt</code> for the homework.</li>
+<li class="fragment">There's an extensive manual -- use it.</li>
+</ul>
+</section>
+<section id="setup-dataset" class="slide level1">
+<h1>Setup dataset</h1>
+<ul>
+<li class="fragment">Today, because we're doing matching, we're going to be looking at the Lalonde data.</li>
+<li class="fragment">If you ever read any paper about matching, you'll probably see this data again. (I've heard this called the Lalonde Fallacy)</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(MatchIt)
+<span class="kw">data</span>(lalonde, <span class="dt">package =</span> <span class="st">&quot;MatchIt&quot;</span>)
+trt &lt;-<span class="st"> </span>lalonde$treat ==<span class="st"> </span><span class="dv">1</span>
+means &lt;-<span class="st"> </span><span class="kw">apply</span>(lalonde[, -<span class="dv">1</span>], <span class="dv">2</span>, function(x) <span class="kw">tapply</span>(x, trt, mean))
+sds &lt;-<span class="st"> </span><span class="kw">apply</span>(lalonde[, -<span class="dv">1</span>], <span class="dv">2</span>, function(x) <span class="kw">tapply</span>(x, trt, sd))
+<span class="kw">rownames</span>(means) &lt;-<span class="st"> </span><span class="kw">rownames</span>(sds) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;Treated&quot;</span>, <span class="st">&quot;Control&quot;</span>)
+varratio &lt;-<span class="st"> </span>sds[<span class="dv">1</span>, ]^<span class="dv">2</span>/sds[<span class="dv">2</span>, ]^<span class="dv">2</span>
+ks.p &lt;-<span class="st"> </span><span class="kw">apply</span>(lalonde[, -<span class="dv">1</span>], <span class="dv">2</span>, function(x) <span class="kw">ks.test</span>(x[trt], x[!trt])$p.value)</code></pre>
+<pre><code>## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">t.p &lt;-<span class="st"> </span><span class="kw">apply</span>(lalonde[, -<span class="dv">1</span>], <span class="dv">2</span>, function(x) <span class="kw">t.test</span>(x[trt], x[!trt])$p.value)</code></pre>
+</div>
+</section>
+<section id="view-initial-balance" class="slide level1">
+<h1>View Initial Balance</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">round</span>(<span class="kw">t</span>(<span class="kw">rbind</span>(means, sds, varratio, ks.p, t.p)), <span class="dv">3</span>)</code></pre>
+<pre><code>##           Treated  Control  Treated  Control varratio  ks.p   t.p
+## age        28.030   25.816   10.787    7.155    2.273 0.003 0.003
+## educ       10.235   10.346    2.855    2.011    2.017 0.081 0.585
+## black       0.203    0.843    0.403    0.365    1.219 0.000 0.000
+## hispan      0.142    0.059    0.350    0.237    2.174 0.339 0.001
+## married     0.513    0.189    0.500    0.393    1.624 0.000 0.000
+## nodegree    0.597    0.708    0.491    0.456    1.161 0.081 0.007
+## re74     5619.237 2095.574 6788.751 4886.620    1.930 0.000 0.000
+## re75     2466.484 1532.055 3291.996 3219.251    1.046 0.000 0.001
+## re78     6984.170 6349.144 7294.162 7867.402    0.860 0.162 0.349</code></pre>
+</section>
+<section id="propensity-score" class="slide level1">
+<h1>Propensity Score</h1>
+<ul>
+<li class="fragment">The propensity score is based on a sort of Horvitz-Thompson estimator.</li>
+<li class="fragment">Dividing by the probability of sampling means that we weight higher for units with low inclusion probabilities.</li>
+<li class="fragment">In our case, we can imagine having a sample of units (each with <span class="math">\(Y_0\)</span> and <span class="math">\(Y_1\)</span>). We then randomly assign them to treatment.</li>
+<li class="fragment">This is equivalent to randomly sampling potential outcomes.</li>
+<li class="fragment">So if we believe that treatment(/sampling) probabilities are assigned according to some covariates, then we just need to know what those probabilities are.</li>
+<li class="fragment">Call the propensity score <span class="math">\(e(X)\)</span>. Then <span class="math">\(e(X)\)</span> tells us the probability of sampling <span class="math">\(Y_1\)</span> (treating out sample as the population, because we're interested in a SATE).</li>
+<li class="fragment">This suggests that we can just use <span class="math">\({1 \over n_1} \sum_{i=1}^{n_1} {(Y_i \setminus N) \over e(X_i)}\)</span> to estimate <span class="math">\(E[Y_1]\)</span>.</li>
+<li class="fragment">This embeds the logic of IPW.</li>
+</ul>
+</section>
+<section id="fitting-the-propensity-score" class="slide level1">
+<h1>Fitting the Propensity Score</h1>
+<ul>
+<li class="fragment">First, estimate a model of the propensity score.</li>
+<li class="fragment">(Typically just some logit)</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">p.model &lt;-<span class="st"> </span><span class="kw">glm</span>(treat ~<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>re74 +<span class="st"> </span>
+<span class="st">    </span>re75, lalonde, <span class="dt">family =</span> <span class="st">&quot;binomial&quot;</span>)
+<span class="kw">require</span>(BayesTree)
+<span class="co"># p.bart &lt;- bart(lalonde[,-c(1,ncol(lalonde))],lalonde$treat,verbose=FALSE)</span>
+pscore.logit &lt;-<span class="st"> </span><span class="kw">predict</span>(p.model, <span class="dt">type =</span> <span class="st">&quot;response&quot;</span>)
+pscore.bart &lt;-<span class="st"> </span><span class="kw">pnorm</span>(<span class="kw">colMeans</span>(tttt$yhat.train))
+<span class="kw">par</span>(<span class="dt">mfrow =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))
+<span class="kw">hist</span>(pscore.logit)
+<span class="kw">hist</span>(pscore.bart)</code></pre>
+<figure>
+<img src="figure/5-lalonde-fit-pscore.png" />
+</figure>
+</div>
+</section>
+<section id="estimate-model" class="slide level1">
+<h1>Estimate Model</h1>
+<ul>
+<li class="fragment">What do you want to estimate? This will change the appropriate weights.</li>
+<li class="fragment">For ATT, sampling probability for treated units is <span class="math">\(1\)</span>.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">base.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span class="st"> </span>treat +<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>
+<span class="st">    </span>re74 +<span class="st"> </span>re75, lalonde)
+ipw.logit &lt;-<span class="st"> </span>trt +<span class="st"> </span>(<span class="dv">1</span> -<span class="st"> </span>trt)/(<span class="dv">1</span> -<span class="st"> </span>pscore.logit)
+ipw.logit.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span class="st"> </span>treat +<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>
+<span class="st">    </span>re74 +<span class="st"> </span>re75, lalonde, <span class="dt">weights =</span> ipw.logit)
+ipw.bart &lt;-<span class="st"> </span>trt +<span class="st"> </span>(<span class="dv">1</span> -<span class="st"> </span>trt)/(<span class="dv">1</span> -<span class="st"> </span>pscore.bart)
+ipw.bart.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span class="st"> </span>treat +<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>
+<span class="st">    </span>re74 +<span class="st"> </span>re75, lalonde, <span class="dt">weights =</span> ipw.bart)
+coefs &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dt">base =</span> <span class="kw">coef</span>(base.mod)[<span class="dv">2</span>], <span class="dt">ipw.logit =</span> <span class="kw">coef</span>(ipw.logit.mod)[<span class="dv">2</span>], <span class="dt">ipw.bart =</span> <span class="kw">coef</span>(ipw.bart.mod)[<span class="dv">2</span>])
+coefs</code></pre>
+<pre><code>##      base.treat ipw.logit.treat  ipw.bart.treat 
+##            1548            1332            1304</code></pre>
+</div>
+</section>
+<section id="propensity-score-matching" class="slide level1">
+<h1>Propensity Score matching</h1>
+<ul>
+<li class="fragment">We don't have to weight, though. We might match, instead.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">ctl.data &lt;-<span class="st"> </span><span class="kw">subset</span>(lalonde, treat ==<span class="st"> </span><span class="dv">0</span>)
+pscore.logit.ctl &lt;-<span class="st"> </span>pscore.logit[!trt]
+pscore.logit.trt &lt;-<span class="st"> </span>pscore.logit[trt]
+pscore.bart.ctl &lt;-<span class="st"> </span>pscore.bart[!trt]
+pscore.bart.trt &lt;-<span class="st"> </span>pscore.bart[trt]
+match.data &lt;-<span class="st"> </span><span class="kw">subset</span>(lalonde, treat ==<span class="st"> </span><span class="dv">1</span>)
+matches &lt;-<span class="st"> </span><span class="kw">sapply</span>(pscore.logit.trt, function(x) <span class="kw">which.min</span>(<span class="kw">abs</span>(pscore.logit.ctl -<span class="st"> </span>
+<span class="st">    </span>x)))
+match.data &lt;-<span class="st"> </span><span class="kw">rbind</span>(match.data, ctl.data[matches, ])
+pm.logit.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span class="st"> </span>treat +<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>
+<span class="st">    </span>re74 +<span class="st"> </span>re75, match.data)
+match.data &lt;-<span class="st"> </span><span class="kw">subset</span>(lalonde, treat ==<span class="st"> </span><span class="dv">1</span>)
+matches &lt;-<span class="st"> </span><span class="kw">sapply</span>(pscore.bart.trt, function(x) <span class="kw">which.min</span>(<span class="kw">abs</span>(pscore.bart.ctl -<span class="st"> </span>
+<span class="st">    </span>x)))
+match.data &lt;-<span class="st"> </span><span class="kw">rbind</span>(match.data, ctl.data[matches, ])
+pm.bart.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span class="st"> </span>treat +<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>
+<span class="st">    </span>re74 +<span class="st"> </span>re75, match.data)</code></pre>
+</div>
+</section>
+<section id="estimation-and-such" class="slide level1">
+<h1>Estimation and such</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(<span class="kw">c</span>(pscore.bart.trt, pscore.bart.ctl[matches]), <span class="kw">jitter</span>(<span class="kw">rep</span>(<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">0</span>), <span class="kw">c</span>(N, 
+    N))), <span class="dt">axes =</span> F, <span class="dt">ylab =</span> <span class="st">&quot;Treatment group&quot;</span>, <span class="dt">xlab =</span> <span class="st">&quot;Propensity Score&quot;</span>)
+<span class="kw">axis</span>(<span class="dv">1</span>)
+<span class="kw">axis</span>(<span class="dv">2</span>, <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>))</code></pre>
+<figure>
+<img src="figure/5-pscore-att.png" />
+</figure>
+<pre class="sourceCode r"><code class="sourceCode r">coefs &lt;-<span class="st"> </span><span class="kw">c</span>(coefs, <span class="dt">pmat.logit =</span> <span class="kw">coef</span>(pm.logit.mod)[<span class="dv">2</span>], <span class="dt">pmat.bart =</span> <span class="kw">coef</span>(pm.bart.mod)[<span class="dv">2</span>])
+coefs</code></pre>
+<pre><code>##       base.treat  ipw.logit.treat   ipw.bart.treat pmat.logit.treat 
+##             1548             1332             1304             1964 
+##  pmat.bart.treat 
+##             1352</code></pre>
+</section>
+<section id="conditional-treatment-effects" class="slide level1">
+<h1>Conditional Treatment effects</h1>
+<ul>
+<li class="fragment">You can also think about using the local linear regression we talked about last week.</li>
+<li class="fragment">Weight according to the propensity score.</li>
+<li class="fragment">This allows you to see how the treatment effect varies along the propensity score.</li>
+<li class="fragment">Does the treatment only seem to have an effect on people who were very unlikely to be exposed? etc</li>
+</ul>
+</section>
+<section id="mahalanobis-distance" class="slide level1">
+<h1>Mahalanobis Distance</h1>
+<ul>
+<li class="fragment"><span class="math">\((x-\mu)&#39;V^{-1}(x-\mu)\)</span></li>
+<li class="fragment">In our case, <span class="math">\(\mu\)</span> corresponds to a given treated unit.</li>
+<li class="fragment">Mahalanobis distance is a very common distance &quot;metric&quot;.</li>
+<li class="fragment">You can think about it as simple Euclidean distance in a warped feature space (warped according the the inverse variance-covariance matrix)</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">V &lt;-<span class="st"> </span><span class="kw">cov</span>(lalonde[, -<span class="kw">c</span>(<span class="dv">1</span>, <span class="kw">ncol</span>(lalonde))])
+match.data &lt;-<span class="st"> </span><span class="kw">subset</span>(lalonde, treat ==<span class="st"> </span><span class="dv">1</span>)
+mahal.dist &lt;-<span class="st"> </span><span class="kw">apply</span>(match.data[, -<span class="kw">c</span>(<span class="dv">1</span>, <span class="kw">ncol</span>(match.data))], <span class="dv">1</span>, function(x) <span class="kw">mahalanobis</span>(ctl.data[, 
+    -<span class="kw">c</span>(<span class="dv">1</span>, <span class="kw">ncol</span>(ctl.data))], x, V))
+matches &lt;-<span class="st"> </span><span class="kw">apply</span>(mahal.dist, <span class="dv">2</span>, which.min)
+N &lt;-<span class="st"> </span><span class="kw">length</span>(matches)
+match.data &lt;-<span class="st"> </span><span class="kw">rbind</span>(match.data, ctl.data[matches, ])
+<span class="kw">table</span>(<span class="kw">apply</span>(mahal.dist, <span class="dv">2</span>, which.min))</code></pre>
+<pre><code>## 
+##   1   6  17  23  59  72  95  96  97  99 110 112 118 127 134 140 150 158 
+##   1   2   1   1   1   1   1   1   1   3   2   1   9   1   4   6   1   1 
+## 159 168 177 179 199 202 218 220 224 226 228 235 237 238 247 253 265 266 
+##   2   1   1   2   1   1   2   1   1   5   2   1   1   1   1   4   1   2 
+## 269 278 290 291 308 322 326 327 330 331 333 335 339 341 345 352 353 354 
+##   3   1   1   1   3   1   1   1   1   2   2   2   1   1   1   8   2   1 
+## 355 361 366 367 368 372 373 374 376 380 381 383 388 391 392 393 399 400 
+##   2   1   1   4  13   2   7   3   4   1   1   1   6   1   4   1   3   3 
+## 407 412 416 419 423 428 
+##   1   2   3   1  18   1</code></pre>
+</div>
+</section>
+<section id="evaluate-balance" class="slide level1">
+<h1>Evaluate Balance</h1>
+<pre class="sourceCode r"><code class="sourceCode r">trt.factor &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="kw">c</span>(<span class="st">&quot;Treat&quot;</span>,<span class="st">&quot;Control&quot;</span>),<span class="kw">c</span>(N,N))
+means &lt;-<span class="st"> </span><span class="kw">apply</span>(match.data[,-<span class="dv">1</span>],<span class="dv">2</span>,function(x) <span class="kw">tapply</span>(x,trt.factor,mean))
+sds &lt;-<span class="st"> </span><span class="kw">apply</span>(match.data[,-<span class="dv">1</span>],<span class="dv">2</span>,function(x) <span class="kw">tapply</span>(x,trt.factor,sd))
+varratio &lt;-<span class="st"> </span>sds[<span class="dv">1</span>,]^<span class="dv">2</span>/sds[<span class="dv">2</span>,]^<span class="dv">2</span>
+ks.p &lt;-<span class="st"> </span><span class="kw">apply</span>(match.data[,-<span class="dv">1</span>],<span class="dv">2</span>,function(x) <span class="kw">ks.test</span>(x[<span class="dv">1</span>:N],x[{N<span class="dv">+1</span>}:{<span class="dv">2</span>*N}])$p.value)</code></pre>
+<pre><code>## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">t.p &lt;-<span class="st"> </span><span class="kw">apply</span>(match.data[,-<span class="dv">1</span>],<span class="dv">2</span>,function(x) <span class="kw">t.test</span>(x[<span class="dv">1</span>:N],x[{N<span class="dv">+1</span>}:{<span class="dv">2</span>*N}])$p.value)</code></pre>
+</section>
+<section id="view-matched-balance" class="slide level1">
+<h1>View Matched Balance</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">round</span>(<span class="kw">t</span>(<span class="kw">rbind</span>(means, sds, varratio, ks.p, t.p)), <span class="dv">3</span>)[-<span class="dv">9</span>, ]</code></pre>
+<pre><code>##           Control    Treat  Control    Treat varratio  ks.p   t.p
+## age        25.546   25.816    8.745    7.155    1.494 0.003 0.745
+## educ       10.443   10.346    1.841    2.011    0.838 0.999 0.628
+## black       0.832    0.843    0.374    0.365    1.055 1.000 0.779
+## hispan      0.059    0.059    0.237    0.237    1.000 1.000 1.000
+## married     0.184    0.189    0.388    0.393    0.978 1.000 0.894
+## nodegree    0.703    0.708    0.458    0.456    1.011 1.000 0.910
+## re74     1871.365 2095.574 4213.141 4886.620    0.743 0.008 0.637
+## re75     1141.974 1532.055 2428.479 3219.251    0.569 0.577 0.189</code></pre>
+</section>
+<section id="and-estimate-att" class="slide level1">
+<h1>And Estimate ATT</h1>
+<pre class="sourceCode r"><code class="sourceCode r">mahal.match.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span class="st"> </span>treat +<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>
+<span class="st">    </span>nodegree +<span class="st"> </span>re74 +<span class="st"> </span>re75, match.data)
+coefs &lt;-<span class="st"> </span><span class="kw">c</span>(coefs, <span class="dt">mahal.match =</span> <span class="kw">coef</span>(mahal.match.mod)[<span class="dv">2</span>])
+coefs</code></pre>
+<pre><code>##        base.treat   ipw.logit.treat    ipw.bart.treat  pmat.logit.treat 
+##            1548.2            1332.0            1303.7            1963.9 
+##   pmat.bart.treat mahal.match.treat 
+##            1351.9             417.8</code></pre>
+</section>
+<section id="genetic-matching" class="slide level1">
+<h1>Genetic Matching</h1>
+<ul>
+<li class="fragment">This is a fancy and very effective algorithm developed by Jas Sekhon.</li>
+<li class="fragment">The basic logic is as follows:
+<ul>
+<li class="fragment">Start with the mahalanobis distance solution.</li>
+<li class="fragment">Evaluate balance (by default, by paired t-tests and KS tests on covariates)</li>
+<li class="fragment">Tweak the covariance matrix.</li>
+<li class="fragment">New matching solution</li>
+<li class="fragment">See if balance improved</li>
+<li class="fragment">Iterate</li>
+</ul></li>
+<li class="fragment">It uses a genetic algorithm to tweak the covariance matrix.</li>
+<li class="fragment">It is NOT fast. And you should use a large value of <code>pop.size</code>, which will make it even slower (10 is WAY too low. The default is 100, and even that is too low). Also, you should use the available wrapper functions via MatchIt (or even just in the Matching package)</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(Matching)
+<span class="kw">require</span>(rgenoud)
+<span class="co"># gmatch &lt;- GenMatch(lalonde$treat,lalonde[,-c(1,ncol(lalonde))],pop.size =</span>
+<span class="co"># 1000,ties=FALSE,print.level=0)</span>
+matches &lt;-<span class="st"> </span>gmatch$matches[, <span class="dv">2</span>]
+match.data &lt;-<span class="st"> </span><span class="kw">subset</span>(lalonde, treat ==<span class="st"> </span><span class="dv">1</span>)
+match.data &lt;-<span class="st"> </span><span class="kw">rbind</span>(match.data, lalonde[matches, ])</code></pre>
+</div>
+</section>
+<section id="balance-tests-for-genmatch" class="slide level1">
+<h1>Balance Tests for genMatch</h1>
+<pre class="sourceCode r"><code class="sourceCode r">trt.factor &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="kw">c</span>(<span class="st">&quot;Treat&quot;</span>,<span class="st">&quot;Control&quot;</span>),<span class="kw">c</span>(N,N))
+means &lt;-<span class="st"> </span><span class="kw">apply</span>(match.data[,-<span class="dv">1</span>],<span class="dv">2</span>,function(x) <span class="kw">tapply</span>(x,trt.factor,mean))
+sds &lt;-<span class="st"> </span><span class="kw">apply</span>(match.data[,-<span class="dv">1</span>],<span class="dv">2</span>,function(x) <span class="kw">tapply</span>(x,trt.factor,sd))
+varratio &lt;-<span class="st"> </span>sds[<span class="dv">1</span>,]^<span class="dv">2</span>/sds[<span class="dv">2</span>,]^<span class="dv">2</span>
+ks.p &lt;-<span class="st"> </span><span class="kw">apply</span>(match.data[,-<span class="dv">1</span>],<span class="dv">2</span>,function(x) <span class="kw">ks.test</span>(x[<span class="dv">1</span>:N],x[{N<span class="dv">+1</span>}:{<span class="dv">2</span>*N}])$p.value)</code></pre>
+<pre><code>## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties
+## Warning: p-value will be approximate in the presence of ties</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">t.p &lt;-<span class="st"> </span><span class="kw">apply</span>(match.data[,-<span class="dv">1</span>],<span class="dv">2</span>,function(x) <span class="kw">t.test</span>(x[<span class="dv">1</span>:N],x[{N<span class="dv">+1</span>}:{<span class="dv">2</span>*N}])$p.value)</code></pre>
+</section>
+<section id="view-matches-balance" class="slide level1">
+<h1>View Matches Balance</h1>
+<ul>
+<li class="fragment">You won't find better results for these metrics (doesn't necessarily make it &quot;best&quot;, though)</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">round</span>(<span class="kw">t</span>(<span class="kw">rbind</span>(means, sds, varratio, ks.p, t.p)), <span class="dv">3</span>)[-<span class="dv">9</span>, ]</code></pre>
+<pre><code>##           Control    Treat  Control    Treat varratio  ks.p   t.p
+## age        25.724   25.816    7.729    7.155    1.167 0.416 0.906
+## educ       10.362   10.346    1.949    2.011    0.939 0.493 0.937
+## black       0.838    0.843    0.370    0.365    1.028 1.000 0.887
+## hispan      0.059    0.059    0.237    0.237    1.000 1.000 1.000
+## married     0.222    0.189    0.416    0.393    1.125 1.000 0.441
+## nodegree    0.708    0.708    0.456    0.456    1.000 1.000 1.000
+## re74     2062.483 2095.574 4446.327 4886.620    0.828 0.665 0.946
+## re75     1354.161 1532.055 2795.864 3219.251    0.754 0.899 0.571</code></pre>
+</div>
+</section>
+<section id="and-estimate-att-1" class="slide level1">
+<h1>And Estimate ATT</h1>
+<pre class="sourceCode r"><code class="sourceCode r">gen.match.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span class="st"> </span>treat +<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>
+<span class="st">    </span>re74 +<span class="st"> </span>re75, match.data)
+coefs &lt;-<span class="st"> </span><span class="kw">c</span>(coefs, <span class="dt">gen.match =</span> <span class="kw">coef</span>(gen.match.mod)[<span class="dv">2</span>])
+coefs</code></pre>
+<pre><code>##        base.treat   ipw.logit.treat    ipw.bart.treat  pmat.logit.treat 
+##            1548.2            1332.0            1303.7            1963.9 
+##   pmat.bart.treat mahal.match.treat   gen.match.treat 
+##            1351.9             417.8            1003.4</code></pre>
+</section>
+<section id="cem" class="slide level1">
+<h1>CEM</h1>
+<ul>
+<li class="fragment">CEM just creates bins along each covariate dimension (either pre-specified or automatic)</li>
+<li class="fragment">Units lying in the same strata are then matched together</li>
+<li class="fragment">Curse of dimensionality means that with lots of covariates, we'll only rarely have units in the same strata.</li>
+<li class="fragment">What does that mean we're estimating? Is it the ATT?</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># install.packages(&#39;cem&#39;,repos=&#39;http://r.iq.harvard.edu&#39;, type=&#39;source&#39;)</span>
+<span class="kw">require</span>(cem)
+cem.match &lt;-<span class="st"> </span><span class="kw">cem</span>(<span class="dt">treatment =</span> <span class="st">&quot;treat&quot;</span>, <span class="dt">data =</span> lalonde, <span class="dt">drop =</span> <span class="st">&quot;re78&quot;</span>)
+cem.match</code></pre>
+<pre><code>##            G0  G1
+## All       429 185
+## Matched    78  68
+## Unmatched 351 117</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">
+cem.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span class="st"> </span>treat +<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>
+<span class="st">    </span>re74 +<span class="st"> </span>re75, lalonde, <span class="dt">weights =</span> cem.match$w)
+coefs &lt;-<span class="st"> </span><span class="kw">c</span>(coefs, <span class="kw">coef</span>(cem.mod)[<span class="dv">2</span>])
+coefs</code></pre>
+<pre><code>##        base.treat   ipw.logit.treat    ipw.bart.treat  pmat.logit.treat 
+##            1548.2            1332.0            1303.7            1963.9 
+##   pmat.bart.treat mahal.match.treat   gen.match.treat             treat 
+##            1351.9             417.8            1003.4             744.2</code></pre>
+</div>
+</section>
+<section id="tweaking-cem" class="slide level1">
+<h1>Tweaking CEM</h1>
+<pre class="sourceCode r"><code class="sourceCode r">cutpoints &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">age =</span> <span class="kw">c</span>(<span class="dv">25</span>, <span class="dv">35</span>), <span class="dt">educ =</span> <span class="kw">c</span>(<span class="dv">6</span>, <span class="dv">12</span>), <span class="dt">re74 =</span> <span class="kw">c</span>(<span class="dv">100</span>, <span class="dv">5000</span>), <span class="dt">re75 =</span> <span class="kw">c</span>(<span class="dv">100</span>, 
+    <span class="dv">5000</span>))
+cem.tweak.match &lt;-<span class="st"> </span><span class="kw">cem</span>(<span class="dt">treatment =</span> <span class="st">&quot;treat&quot;</span>, <span class="dt">data =</span> lalonde, <span class="dt">drop =</span> <span class="st">&quot;re78&quot;</span>, <span class="dt">cutpoints =</span> cutpoints)
+cem.tweak.match</code></pre>
+<pre><code>##            G0  G1
+## All       429 185
+## Matched   168 160
+## Unmatched 261  25</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">
+cem.tweak.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span class="st"> </span>treat +<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>
+<span class="st">    </span>re74 +<span class="st"> </span>re75, lalonde, <span class="dt">weights =</span> cem.tweak.match$w)
+coefs &lt;-<span class="st"> </span><span class="kw">c</span>(coefs, <span class="kw">coef</span>(cem.tweak.mod)[<span class="dv">2</span>])
+coefs</code></pre>
+<pre><code>##        base.treat   ipw.logit.treat    ipw.bart.treat  pmat.logit.treat 
+##            1548.2            1332.0            1303.7            1963.9 
+##   pmat.bart.treat mahal.match.treat   gen.match.treat             treat 
+##            1351.9             417.8            1003.4             744.2 
+##             treat 
+##            -451.8</code></pre>
+</section>
+<section id="entropy-balance" class="slide level1">
+<h1>Entropy Balance</h1>
+<ul>
+<li class="fragment">What if we framed preprocessing explicitly as an optimization problem?</li>
+<li class="fragment">We want to minimize difference between empirical moments of treatment and control by varying the weights accorded to individual observations in our dataset.</li>
+<li class="fragment">All while keeping weights relatively stable.</li>
+<li class="fragment">This is &quot;entropy balancing&quot; created by Jens Hainmueller.</li>
+<li class="fragment">We optimize the following problem:<br /><span class="math">\(\min_{\boldsymbol{W},\lambda_0,\boldsymbol\lambda} L^p = \sum_{D=0} w_i \log ({w_i / q_i}) +\)</span><br /><span class="math">\(\sum_{r=1}^R \lambda_r \left(\sum_{D=0} w_ic_{ri}(X_i)-m_r\right) +\)</span><br /><span class="math">\((\lambda_0 -1) \left( \sum_{D=0} w_i -1 \right)\)</span></li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(ebal, <span class="dt">quietly =</span> <span class="ot">TRUE</span>)
+ebal.match &lt;-<span class="st"> </span><span class="kw">ebalance</span>(lalonde$treat, lalonde[, -<span class="kw">c</span>(<span class="dv">1</span>, <span class="kw">ncol</span>(lalonde))])</code></pre>
+<pre><code>## Converged within tolerance</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">ebal.w &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">rep</span>(<span class="dv">1</span>, N), ebal.match$w)
+ebal.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span class="st"> </span>treat +<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>
+<span class="st">    </span>re74 +<span class="st"> </span>re75, lalonde, <span class="dt">weights =</span> ebal.w)</code></pre>
+</div>
+</section>
+<section id="final-estimates" class="slide level1">
+<h1>Final Estimates</h1>
+<pre class="sourceCode r"><code class="sourceCode r">coefs &lt;-<span class="st"> </span><span class="kw">c</span>(coefs, <span class="dt">ebal =</span> <span class="kw">coef</span>(ebal.mod)[<span class="dv">2</span>])
+coefs</code></pre>
+<pre><code>##        base.treat   ipw.logit.treat    ipw.bart.treat  pmat.logit.treat 
+##            1548.2            1332.0            1303.7            1963.9 
+##   pmat.bart.treat mahal.match.treat   gen.match.treat             treat 
+##            1351.9             417.8            1003.4             744.2 
+##             treat        ebal.treat 
+##            -451.8            1273.3</code></pre>
+</section>
+    </div>
+  </div>
+
+  <script src="reveal.js/lib/js/head.min.js"></script>
+  <script src="reveal.js/js/reveal.min.js"></script>
+
+  <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        theme: 'simple', // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          { src: 'reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'reveal.js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+          { src: 'reveal.js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } },
+//          { src: 'reveal.js/plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; }, }
+//          { src: 'reveal.js/plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+]});
+    </script>
+  </body>
+</html>
