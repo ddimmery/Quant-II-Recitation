@@ -1,0 +1,294 @@
+% Matching and Weighting
+% Drew Dimmery <drewd@nyu.edu>
+% February 28, 2014
+
+# Structure
+- IPW and Sampling
+- Matching
+    - Nearest Neighbor
+    - Mahalanobis distance
+    - Genetic Matching
+    - CEM
+- Beyond Matching
+    - Entropy balancing, etc
+
+# Big Picture
+- ahem -
+- MATCHING IS NOT AN IDENTIFICATION STRATEGY.
+- Heckman, Ichimura, Smith and Todd (1998) provide a nice decomposition:
+    - $B = \int_{S_{1X}} E[Y_0|X, D=1] dF(X|D=1) -$  
+    $\int_{S_{0X}} E[Y_0 | X, D=0] dF(X|D=0)$
+    - $B = B_1 + B_2 + B_3$
+    - $B_1 = \int_{S_{1X} \setminus S_X} E[Y_0 |X, D=1] dF(X|D=1) -$  
+    $\int_{S_{0X} \setminus S_X} E[Y_0 |X, D=0] dF(X|D=0)$
+    - $B_2 = \int_{S_X} E[Y_0 |X, D=0] (dF(X|D=1)-dF(X|D=0))$
+    - $B_3 = P_X\bar{B}_{S_X}$
+    - Matching addresses $B_1$ and $B_2$. CIA requires an assumptions to control $B_3$. 
+    - Relative magnitudes are unknown.
+- This gets to the question Cyrus has been repeating a lot: How could two seemingly identical units receive *different* treatments?
+
+# Slightly Smaller Picture
+- Okay, we have some random mechanism that exists after controlling for covariates.
+- Why don't we just put them in a regression?
+    - There's an intuitive appeal to be able to do all of this controlling while keeping the outcome in a lockbox.
+    - Separating the procedures mean that you can address two types of confounding separately.
+        1. Different treatment groups may have different chances of getting treated.
+        2. Different treatment groups may have different baseline (control) potential outcomes.
+    - A design which addresses both of these options separately is called "doubly robust".
+    - Double robustness means that we only have to get ONE of these right for consistent estimation.
+    - (What's the probability of getting a one out of two independent bernoulli trials with $\pi =0$?)
+- I'm going to do most matching by hand to show you what's under the hood. You should use `MatchIt` for the homework.
+- There's an extensive manual -- use it.
+
+# Setup dataset
+- Today, because we're doing matching, we're going to be looking at the Lalonde data.
+- If you ever read any paper about matching, you'll probably see this data again. (I've heard this called the Lalonde Fallacy)
+
+. . .
+
+```{r 5-lalonde}
+require(MatchIt)
+data(lalonde,package="MatchIt")
+trt <- lalonde$treat==1
+means <- apply(lalonde[,-1],2,function(x) tapply(x,trt,mean))
+sds <- apply(lalonde[,-1],2,function(x) tapply(x,trt,sd))
+rownames(means)<-rownames(sds)<-c("Treated","Control")
+varratio <- sds[1,]^2/sds[2,]^2
+ks.p <- apply(lalonde[,-1],2,function(x) ks.test(x[trt],x[!trt])$p.value)
+t.p <- apply(lalonde[,-1],2,function(x) t.test(x[trt],x[!trt])$p.value)
+```
+
+# View Initial Balance
+```{r 5-lalonde-init-bal}
+round(t(rbind(means,sds,varratio,ks.p,t.p)),3)
+```
+
+# Propensity Score
+- The propensity score is based on a sort of Horvitz-Thompson estimator.
+- Dividing by the probability of sampling means that we weight higher for units with low inclusion probabilities.
+- In our case, we can imagine having a sample of units (each with $Y_0$ and $Y_1$). We then randomly assign them to treatment.
+- This is equivalent to randomly sampling potential outcomes.
+- So if we believe that treatment(/sampling) probabilities are assigned according to some covariates, then we just need to know what those probabilities are.
+- Call the propensity score $e(X)$. Then $e(X)$ tells us the probability of sampling $Y_1$ (treating out sample as the population, because we're interested in a SATE).
+- This suggests that we can just use ${1 \over n_1} \sum_{i=1}^{n_1} {(Y_i \setminus N) \over e(X_i)}$ to estimate $E[Y_1]$.
+- This embeds the logic of IPW.
+
+# Fitting the Propensity Score
+- First, estimate a model of the propensity score.
+- (Typically just some logit)
+
+. . .
+
+```{r 5-lalonde-fit-pscore,fig.cap='',fig.width=10,fig.height=5}
+p.model <- glm(treat~age+educ+black+hispan+married+nodegree+re74+re75,lalonde,family="binomial")
+require(BayesTree)
+# p.bart <- bart(lalonde[,-c(1,ncol(lalonde))],lalonde$treat,verbose=FALSE)
+pscore.logit <- predict(p.model,type="response")
+pscore.bart <- pnorm(colMeans(tttt$yhat.train))
+par(mfrow=c(1,2))
+hist(pscore.logit)
+hist(pscore.bart)
+```
+
+# Estimate Model
+- What do you want to estimate? This will change the appropriate weights.
+- For ATT, sampling probability for treated units is $1$.
+
+. . .
+
+```{r 5-est-pscoremods}
+base.mod <- lm(re78~treat+age+educ+black+hispan+married+nodegree+re74+re75,lalonde)
+ipw.logit <- trt + (1-trt)/(1-pscore.logit)
+ipw.logit.mod <- lm(re78~treat+age+educ+black+hispan+married+nodegree+re74+re75,lalonde,weights=ipw.logit)
+ipw.bart <- trt + (1-trt)/(1-pscore.bart)
+ipw.bart.mod <- lm(re78~treat+age+educ+black+hispan+married+nodegree+re74+re75,lalonde,weights=ipw.bart)
+coefs <- c(base=coef(base.mod)[2],ipw.logit=coef(ipw.logit.mod)[2],ipw.bart=coef(ipw.bart.mod)[2])
+coefs
+```
+
+# Propensity Score matching
+- We don't have to weight, though. We might match, instead.
+
+. . .
+
+```{r 5-prop-score-match}
+ctl.data <- subset(lalonde,treat==0)
+pscore.logit.ctl<-pscore.logit[!trt]
+pscore.logit.trt<-pscore.logit[trt]
+pscore.bart.ctl<-pscore.bart[!trt]
+pscore.bart.trt<-pscore.bart[trt]
+match.data <- subset(lalonde,treat==1)
+matches <- sapply(pscore.logit.trt,function(x) which.min(abs(pscore.logit.ctl-x)))
+match.data <- rbind(match.data,ctl.data[matches,])
+pm.logit.mod<-lm(re78~treat+age+educ+black+hispan+married+nodegree+re74+re75,match.data)
+match.data <- subset(lalonde,treat==1)
+matches <- sapply(pscore.bart.trt,function(x) which.min(abs(pscore.bart.ctl-x)))
+match.data <- rbind(match.data,ctl.data[matches,])
+pm.bart.mod<-lm(re78~treat+age+educ+black+hispan+married+nodegree+re74+re75,match.data)
+```
+
+# Estimation and such
+
+```{r 5-pscore-att,fig.cap='',fig.width=6,fig.height=3}
+plot(c(pscore.bart.trt,pscore.bart.ctl[matches]),jitter(rep(c(1,0),c(N,N))),axes=F,ylab="Treatment group",xlab="Propensity Score")
+axis(1)
+axis(2,c(0,1))
+coefs <- c(coefs,pmat.logit=coef(pm.logit.mod)[2],pmat.bart=coef(pm.bart.mod)[2])
+coefs
+```
+
+# Conditional Treatment effects
+- You can also think about using the local linear regression we talked about last week.
+- Weight according to the propensity score.
+- This allows you to see how the treatment effect varies along the propensity score.
+- Does the treatment only seem to have an effect on people who were very unlikely to be exposed? etc
+
+# Mahalanobis Distance
+- $(x-\mu)'V^{-1}(x-\mu)$
+- In our case, $\mu$ corresponds to a given treated unit.
+- Mahalanobis distance is a very common distance "metric".
+- You can think about it as simple Euclidean distance in a warped feature space (warped according the the inverse variance-covariance matrix)
+
+. . .
+
+```{r 5-mahal}
+V<-cov(lalonde[,-c(1,ncol(lalonde))])
+match.data <- subset(lalonde,treat==1)
+mahal.dist <- apply(match.data[,-c(1,ncol(match.data))],1,function(x) mahalanobis(ctl.data[,-c(1,ncol(ctl.data))],x,V))
+matches <- apply(mahal.dist,2,which.min)
+N <- length(matches)
+match.data <- rbind(match.data,ctl.data[matches,])
+table(apply(mahal.dist,2,which.min))
+```
+
+# Evaluate Balance
+
+```{r 5-mahal-bal,tidy=FALSE}
+trt.factor <- rep(c("Treat","Control"),c(N,N))
+means <- apply(match.data[,-1],2,function(x) tapply(x,trt.factor,mean))
+sds <- apply(match.data[,-1],2,function(x) tapply(x,trt.factor,sd))
+varratio <- sds[1,]^2/sds[2,]^2
+ks.p <- apply(match.data[,-1],2,function(x) ks.test(x[1:N],x[{N+1}:{2*N}])$p.value)
+t.p <- apply(match.data[,-1],2,function(x) t.test(x[1:N],x[{N+1}:{2*N}])$p.value)
+```
+
+# View Matched Balance
+```{r 5-show-mahal-bal}
+round(t(rbind(means,sds,varratio,ks.p,t.p)),3)[-9,]
+```
+
+# And Estimate ATT
+
+```{r 5-mahal-att}
+mahal.match.mod <- lm(re78~treat+age+educ+black+hispan+married+nodegree+re74+re75,match.data)
+coefs <- c(coefs, mahal.match=coef(mahal.match.mod)[2])
+coefs
+```
+
+# Genetic Matching
+- This is a fancy and very effective algorithm developed by Jas Sekhon.
+- The basic logic is as follows:
+    - Start with the mahalanobis distance solution.
+    - Evaluate balance (by default, by paired t-tests and KS tests on covariates)
+    - Tweak the covariance matrix.
+    - New matching solution
+    - See if balance improved
+    - Iterate
+- It uses a genetic algorithm to tweak the covariance matrix.
+- It is NOT fast. And you should use a large value of `pop.size`, which will make it even slower (10 is WAY too low. The default is 100, and even that is too low). Also, you should use the available wrapper functions via MatchIt (or even just in the Matching package)
+
+. . .
+
+```{r 5-genmatch-start}
+require(Matching)
+require(rgenoud)
+# gmatch <- GenMatch(lalonde$treat,lalonde[,-c(1,ncol(lalonde))],pop.size = 1000,ties=FALSE,print.level=0)
+matches <- gmatch$matches[,2]
+match.data <- subset(lalonde,treat==1)
+match.data <- rbind(match.data,lalonde[matches,])
+```
+
+# Balance Tests for genMatch
+```{r 5-gen-bal,tidy=FALSE}
+trt.factor <- rep(c("Treat","Control"),c(N,N))
+means <- apply(match.data[,-1],2,function(x) tapply(x,trt.factor,mean))
+sds <- apply(match.data[,-1],2,function(x) tapply(x,trt.factor,sd))
+varratio <- sds[1,]^2/sds[2,]^2
+ks.p <- apply(match.data[,-1],2,function(x) ks.test(x[1:N],x[{N+1}:{2*N}])$p.value)
+t.p <- apply(match.data[,-1],2,function(x) t.test(x[1:N],x[{N+1}:{2*N}])$p.value)
+```
+
+# View Matches Balance
+- You won't find better results for these metrics (doesn't necessarily make it "best", though)
+
+. . .
+
+```{r 5-show-gen-bal}
+round(t(rbind(means,sds,varratio,ks.p,t.p)),3)[-9,]
+```
+
+# And Estimate ATT
+
+```{r 5-gen-att}
+gen.match.mod <- lm(re78~treat+age+educ+black+hispan+married+nodegree+re74+re75,match.data)
+coefs <- c(coefs, gen.match=coef(gen.match.mod)[2])
+coefs
+```
+
+# CEM
+
+- CEM just creates bins along each covariate dimension (either pre-specified or automatic)
+- Units lying in the same strata are then matched together
+- Curse of dimensionality means that with lots of covariates, we'll only rarely have units in the same strata.
+- What does that mean we're estimating? Is it the ATT?
+
+. . .
+
+```{r 5-cem-start}
+# install.packages("cem",repos="http://r.iq.harvard.edu", type="source")
+require(cem)
+cem.match <- cem(treatment="treat",data=lalonde,drop="re78")
+cem.match
+
+cem.mod <- lm(re78~treat+age+educ+black+hispan+married+nodegree+re74+re75,lalonde,weights=cem.match$w)
+coefs<-c(coefs,coef(cem.mod)[2])
+coefs
+```
+
+# Tweaking CEM
+
+```{r 5-tweak-cem}
+cutpoints <- list(age=c(25,35),educ=c(6,12),re74=c(100,5000),re75=c(100,5000))
+cem.tweak.match <- cem(treatment="treat",data=lalonde,drop="re78",cutpoints=cutpoints)
+cem.tweak.match
+
+cem.tweak.mod <- lm(re78~treat+age+educ+black+hispan+married+nodegree+re74+re75,lalonde,weights=cem.tweak.match$w)
+coefs<-c(coefs,coef(cem.tweak.mod)[2])
+coefs
+```
+
+# Entropy Balance
+- What if we framed preprocessing explicitly as an optimization problem?
+- We want to minimize difference between empirical moments of treatment and control by varying the weights accorded to individual observations in our dataset.
+- All while keeping weights relatively stable.
+- This is "entropy balancing" created by Jens Hainmueller.
+- We optimize the following problem:  
+$\min_{\boldsymbol{W},\lambda_0,\boldsymbol\lambda} L^p = \sum_{D=0} w_i \log ({w_i / q_i}) +$  
+$\sum_{r=1}^R \lambda_r \left(\sum_{D=0} w_ic_{ri}(X_i)-m_r\right) +$   
+$(\lambda_0 -1) \left( \sum_{D=0} w_i -1 \right)$
+
+. . .
+
+```{r 5-ebal-start}
+require(ebal,quietly=TRUE)
+ebal.match <- ebalance(lalonde$treat, lalonde[,-c(1,ncol(lalonde))])
+ebal.w <- c(rep(1,N),ebal.match$w)
+ebal.mod <- lm(re78~treat+age+educ+black+hispan+married+nodegree+re74+re75,lalonde,weights=ebal.w)
+```
+
+# Final Estimates
+
+```{r 5-final-ests}
+coefs<-c(coefs,ebal=coef(ebal.mod)[2])
+coefs
+```
