@@ -84,7 +84,7 @@ p.model <- glm(treat~age+educ+black+hispan+married+nodegree+re74+re75,lalonde,fa
 require(BayesTree)
 # p.bart <- bart(lalonde[,-c(1,ncol(lalonde))],lalonde$treat,verbose=FALSE)
 pscore.logit <- predict(p.model,type="response")
-pscore.bart <- pnorm(colMeans(tttt$yhat.train))
+pscore.bart <- pnorm(colMeans(p.bart$yhat.train))
 par(mfrow=c(1,2))
 hist(pscore.logit)
 hist(pscore.bart)
