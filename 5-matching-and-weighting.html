@@ -114,8 +114,10 @@ document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
 <li class="fragment">If you ever read any paper about matching, you'll probably see this data again. (I've heard this called the Lalonde Fallacy)</li>
 </ul>
 <div class="fragment">
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(MatchIt)
-<span class="kw">data</span>(lalonde, <span class="dt">package =</span> <span class="st">&quot;MatchIt&quot;</span>)
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(MatchIt)</code></pre>
+<pre><code>## Loading required package: MatchIt
+## Loading required package: MASS</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(lalonde, <span class="dt">package =</span> <span class="st">&quot;MatchIt&quot;</span>)
 trt &lt;-<span class="st"> </span>lalonde$treat ==<span class="st"> </span><span class="dv">1</span>
 means &lt;-<span class="st"> </span><span class="kw">apply</span>(lalonde[, -<span class="dv">1</span>], <span class="dv">2</span>, function(x) <span class="kw">tapply</span>(x, trt, mean))
 sds &lt;-<span class="st"> </span><span class="kw">apply</span>(lalonde[, -<span class="dv">1</span>], <span class="dv">2</span>, function(x) <span class="kw">tapply</span>(x, trt, sd))
@@ -170,13 +172,17 @@ ks.p &lt;-<span class="st"> </span><span class="kw">apply</span>(lalonde[, -<spa
 <div class="fragment">
 <pre class="sourceCode r"><code class="sourceCode r">p.model &lt;-<span class="st"> </span><span class="kw">glm</span>(treat ~<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>re74 +<span class="st"> </span>
 <span class="st">    </span>re75, lalonde, <span class="dt">family =</span> <span class="st">&quot;binomial&quot;</span>)
-<span class="kw">require</span>(BayesTree)
-<span class="co"># p.bart &lt;- bart(lalonde[,-c(1,ncol(lalonde))],lalonde$treat,verbose=FALSE)</span>
+<span class="kw">require</span>(BayesTree)</code></pre>
+<pre><code>## Loading required package: BayesTree
+## Loading required package: nnet</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># p.bart &lt;- bart(lalonde[,-c(1,ncol(lalonde))],lalonde$treat,verbose=FALSE)</span>
 pscore.logit &lt;-<span class="st"> </span><span class="kw">predict</span>(p.model, <span class="dt">type =</span> <span class="st">&quot;response&quot;</span>)
-pscore.bart &lt;-<span class="st"> </span><span class="kw">pnorm</span>(<span class="kw">colMeans</span>(tttt$yhat.train))
-<span class="kw">par</span>(<span class="dt">mfrow =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))
+pscore.bart &lt;-<span class="st"> </span><span class="kw">pnorm</span>(<span class="kw">colMeans</span>(p.bart$yhat.train))</code></pre>
+<pre><code>## Error: object &#39;p.bart&#39; not found</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">par</span>(<span class="dt">mfrow =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))
 <span class="kw">hist</span>(pscore.logit)
 <span class="kw">hist</span>(pscore.bart)</code></pre>
+<pre><code>## Error: object &#39;pscore.bart&#39; not found</code></pre>
 <figure>
 <img src="figure/5-lalonde-fit-pscore.png" />
 </figure>
@@ -194,13 +200,15 @@ pscore.bart &lt;-<span class="st"> </span><span class="kw">pnorm</span>(<span cl
 ipw.logit &lt;-<span class="st"> </span>trt +<span class="st"> </span>(<span class="dv">1</span> -<span class="st"> </span>trt)/(<span class="dv">1</span> -<span class="st"> </span>pscore.logit)
 ipw.logit.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span class="st"> </span>treat +<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>
 <span class="st">    </span>re74 +<span class="st"> </span>re75, lalonde, <span class="dt">weights =</span> ipw.logit)
-ipw.bart &lt;-<span class="st"> </span>trt +<span class="st"> </span>(<span class="dv">1</span> -<span class="st"> </span>trt)/(<span class="dv">1</span> -<span class="st"> </span>pscore.bart)
-ipw.bart.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span class="st"> </span>treat +<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>
-<span class="st">    </span>re74 +<span class="st"> </span>re75, lalonde, <span class="dt">weights =</span> ipw.bart)
-coefs &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dt">base =</span> <span class="kw">coef</span>(base.mod)[<span class="dv">2</span>], <span class="dt">ipw.logit =</span> <span class="kw">coef</span>(ipw.logit.mod)[<span class="dv">2</span>], <span class="dt">ipw.bart =</span> <span class="kw">coef</span>(ipw.bart.mod)[<span class="dv">2</span>])
-coefs</code></pre>
-<pre><code>##      base.treat ipw.logit.treat  ipw.bart.treat 
-##            1548            1332            1304</code></pre>
+ipw.bart &lt;-<span class="st"> </span>trt +<span class="st"> </span>(<span class="dv">1</span> -<span class="st"> </span>trt)/(<span class="dv">1</span> -<span class="st"> </span>pscore.bart)</code></pre>
+<pre><code>## Error: object &#39;pscore.bart&#39; not found</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">ipw.bart.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span class="st"> </span>treat +<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>
+<span class="st">    </span>re74 +<span class="st"> </span>re75, lalonde, <span class="dt">weights =</span> ipw.bart)</code></pre>
+<pre><code>## Error: object &#39;ipw.bart&#39; not found</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">coefs &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dt">base =</span> <span class="kw">coef</span>(base.mod)[<span class="dv">2</span>], <span class="dt">ipw.logit =</span> <span class="kw">coef</span>(ipw.logit.mod)[<span class="dv">2</span>], <span class="dt">ipw.bart =</span> <span class="kw">coef</span>(ipw.bart.mod)[<span class="dv">2</span>])</code></pre>
+<pre><code>## Error: object &#39;ipw.bart.mod&#39; not found</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">coefs</code></pre>
+<pre><code>## Error: object &#39;coefs&#39; not found</code></pre>
 </div>
 </section>
 <section id="propensity-score-matching" class="slide level1">
@@ -212,9 +220,11 @@ coefs</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r">ctl.data &lt;-<span class="st"> </span><span class="kw">subset</span>(lalonde, treat ==<span class="st"> </span><span class="dv">0</span>)
 pscore.logit.ctl &lt;-<span class="st"> </span>pscore.logit[!trt]
 pscore.logit.trt &lt;-<span class="st"> </span>pscore.logit[trt]
-pscore.bart.ctl &lt;-<span class="st"> </span>pscore.bart[!trt]
-pscore.bart.trt &lt;-<span class="st"> </span>pscore.bart[trt]
-match.data &lt;-<span class="st"> </span><span class="kw">subset</span>(lalonde, treat ==<span class="st"> </span><span class="dv">1</span>)
+pscore.bart.ctl &lt;-<span class="st"> </span>pscore.bart[!trt]</code></pre>
+<pre><code>## Error: object &#39;pscore.bart&#39; not found</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">pscore.bart.trt &lt;-<span class="st"> </span>pscore.bart[trt]</code></pre>
+<pre><code>## Error: object &#39;pscore.bart&#39; not found</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">match.data &lt;-<span class="st"> </span><span class="kw">subset</span>(lalonde, treat ==<span class="st"> </span><span class="dv">1</span>)
 matches &lt;-<span class="st"> </span><span class="kw">sapply</span>(pscore.logit.trt, function(x) <span class="kw">which.min</span>(<span class="kw">abs</span>(pscore.logit.ctl -<span class="st"> </span>
 <span class="st">    </span>x)))
 match.data &lt;-<span class="st"> </span><span class="kw">rbind</span>(match.data, ctl.data[matches, ])
@@ -222,8 +232,9 @@ pm.logit.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<spa
 <span class="st">    </span>re74 +<span class="st"> </span>re75, match.data)
 match.data &lt;-<span class="st"> </span><span class="kw">subset</span>(lalonde, treat ==<span class="st"> </span><span class="dv">1</span>)
 matches &lt;-<span class="st"> </span><span class="kw">sapply</span>(pscore.bart.trt, function(x) <span class="kw">which.min</span>(<span class="kw">abs</span>(pscore.bart.ctl -<span class="st"> </span>
-<span class="st">    </span>x)))
-match.data &lt;-<span class="st"> </span><span class="kw">rbind</span>(match.data, ctl.data[matches, ])
+<span class="st">    </span>x)))</code></pre>
+<pre><code>## Error: object &#39;pscore.bart.trt&#39; not found</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">match.data &lt;-<span class="st"> </span><span class="kw">rbind</span>(match.data, ctl.data[matches, ])
 pm.bart.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span class="st"> </span>treat +<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>
 <span class="st">    </span>re74 +<span class="st"> </span>re75, match.data)</code></pre>
 </div>
@@ -231,18 +242,16 @@ pm.bart.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span
 <section id="estimation-and-such" class="slide level1">
 <h1>Estimation and such</h1>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(<span class="kw">c</span>(pscore.bart.trt, pscore.bart.ctl[matches]), <span class="kw">jitter</span>(<span class="kw">rep</span>(<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">0</span>), <span class="kw">c</span>(N, 
-    N))), <span class="dt">axes =</span> F, <span class="dt">ylab =</span> <span class="st">&quot;Treatment group&quot;</span>, <span class="dt">xlab =</span> <span class="st">&quot;Propensity Score&quot;</span>)
-<span class="kw">axis</span>(<span class="dv">1</span>)
-<span class="kw">axis</span>(<span class="dv">2</span>, <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>))</code></pre>
-<figure>
-<img src="figure/5-pscore-att.png" />
-</figure>
-<pre class="sourceCode r"><code class="sourceCode r">coefs &lt;-<span class="st"> </span><span class="kw">c</span>(coefs, <span class="dt">pmat.logit =</span> <span class="kw">coef</span>(pm.logit.mod)[<span class="dv">2</span>], <span class="dt">pmat.bart =</span> <span class="kw">coef</span>(pm.bart.mod)[<span class="dv">2</span>])
-coefs</code></pre>
-<pre><code>##       base.treat  ipw.logit.treat   ipw.bart.treat pmat.logit.treat 
-##             1548             1332             1304             1964 
-##  pmat.bart.treat 
-##             1352</code></pre>
+    N))), <span class="dt">axes =</span> F, <span class="dt">ylab =</span> <span class="st">&quot;Treatment group&quot;</span>, <span class="dt">xlab =</span> <span class="st">&quot;Propensity Score&quot;</span>)</code></pre>
+<pre><code>## Error: object &#39;pscore.bart.trt&#39; not found</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">axis</span>(<span class="dv">1</span>)</code></pre>
+<pre><code>## Error: plot.new has not been called yet</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">axis</span>(<span class="dv">2</span>, <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>))</code></pre>
+<pre><code>## Error: plot.new has not been called yet</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">coefs &lt;-<span class="st"> </span><span class="kw">c</span>(coefs, <span class="dt">pmat.logit =</span> <span class="kw">coef</span>(pm.logit.mod)[<span class="dv">2</span>], <span class="dt">pmat.bart =</span> <span class="kw">coef</span>(pm.bart.mod)[<span class="dv">2</span>])</code></pre>
+<pre><code>## Error: object &#39;coefs&#39; not found</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">coefs</code></pre>
+<pre><code>## Error: object &#39;coefs&#39; not found</code></pre>
 </section>
 <section id="conditional-treatment-effects" class="slide level1">
 <h1>Conditional Treatment effects</h1>
@@ -318,12 +327,10 @@ ks.p &lt;-<span class="st"> </span><span class="kw">apply</span>(match.data[,-<s
 <h1>And Estimate ATT</h1>
 <pre class="sourceCode r"><code class="sourceCode r">mahal.match.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span class="st"> </span>treat +<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>
 <span class="st">    </span>nodegree +<span class="st"> </span>re74 +<span class="st"> </span>re75, match.data)
-coefs &lt;-<span class="st"> </span><span class="kw">c</span>(coefs, <span class="dt">mahal.match =</span> <span class="kw">coef</span>(mahal.match.mod)[<span class="dv">2</span>])
-coefs</code></pre>
-<pre><code>##        base.treat   ipw.logit.treat    ipw.bart.treat  pmat.logit.treat 
-##            1548.2            1332.0            1303.7            1963.9 
-##   pmat.bart.treat mahal.match.treat 
-##            1351.9             417.8</code></pre>
+coefs &lt;-<span class="st"> </span><span class="kw">c</span>(coefs, <span class="dt">mahal.match =</span> <span class="kw">coef</span>(mahal.match.mod)[<span class="dv">2</span>])</code></pre>
+<pre><code>## Error: object &#39;coefs&#39; not found</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">coefs</code></pre>
+<pre><code>## Error: object &#39;coefs&#39; not found</code></pre>
 </section>
 <section id="genetic-matching" class="slide level1">
 <h1>Genetic Matching</h1>
@@ -342,12 +349,31 @@ coefs</code></pre>
 <li class="fragment">It is NOT fast. And you should use a large value of <code>pop.size</code>, which will make it even slower (10 is WAY too low. The default is 100, and even that is too low). Also, you should use the available wrapper functions via MatchIt (or even just in the Matching package)</li>
 </ul>
 <div class="fragment">
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(Matching)
-<span class="kw">require</span>(rgenoud)
-<span class="co"># gmatch &lt;- GenMatch(lalonde$treat,lalonde[,-c(1,ncol(lalonde))],pop.size =</span>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(Matching)</code></pre>
+<pre><code>## Loading required package: Matching
+## ## 
+## ##  Matching (Version 4.8-3.4, Build Date: 2013/10/28)
+## ##  See http://sekhon.berkeley.edu/matching for additional documentation.
+## ##  Please cite software as:
+## ##   Jasjeet S. Sekhon. 2011. ``Multivariate and Propensity Score Matching
+## ##   Software with Automated Balance Optimization: The Matching package for R.&#39;&#39;
+## ##   Journal of Statistical Software, 42(7): 1-52. 
+## ##</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(rgenoud)</code></pre>
+<pre><code>## Loading required package: rgenoud
+## Loading required package: parallel
+## ##  rgenoud (Version 5.7-12, Build Date: 2013-06-28)
+## ##  See http://sekhon.berkeley.edu/rgenoud for additional documentation.
+## ##  Please cite software as:
+## ##   Walter Mebane, Jr. and Jasjeet S. Sekhon. 2011.
+## ##   ``Genetic Optimization Using Derivatives: The rgenoud package for R.&#39;&#39;
+## ##   Journal of Statistical Software, 42(11): 1-26. 
+## ##</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># gmatch &lt;- GenMatch(lalonde$treat,lalonde[,-c(1,ncol(lalonde))],pop.size =</span>
 <span class="co"># 1000,ties=FALSE,print.level=0)</span>
-matches &lt;-<span class="st"> </span>gmatch$matches[, <span class="dv">2</span>]
-match.data &lt;-<span class="st"> </span><span class="kw">subset</span>(lalonde, treat ==<span class="st"> </span><span class="dv">1</span>)
+matches &lt;-<span class="st"> </span>gmatch$matches[, <span class="dv">2</span>]</code></pre>
+<pre><code>## Error: object &#39;gmatch&#39; not found</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">match.data &lt;-<span class="st"> </span><span class="kw">subset</span>(lalonde, treat ==<span class="st"> </span><span class="dv">1</span>)
 match.data &lt;-<span class="st"> </span><span class="kw">rbind</span>(match.data, lalonde[matches, ])</code></pre>
 </div>
 </section>
@@ -377,26 +403,24 @@ ks.p &lt;-<span class="st"> </span><span class="kw">apply</span>(match.data[,-<s
 <div class="fragment">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">round</span>(<span class="kw">t</span>(<span class="kw">rbind</span>(means, sds, varratio, ks.p, t.p)), <span class="dv">3</span>)[-<span class="dv">9</span>, ]</code></pre>
 <pre><code>##           Control    Treat  Control    Treat varratio  ks.p   t.p
-## age        25.724   25.816    7.729    7.155    1.167 0.416 0.906
-## educ       10.362   10.346    1.949    2.011    0.939 0.493 0.937
-## black       0.838    0.843    0.370    0.365    1.028 1.000 0.887
-## hispan      0.059    0.059    0.237    0.237    1.000 1.000 1.000
-## married     0.222    0.189    0.416    0.393    1.125 1.000 0.441
-## nodegree    0.708    0.708    0.456    0.456    1.000 1.000 1.000
-## re74     2062.483 2095.574 4446.327 4886.620    0.828 0.665 0.946
-## re75     1354.161 1532.055 2795.864 3219.251    0.754 0.899 0.571</code></pre>
+## age        27.708   25.816   11.462    7.155    2.566 0.039 0.058
+## educ       10.978   10.346    2.093    2.011    1.083 0.184 0.003
+## black       0.373    0.843    0.485    0.365    1.769 0.000 0.000
+## hispan      0.124    0.059    0.331    0.237    1.947 0.831 0.031
+## married     0.422    0.189    0.495    0.393    1.590 0.000 0.000
+## nodegree    0.595    0.708    0.492    0.456    1.166 0.184 0.022
+## re74     4808.708 2095.574 5875.248 4886.620    1.446 0.000 0.000
+## re75     2301.655 1532.055 2283.410 3219.251    0.503 0.000 0.008</code></pre>
 </div>
 </section>
 <section id="and-estimate-att-1" class="slide level1">
 <h1>And Estimate ATT</h1>
 <pre class="sourceCode r"><code class="sourceCode r">gen.match.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span class="st"> </span>treat +<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>
 <span class="st">    </span>re74 +<span class="st"> </span>re75, match.data)
-coefs &lt;-<span class="st"> </span><span class="kw">c</span>(coefs, <span class="dt">gen.match =</span> <span class="kw">coef</span>(gen.match.mod)[<span class="dv">2</span>])
-coefs</code></pre>
-<pre><code>##        base.treat   ipw.logit.treat    ipw.bart.treat  pmat.logit.treat 
-##            1548.2            1332.0            1303.7            1963.9 
-##   pmat.bart.treat mahal.match.treat   gen.match.treat 
-##            1351.9             417.8            1003.4</code></pre>
+coefs &lt;-<span class="st"> </span><span class="kw">c</span>(coefs, <span class="dt">gen.match =</span> <span class="kw">coef</span>(gen.match.mod)[<span class="dv">2</span>])</code></pre>
+<pre><code>## Error: object &#39;coefs&#39; not found</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">coefs</code></pre>
+<pre><code>## Error: object &#39;coefs&#39; not found</code></pre>
 </section>
 <section id="cem" class="slide level1">
 <h1>CEM</h1>
@@ -408,8 +432,25 @@ coefs</code></pre>
 </ul>
 <div class="fragment">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="co"># install.packages(&#39;cem&#39;,repos=&#39;http://r.iq.harvard.edu&#39;, type=&#39;source&#39;)</span>
-<span class="kw">require</span>(cem)
-cem.match &lt;-<span class="st"> </span><span class="kw">cem</span>(<span class="dt">treatment =</span> <span class="st">&quot;treat&quot;</span>, <span class="dt">data =</span> lalonde, <span class="dt">drop =</span> <span class="st">&quot;re78&quot;</span>)
+<span class="kw">require</span>(cem)</code></pre>
+<pre><code>## Loading required package: cem
+## Loading required package: nlme
+## Loading required package: lattice
+## Loading required package: randomForest
+## randomForest 4.6-7
+## Type rfNews() to see new features/changes/bug fixes.
+## Loading required package: tcltk
+## Loading required package: combinat
+## 
+## Attaching package: &#39;combinat&#39;
+## 
+## The following object is masked from &#39;package:utils&#39;:
+## 
+##     combn
+## 
+## 
+## How to use CEM? Type vignette(&quot;cem&quot;)</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">cem.match &lt;-<span class="st"> </span><span class="kw">cem</span>(<span class="dt">treatment =</span> <span class="st">&quot;treat&quot;</span>, <span class="dt">data =</span> lalonde, <span class="dt">drop =</span> <span class="st">&quot;re78&quot;</span>)
 cem.match</code></pre>
 <pre><code>##            G0  G1
 ## All       429 185
@@ -418,12 +459,10 @@ cem.match</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r">
 cem.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span class="st"> </span>treat +<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>
 <span class="st">    </span>re74 +<span class="st"> </span>re75, lalonde, <span class="dt">weights =</span> cem.match$w)
-coefs &lt;-<span class="st"> </span><span class="kw">c</span>(coefs, <span class="kw">coef</span>(cem.mod)[<span class="dv">2</span>])
-coefs</code></pre>
-<pre><code>##        base.treat   ipw.logit.treat    ipw.bart.treat  pmat.logit.treat 
-##            1548.2            1332.0            1303.7            1963.9 
-##   pmat.bart.treat mahal.match.treat   gen.match.treat             treat 
-##            1351.9             417.8            1003.4             744.2</code></pre>
+coefs &lt;-<span class="st"> </span><span class="kw">c</span>(coefs, <span class="kw">coef</span>(cem.mod)[<span class="dv">2</span>])</code></pre>
+<pre><code>## Error: object &#39;coefs&#39; not found</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">coefs</code></pre>
+<pre><code>## Error: object &#39;coefs&#39; not found</code></pre>
 </div>
 </section>
 <section id="tweaking-cem" class="slide level1">
@@ -439,14 +478,10 @@ cem.tweak.match</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r">
 cem.tweak.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span class="st"> </span>treat +<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>
 <span class="st">    </span>re74 +<span class="st"> </span>re75, lalonde, <span class="dt">weights =</span> cem.tweak.match$w)
-coefs &lt;-<span class="st"> </span><span class="kw">c</span>(coefs, <span class="kw">coef</span>(cem.tweak.mod)[<span class="dv">2</span>])
-coefs</code></pre>
-<pre><code>##        base.treat   ipw.logit.treat    ipw.bart.treat  pmat.logit.treat 
-##            1548.2            1332.0            1303.7            1963.9 
-##   pmat.bart.treat mahal.match.treat   gen.match.treat             treat 
-##            1351.9             417.8            1003.4             744.2 
-##             treat 
-##            -451.8</code></pre>
+coefs &lt;-<span class="st"> </span><span class="kw">c</span>(coefs, <span class="kw">coef</span>(cem.tweak.mod)[<span class="dv">2</span>])</code></pre>
+<pre><code>## Error: object &#39;coefs&#39; not found</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">coefs</code></pre>
+<pre><code>## Error: object &#39;coefs&#39; not found</code></pre>
 </section>
 <section id="entropy-balance" class="slide level1">
 <h1>Entropy Balance</h1>
@@ -458,8 +493,12 @@ coefs</code></pre>
 <li class="fragment">We optimize the following problem:<br /><span class="math">\(\min_{\boldsymbol{W},\lambda_0,\boldsymbol\lambda} L^p = \sum_{D=0} w_i \log ({w_i / q_i}) +\)</span><br /><span class="math">\(\sum_{r=1}^R \lambda_r \left(\sum_{D=0} w_ic_{ri}(X_i)-m_r\right) +\)</span><br /><span class="math">\((\lambda_0 -1) \left( \sum_{D=0} w_i -1 \right)\)</span></li>
 </ul>
 <div class="fragment">
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(ebal, <span class="dt">quietly =</span> <span class="ot">TRUE</span>)
-ebal.match &lt;-<span class="st"> </span><span class="kw">ebalance</span>(lalonde$treat, lalonde[, -<span class="kw">c</span>(<span class="dv">1</span>, <span class="kw">ncol</span>(lalonde))])</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(ebal, <span class="dt">quietly =</span> <span class="ot">TRUE</span>)</code></pre>
+<pre><code>## ##
+## ## ebal Package: Implements Entropy Balancing.
+## 
+## ## See http://www.stanford.edu/~jhain/ for additional information.</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">ebal.match &lt;-<span class="st"> </span><span class="kw">ebalance</span>(lalonde$treat, lalonde[, -<span class="kw">c</span>(<span class="dv">1</span>, <span class="kw">ncol</span>(lalonde))])</code></pre>
 <pre><code>## Converged within tolerance</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r">ebal.w &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">rep</span>(<span class="dv">1</span>, N), ebal.match$w)
 ebal.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span class="st"> </span>treat +<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>
@@ -468,14 +507,10 @@ ebal.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span cl
 </section>
 <section id="final-estimates" class="slide level1">
 <h1>Final Estimates</h1>
-<pre class="sourceCode r"><code class="sourceCode r">coefs &lt;-<span class="st"> </span><span class="kw">c</span>(coefs, <span class="dt">ebal =</span> <span class="kw">coef</span>(ebal.mod)[<span class="dv">2</span>])
-coefs</code></pre>
-<pre><code>##        base.treat   ipw.logit.treat    ipw.bart.treat  pmat.logit.treat 
-##            1548.2            1332.0            1303.7            1963.9 
-##   pmat.bart.treat mahal.match.treat   gen.match.treat             treat 
-##            1351.9             417.8            1003.4             744.2 
-##             treat        ebal.treat 
-##            -451.8            1273.3</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">coefs &lt;-<span class="st"> </span><span class="kw">c</span>(coefs, <span class="dt">ebal =</span> <span class="kw">coef</span>(ebal.mod)[<span class="dv">2</span>])</code></pre>
+<pre><code>## Error: object &#39;coefs&#39; not found</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">coefs</code></pre>
+<pre><code>## Error: object &#39;coefs&#39; not found</code></pre>
 </section>
     </div>
   </div>
