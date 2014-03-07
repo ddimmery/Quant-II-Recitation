@@ -1,0 +1,51 @@
+% Bootstrapping and Instrumental Variables
+% Drew Dimmery <drewd@nyu.edu>
+% March 8, 2014
+
+# Structure
+- Rubber-duck debugging
+- Bootstrapping
+    - I'll give some examples of the more complicated bootstrapping methods
+- Instrumental Variables
+    - Basic 2SLS
+    - Sensitivity Analysis for IV
+
+# Debugging
+- Rubber duck debugging:
+    - Use when you can't figure out why your code doesn't work right
+    - Find something inanimate to talk to
+    - Explain what your code does, line by excruciating line
+    - If you can't explain it, that's probably where the problem is.
+    - This works ridiculously well.
+    - You should also be able to tell your duck exactly what is stored in each
+      variable at all times.
+- Check individual elements of your code on small data such that you know what
+  the right answer *should* be.
+
+# Bootstrapping
+- We're going to start with Lalonde again.
+- We will do the IPW procedure as before, but this time get the "right" SEs.
+
+
+# Cluster Bootstrapping
+- When treatment was assigned with clustering, our bootstrap must account for
+  that.
+- So we adjust the resampling procedure.
+- We now move away from Lalonde, and we'll look at a replication of (and
+  extension to) the Green, Vavreck (2008) PA paper which examines the
+  performance of cluster robust SEs in an experimental context.
+- Treatment was a GOTV advertising campaign
+- Outcome was 2004 turnout.
+- 23869 individuals 19 or under in 85 clusters.
+
+# Read in G/V data
+
+```{r 6-read-gv-data}
+dat<-read.csv(file="GreenVavreck_PolAnalysis_2008_PA_Replication.csv",head=TRUE,sep=",")
+f1 <- paste("tout1 ~ treat + ",paste(names(dat)[11:49],collapse=" + ",))
+ols1 <- lm(f1,dat)
+summary(ols1)$coefficients[2,]
+```
+
+# Try Cluster Robust SEs
+
