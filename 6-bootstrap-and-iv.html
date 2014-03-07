@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="Drew Dimmery drewd@nyu.edu" />
+  <title>Bootstrapping and Instrumental Variables</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="reveal.js/css/reveal.min.css"/>
+    <style type="text/css">code{white-space: pre;}</style>
+    <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+    </style>
+    <link rel="stylesheet" href="reveal.js/css/theme/simple.css" id="theme">
+  <link rel="stylesheet" media="print" href="reveal.js/css/print/pdf.css" />
+  <!--[if lt IE 9]>
+  <script src="reveal.js/lib/js/html5shiv.js"></script>
+  <![endif]-->
+    <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section>
+    <h1 class="title">Bootstrapping and Instrumental Variables</h1>
+    <h2 class="author">Drew Dimmery <script type="text/javascript">
+<!--
+h='&#110;&#x79;&#x75;&#46;&#x65;&#100;&#x75;';a='&#64;';n='&#100;&#114;&#x65;&#x77;&#100;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#100;&#114;&#x65;&#x77;&#100;&#32;&#x61;&#116;&#32;&#110;&#x79;&#x75;&#32;&#100;&#x6f;&#116;&#32;&#x65;&#100;&#x75;</noscript></h2>
+    <h3 class="date">March 8, 2014</h3>
+</section>
+
+<section id="structure" class="slide level1">
+<h1>Structure</h1>
+<ul>
+<li class="fragment">Rubber-duck debugging</li>
+<li class="fragment">Bootstrapping
+<ul>
+<li class="fragment">I'll give some examples of the more complicated bootstrapping methods</li>
+</ul></li>
+<li class="fragment">Instrumental Variables
+<ul>
+<li class="fragment">Basic 2SLS</li>
+<li class="fragment">Sensitivity Analysis for IV</li>
+</ul></li>
+</ul>
+</section>
+<section id="debugging" class="slide level1">
+<h1>Debugging</h1>
+<ul>
+<li class="fragment">Rubber duck debugging:
+<ul>
+<li class="fragment">Use when you can't figure out why your code doesn't work right</li>
+<li class="fragment">Find something inanimate to talk to</li>
+<li class="fragment">Explain what your code does, line by excruciating line</li>
+<li class="fragment">If you can't explain it, that's probably where the problem is.</li>
+<li class="fragment">This works ridiculously well.</li>
+<li class="fragment">You should also be able to tell your duck exactly what is stored in each variable at all times.</li>
+</ul></li>
+<li class="fragment">Check individual elements of your code on small data such that you know what the right answer <em>should</em> be.</li>
+</ul>
+</section>
+<section id="a-note-on-the-bootstrap" class="slide level1">
+<h1>A note on the Bootstrap</h1>
+<ul>
+<li class="fragment">I'm going to talk about the non-parametric bootstrap (which Cyrus talked about)</li>
+<li class="fragment">The key to this is that we don't want to make an assumption about what our data looks like.</li>
+<li class="fragment">So what looks more like our data than anything else we know of?</li>
+<li class="fragment">Our data.</li>
+<li class="fragment">We sample repeatedly <em>from the empirical distribution of our data</em>.</li>
+<li class="fragment">This is why we resample with replacement. Each draw is an independent draw from the empirical distribution of the data we've collected.</li>
+</ul>
+</section>
+<section id="advanced-bootstrapping" class="slide level1">
+<h1>Advanced bootstrapping</h1>
+<ul>
+<li class="fragment">There are more advanced uses of the bootstrap in the construction of estimators. One example is in so called <em>bias reduction</em>. (digression ahead)</li>
+<li class="fragment">If <span class="math">\(b\)</span> is the bias of an estimator <span class="math">\(\hat{\theta}\)</span> of <span class="math">\(\theta\)</span>, we could obtain an unbiased estimator by subtracting <span class="math">\(b\)</span> from <span class="math">\(\hat{\theta}\)</span>.</li>
+<li class="fragment">Bootstrapping let's us estimate <span class="math">\(b\)</span> with <span class="math">\({1\over B} \sum_{i=1}^B   [\hat{\theta_i^b} - \hat{\theta}]\)</span> where <span class="math">\(\hat{\theta_i^b}\)</span> is an estimate after resampling from the empirical distribution.</li>
+<li class="fragment">Not guaranteed to do better, but it's an interesting approach.</li>
+<li class="fragment">Talk to me for more info.</li>
+</ul>
+</section>
+<section id="bootstrap-example" class="slide level1">
+<h1>Bootstrap Example</h1>
+<ul>
+<li class="fragment">We're going to start with Lalonde again.</li>
+<li class="fragment">We will do the IPW procedure as before, but this time get the &quot;right&quot; SEs.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(MatchIt)
+<span class="kw">data</span>(lalonde, <span class="dt">package =</span> <span class="st">&quot;MatchIt&quot;</span>)
+p.model &lt;-<span class="st"> </span><span class="kw">glm</span>(treat ~<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>re74 +<span class="st"> </span>
+<span class="st">    </span>re75, lalonde, <span class="dt">family =</span> <span class="st">&quot;binomial&quot;</span>)
+pscore &lt;-<span class="st"> </span><span class="kw">predict</span>(p.model, <span class="dt">type =</span> <span class="st">&quot;response&quot;</span>)
+ipw &lt;-<span class="st"> </span>lalonde$treat +<span class="st"> </span>(<span class="dv">1</span> -<span class="st"> </span>lalonde$treat)/(<span class="dv">1</span> -<span class="st"> </span>pscore)
+ipw.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span class="st"> </span>treat +<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>
+<span class="st">    </span>re74 +<span class="st"> </span>re75, lalonde, <span class="dt">weights =</span> ipw)
+N &lt;-<span class="st"> </span><span class="kw">nrow</span>(lalonde)
+bootstrapLalonde &lt;-<span class="st"> </span>function(<span class="dt">out =</span> <span class="st">&quot;coef&quot;</span>) {
+    b.samp &lt;-<span class="st"> </span><span class="kw">sample</span>(N, <span class="dt">replace =</span> <span class="ot">TRUE</span>)
+    b.p.model &lt;-<span class="st"> </span><span class="kw">glm</span>(treat ~<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>
+<span class="st">        </span>re74 +<span class="st"> </span>re75, lalonde[b.samp, ], <span class="dt">family =</span> <span class="st">&quot;binomial&quot;</span>)
+    b.pscore &lt;-<span class="st"> </span><span class="kw">predict</span>(b.p.model, <span class="dt">type =</span> <span class="st">&quot;response&quot;</span>)
+    b.ipw &lt;-<span class="st"> </span>lalonde$treat[b.samp] +<span class="st"> </span>(<span class="dv">1</span> -<span class="st"> </span>lalonde$treat[b.samp])/(<span class="dv">1</span> -<span class="st"> </span>b.pscore)
+    b.ipw.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(re78 ~<span class="st"> </span>treat +<span class="st"> </span>age +<span class="st"> </span>educ +<span class="st"> </span>black +<span class="st"> </span>hispan +<span class="st"> </span>married +<span class="st"> </span>nodegree +<span class="st"> </span>
+<span class="st">        </span>re74 +<span class="st"> </span>re75, lalonde[b.samp, ], <span class="dt">weights =</span> b.ipw)
+    if (out ==<span class="st"> &quot;coef&quot;</span>) {
+        out &lt;-<span class="st"> </span><span class="kw">coef</span>(b.ipw.mod)[<span class="dv">2</span>]
+    } else if (out ==<span class="st"> &quot;t&quot;</span>) {
+        out &lt;-<span class="st"> </span><span class="kw">summary</span>(b.ipw.mod)$coefficients[<span class="dv">2</span>, <span class="dv">3</span>]
+    } else {
+        <span class="kw">stop</span>(<span class="st">&quot;Unknown output statistic.&quot;</span>)
+    }
+    out
+}
+b.samps.coef &lt;-<span class="st"> </span><span class="kw">replicate</span>(<span class="dv">500</span>, <span class="kw">bootstrapLalonde</span>())
+b.samps.t &lt;-<span class="st"> </span><span class="kw">replicate</span>(<span class="dv">500</span>, <span class="kw">bootstrapLalonde</span>(<span class="dt">out =</span> <span class="st">&quot;t&quot;</span>))</code></pre>
+</div>
+</section>
+<section id="check-bootstrap-output" class="slide level1">
+<h1>Check bootstrap output</h1>
+<ul>
+<li class="fragment">We should expect a larger SE since we're including additional first stage variation.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">c</span>(<span class="kw">coef</span>(ipw.mod)[<span class="dv">2</span>], <span class="kw">mean</span>(b.samps.coef))</code></pre>
+<pre><code>## treat       
+##  1332  1389</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">c</span>(<span class="kw">summary</span>(ipw.mod)$coefficients[<span class="dv">2</span>, <span class="dv">2</span>], <span class="kw">sd</span>(b.samps.coef))</code></pre>
+<pre><code>## [1] 697.9 767.1</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">c</span>(<span class="kw">summary</span>(ipw.mod)$coefficients[<span class="dv">2</span>, <span class="dv">3</span>], <span class="kw">mean</span>(b.samps.t))</code></pre>
+<pre><code>## [1] 1.909 1.904</code></pre>
+</div>
+<div class="fragment">
+<ul>
+<li class="fragment">How do we reconcile this? Is it a problem?</li>
+</ul>
+</div>
+</section>
+<section id="cluster-bootstrapping" class="slide level1">
+<h1>Cluster Bootstrapping</h1>
+<ul>
+<li class="fragment">When treatment was assigned with clustering, our bootstrap must account for that.</li>
+<li class="fragment">So we adjust the resampling procedure.</li>
+<li class="fragment">We now move away from Lalonde, and we'll look at a replication of (and extension to) the Green, Vavreck (2008) PA paper which examines the performance of cluster robust SEs in an experimental context.</li>
+<li class="fragment">Treatment was a GOTV advertising campaign</li>
+<li class="fragment">Outcome was 2004 turnout.</li>
+<li class="fragment">23869 individuals 19 or under in 85 clusters.</li>
+</ul>
+</section>
+<section id="read-in-gv-data" class="slide level1">
+<h1>Read in G/V data</h1>
+<pre class="sourceCode r"><code class="sourceCode r">dat &lt;-<span class="st"> </span><span class="kw">read.csv</span>(<span class="dt">file =</span> <span class="st">&quot;GreenVavreck_PolAnalysis_2008_PA_Replication.csv&quot;</span>, <span class="dt">head =</span> <span class="ot">TRUE</span>, 
+    <span class="dt">sep =</span> <span class="st">&quot;,&quot;</span>)
+f1 &lt;-<span class="st"> </span><span class="kw">paste</span>(<span class="st">&quot;tout1 ~ treat + &quot;</span>, <span class="kw">paste</span>(<span class="kw">names</span>(dat)[<span class="dv">11</span>:<span class="dv">49</span>], <span class="dt">collapse =</span> <span class="st">&quot; + &quot;</span>))
+ols1 &lt;-<span class="st"> </span><span class="kw">lm</span>(f1, dat)
+<span class="kw">summary</span>(ols1)$coefficients[<span class="dv">2</span>, ]</code></pre>
+<pre><code>##   Estimate Std. Error    t value   Pr(&gt;|t|) 
+##  0.0241120  0.0070322  3.4288223  0.0006072</code></pre>
+</section>
+<section id="try-cluster-robust-ses" class="slide level1">
+<h1>Try Cluster Robust SEs</h1>
+<ul>
+<li class="fragment"><span class="math">\({H \over H-1} { N-1 \over N -K} (X&#39;X)^{-1} \left(\sum_{h=1}^H X_h&#39; \hat{e}_h \hat{e}_h&#39; X_h\right)(X&#39;X)^{-1}\)</span></li>
+<li class="fragment">The &quot;estimating function&quot; evaluates <span class="math">\((Y_i-X_i&#39;\beta)X_i\)</span> that is, <span class="math">\(\hat{e}_i X_i\)</span>. It is <span class="math">\(N \times p\)</span>.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">robust.se &lt;-<span class="st"> </span>function(model, cluster) {
+    <span class="kw">require</span>(sandwich)
+    <span class="kw">require</span>(lmtest)
+    M &lt;-<span class="st"> </span><span class="kw">length</span>(<span class="kw">unique</span>(cluster))
+    N &lt;-<span class="st"> </span><span class="kw">length</span>(cluster)
+    K &lt;-<span class="st"> </span>model$rank
+    dfc &lt;-<span class="st"> </span>(M/(M -<span class="st"> </span><span class="dv">1</span>)) *<span class="st"> </span>((N -<span class="st"> </span><span class="dv">1</span>)/(N -<span class="st"> </span>K))
+    uj &lt;-<span class="st"> </span><span class="kw">apply</span>(<span class="kw">estfun</span>(model), <span class="dv">2</span>, function(x) <span class="kw">tapply</span>(x, cluster, sum))
+    rcse.cov &lt;-<span class="st"> </span>dfc *<span class="st"> </span><span class="kw">sandwich</span>(model, <span class="dt">meat =</span> <span class="kw">crossprod</span>(uj)/N)
+    rcse.se &lt;-<span class="st"> </span><span class="kw">coeftest</span>(model, rcse.cov)
+    <span class="kw">return</span>(<span class="kw">list</span>(rcse.cov, rcse.se))
+}
+<span class="kw">robust.se</span>(ols1, dat$syscode)[[<span class="dv">2</span>]][<span class="dv">2</span>, ]</code></pre>
+<pre><code>## Note: no visible binding for global variable &#39;lmtest&#39;</code></pre>
+<pre><code>##   Estimate Std. Error    t value   Pr(&gt;|t|) 
+##    0.02411    0.01405    1.71577    0.08622</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">ses &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dt">model =</span> <span class="kw">summary</span>(ols1)$coefficients[<span class="dv">2</span>, <span class="dv">2</span>], <span class="dt">cl.robust =</span> <span class="kw">robust.se</span>(ols1, 
+    dat$syscode)[[<span class="dv">2</span>]][<span class="dv">2</span>, <span class="dv">2</span>])</code></pre>
+</div>
+</section>
+<section id="bootstrap-ses" class="slide level1">
+<h1>Bootstrap SEs</h1>
+<ul>
+<li class="fragment">We should expect the cluster robust sandwich estimator to do pretty well here</li>
+<li class="fragment">We have an actual experiment, and thus pretty plausible &quot;true&quot; clustering.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">H &lt;-<span class="st"> </span><span class="kw">length</span>(<span class="kw">unique</span>(dat$syscode))
+clus &lt;-<span class="st"> </span><span class="kw">unique</span>(dat$syscode)
+obs.in.clus &lt;-<span class="st"> </span><span class="kw">sapply</span>(clus, function(h) <span class="kw">which</span>(dat$syscode ==<span class="st"> </span>h))
+clus &lt;-<span class="st"> </span><span class="kw">as.character</span>(clus)
+<span class="kw">names</span>(obs.in.clus) &lt;-<span class="st"> </span>clus
+pairsBoot.GV &lt;-<span class="st"> </span>function(<span class="dt">out =</span> <span class="st">&quot;coef&quot;</span>) {
+    b.samp &lt;-<span class="st"> </span><span class="kw">sample</span>(clus, <span class="dt">replace =</span> <span class="ot">TRUE</span>)
+    b.obs &lt;-<span class="st"> </span><span class="kw">unlist</span>(<span class="kw">sapply</span>(b.samp, function(h) obs.in.clus[[h]]))
+    b.ols &lt;-<span class="st"> </span><span class="kw">lm</span>(f1, dat[b.obs, ])
+    if (out ==<span class="st"> &quot;coef&quot;</span>) {
+        out &lt;-<span class="st"> </span><span class="kw">coef</span>(b.ols)[<span class="dv">2</span>]
+    } else if (out ==<span class="st"> &quot;t&quot;</span>) {
+        out &lt;-<span class="st"> </span><span class="kw">summary</span>(b.ols)$coefficients[<span class="dv">2</span>, <span class="dv">3</span>]
+    } else {
+        <span class="kw">stop</span>(<span class="st">&quot;Unknown output type.&quot;</span>)
+    }
+    out
+}
+b.samps.coef &lt;-<span class="st"> </span><span class="kw">replicate</span>(<span class="dv">500</span>, <span class="kw">pairsBoot.GV</span>())
+<span class="co"># b.samps.t &lt;- replicate(500, pairsBoot.GV(coef=&#39;t&#39;))</span>
+ses &lt;-<span class="st"> </span><span class="kw">c</span>(ses, <span class="dt">pairs.boot =</span> <span class="kw">sd</span>(b.samps.coef))
+<span class="kw">round</span>(ses, <span class="dv">3</span>)</code></pre>
+<pre><code>##      model  cl.robust pairs.boot 
+##      0.007      0.014      0.024</code></pre>
+</div>
+</section>
+<section id="wild-cluster-bootstrap" class="slide level1">
+<h1>Wild Cluster Bootstrap</h1>
+<ul>
+<li class="fragment">I'm not showing the residual cluster bootstrap</li>
+<li class="fragment">Clusters are not of equal size in this data</li>
+<li class="fragment">(And its probably rare that they will be)</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">ols.fit &lt;-<span class="st"> </span><span class="kw">predict</span>(ols1)
+ols.res &lt;-<span class="st"> </span><span class="kw">residuals</span>(ols1)
+dat$syscode &lt;-<span class="st"> </span><span class="kw">as.character</span>(dat$syscode)
+f.b &lt;-<span class="st"> </span><span class="kw">paste</span>(<span class="st">&quot;newY ~ treat + &quot;</span>, <span class="kw">paste</span>(<span class="kw">names</span>(dat)[<span class="dv">11</span>:<span class="dv">49</span>], <span class="dt">collapse =</span> <span class="st">&quot; + &quot;</span>))
+wildBoot.GV &lt;-<span class="st"> </span>function(<span class="dt">out =</span> <span class="st">&quot;coef&quot;</span>) {
+    toflip &lt;-<span class="st"> </span><span class="kw">rbinom</span>(H, <span class="dv">1</span>, <span class="fl">0.5</span>)
+    <span class="kw">names</span>(toflip) &lt;-<span class="st"> </span>clus
+    toflip &lt;-<span class="st"> </span><span class="kw">names</span>(toflip)[toflip ==<span class="st"> </span><span class="dv">1</span>]
+    b.resid &lt;-<span class="st"> </span><span class="kw">ifelse</span>(dat$syscode %in%<span class="st"> </span>toflip, -ols.res, ols.res)
+    newY &lt;-<span class="st"> </span>ols.fit +<span class="st"> </span>b.resid
+    b.ols &lt;-<span class="st"> </span><span class="kw">lm</span>(f.b, <span class="kw">cbind</span>(newY, dat))
+    if (out ==<span class="st"> &quot;coef&quot;</span>) {
+        out &lt;-<span class="st"> </span><span class="kw">coef</span>(b.ols)[<span class="dv">2</span>]
+    } else if (out ==<span class="st"> &quot;t&quot;</span>) {
+        out &lt;-<span class="st"> </span><span class="kw">summary</span>(b.ols)$coefficients[<span class="dv">2</span>, <span class="dv">3</span>]
+    } else {
+        <span class="kw">stop</span>(<span class="st">&quot;Unknown output type.&quot;</span>)
+    }
+    out
+}
+b.samps.coef &lt;-<span class="st"> </span><span class="kw">replicate</span>(<span class="dv">500</span>, <span class="kw">wildBoot.GV</span>())
+ses &lt;-<span class="st"> </span><span class="kw">c</span>(ses, <span class="dt">wild.boot =</span> <span class="kw">sd</span>(b.samps.coef))
+<span class="kw">round</span>(ses, <span class="dv">3</span>)</code></pre>
+<pre><code>##      model  cl.robust pairs.boot  wild.boot 
+##      0.007      0.014      0.024      0.015</code></pre>
+</div>
+</section>
+<section id="instrumental-variables" class="slide level1">
+<h1>Instrumental Variables</h1>
+<ul>
+<li class="fragment"><span class="math">\(\rho = {\text{Cov}(Y_i,Z_i) \over \text{Cov}(S_i,Z_i)} = { { \text{Cov}(Y_i,Z_i) \over \text{Var}(Z_i)} \over {\text{Cov}(S_i,Z_i) \over \text{Var}(Z_i)}} = {\text{Reduced form} \over \text{First stage}}\)</span></li>
+<li class="fragment">If we have a perfect instrument, this will be unbiased.</li>
+<li class="fragment">But bias is a function of both violation of exclusion restriction and of strength of first stage.</li>
+<li class="fragment">2SLS has finite sample bias. (Cyrus showed this, but didn't dwell on it)</li>
+<li class="fragment">In particular, it <a href="http://econ.lse.ac.uk/staff/spischke/ec533/Weak%20IV.pdf">can be shown</a> that this bias &quot;is&quot;:<br /><span class="math">\({\sigma_{\eta \xi} \over \sigma_{\xi}^2}{1 \over F + 1}\)</span><br />where <span class="math">\(\eta\)</span> is the error in the structural model and <span class="math">\(\xi\)</span> is the error in the first stage.</li>
+<li class="fragment">With an irrelevant instrument (<span class="math">\(F=0\)</span>), the bias is equal to that of OLS (regression of <span class="math">\(Y\)</span> on <span class="math">\(X\)</span>).</li>
+<li class="fragment">There are some bias corrections for this, we might talk about this next week.</li>
+</ul>
+</section>
+<section id="setup-iv-example" class="slide level1">
+<h1>Setup IV example</h1>
+<ul>
+<li class="fragment">For our example with IV, we will look at AJR (2001) - Colonial Origins of Comparative Development</li>
+<li class="fragment">Treatment is average protection from expropriation</li>
+<li class="fragment">Exogenous covariates are dummies for British/French colonial presence</li>
+<li class="fragment">Instrument is settler mortality</li>
+<li class="fragment">Outcome is log(GDP) in 1995</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(foreign)
+dat &lt;-<span class="st"> </span><span class="kw">read.dta</span>(<span class="st">&quot;maketable5.dta&quot;</span>)
+dat &lt;-<span class="st"> </span><span class="kw">subset</span>(dat, baseco ==<span class="st"> </span><span class="dv">1</span>)</code></pre>
+</div>
+</section>
+<section id="estimate-iv-via-2sls" class="slide level1">
+<h1>Estimate IV via 2SLS</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(AER)
+first &lt;-<span class="st"> </span><span class="kw">lm</span>(avexpr ~<span class="st"> </span>logem4 +<span class="st"> </span>f_brit +<span class="st"> </span>f_french, dat)
+iv2sls &lt;-<span class="st"> </span><span class="kw">ivreg</span>(logpgp95 ~<span class="st"> </span>avexpr +<span class="st"> </span>f_brit +<span class="st"> </span>f_french, ~logem4 +<span class="st"> </span>f_brit +<span class="st"> </span>f_french, 
+    dat)
+<span class="kw">require</span>(car)
+<span class="kw">linearHypothesis</span>(first, <span class="st">&quot;logem4&quot;</span>, <span class="dt">test =</span> <span class="st">&quot;F&quot;</span>)</code></pre>
+<pre><code>## Linear hypothesis test
+## 
+## Hypothesis:
+## logem4 = 0
+## 
+## Model 1: restricted model
+## Model 2: avexpr ~ logem4 + f_brit + f_french
+## 
+##   Res.Df RSS Df Sum of Sq    F  Pr(&gt;F)    
+## 1     61 117                              
+## 2     60  94  1        23 14.7 0.00031 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+</section>
+<section id="examine-output" class="slide level1">
+<h1>Examine Output</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(iv2sls)</code></pre>
+<pre><code>## 
+## Call:
+## ivreg(formula = logpgp95 ~ avexpr + f_brit + f_french | logem4 + 
+##     f_brit + f_french, data = dat)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -2.2716 -0.7488  0.0728  0.7544  2.4004 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)    1.372      1.388    0.99    0.327    
+## avexpr         1.078      0.218    4.95  6.3e-06 ***
+## f_brit        -0.778      0.354   -2.20    0.032 *  
+## f_french      -0.117      0.355   -0.33    0.743    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 1.04 on 60 degrees of freedom
+## Multiple R-Squared: 0.0483,  Adjusted R-squared: 0.000748 
+## Wald test: 10.1 on 3 and 60 DF,  p-value: 1.82e-05</code></pre>
+</section>
+<section id="sensitivity-analysis" class="slide level1">
+<h1>Sensitivity Analysis</h1>
+<ul>
+<li class="fragment">Conley, Hansen and Rossi (2012)</li>
+<li class="fragment">Suppose that the exclusion restriction does NOT hold, and there exists a direct effect from the instrument to the outcome.</li>
+<li class="fragment">That is, the structural model is:<br /><span class="math">\(Y = X\beta + Z\gamma + \epsilon\)</span></li>
+<li class="fragment">If <span class="math">\(\gamma\)</span> is zero, the exclusion restriction holds (we're in a structural framework)</li>
+<li class="fragment">We can assume a particular value of <span class="math">\(\gamma\)</span>, take <span class="math">\(\tilde{Y} = Y - Z\gamma\)</span> and estimate our model, gaining an estimate of <span class="math">\(\beta\)</span>.</li>
+<li class="fragment">This defines a sensitivity analysis on the exclusion restriction.</li>
+<li class="fragment">Subject to an assumption about the support of <span class="math">\(\gamma\)</span>, they suggest estimating in a grid over this domain, and then taking the union of the confidence intervals for each value of <span class="math">\(\gamma\)</span> as the combined confidence interval (which will cover).</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">gamma &lt;-<span class="st"> </span><span class="kw">seq</span>(-<span class="dv">1</span>, <span class="dv">1</span>, <span class="fl">0.25</span>)
+ExclSens &lt;-<span class="st"> </span>function(g) {
+    newY &lt;-<span class="st"> </span>dat$logpgp95 -<span class="st"> </span>g *<span class="st"> </span>dat$logem4
+    <span class="kw">coef</span>(<span class="kw">ivreg</span>(newY ~<span class="st"> </span>avexpr +<span class="st"> </span>f_brit +<span class="st"> </span>f_french, ~logem4 +<span class="st"> </span>f_brit +<span class="st"> </span>f_french, 
+        <span class="kw">cbind</span>(dat, newY)))[<span class="dv">2</span>]
+}
+sens.coefs &lt;-<span class="st"> </span><span class="kw">sapply</span>(gamma, ExclSens)
+<span class="kw">names</span>(sens.coefs) &lt;-<span class="st"> </span>gamma
+<span class="kw">round</span>(sens.coefs, <span class="dv">3</span>)</code></pre>
+<pre><code>##     -1  -0.75   -0.5  -0.25      0   0.25    0.5   0.75      1 
+## -0.793 -0.326  0.142  0.610  1.078  1.546  2.013  2.481  2.949</code></pre>
+</div>
+</section>
+    </div>
+  </div>
+
+  <script src="reveal.js/lib/js/head.min.js"></script>
+  <script src="reveal.js/js/reveal.min.js"></script>
+
+  <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        theme: 'simple', // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          { src: 'reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'reveal.js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+          { src: 'reveal.js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } },
+//          { src: 'reveal.js/plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; }, }
+//          { src: 'reveal.js/plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+]});
+    </script>
+  </body>
+</html>
