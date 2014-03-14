@@ -115,18 +115,20 @@ sweeplm <- function(formula,dat,ind) {
   newd <- newd[ok,]
   ind <- ind[ok]
   newd <- apply(newd,2,function(x) unlist(tapply(x,ind,function(z) z-mean(z,na.rm=TRUE))))
+  ind <- sort(ind)
   list(lm(newd[,1]~newd[,-1]-1,as.data.frame(newd)),newd,as.character(ind))
 }
 ```
 
 # Robust SEs again
 ```{r 7-rob-se-fn}
-robust.se <- function(model, cluster){
+robust.se <- function(model, cluster,df.fix=FALSE){
   require(sandwich)
   require(lmtest)
   M <- length(unique(cluster))
   N <- length(cluster)           
-  K <- model$rank
+# The df.fix assumes the swept FEs were the clusters
+  K <- model$rank + ifelse(df.fix,M,0)
   dfc <- (M/(M - 1)) * ((N - 1)/(N - K))
   uj  <- apply(estfun(model), 2, function(x) tapply(x, cluster, sum));
   rcse.cov <- dfc * sandwich(model, meat. = crossprod(uj)/N)
@@ -163,9 +165,10 @@ rbind(dummy.time,sweep.time)
 # FE Results
 ```{r 7-fe-results}
 base.est <- robust.se(base.lm,dat$stcounty[-base.lm$na.action])[2,]
-simple.est <- robust.se(simple.fe,dat$stcounty[-simple.fe$na.action])[2,]
-simple.swept.est <- robust.se(simple.swept.fe[[1]],simple.swept.fe[[3]])[1,]
-swept.est <- robust.se(swept.fe[[1]],swept.fe[[3]])[1,]
+simple.est <- robust.se(simple.fe,dat$reg5year[-simple.fe$na.action])[2,]
+simple.swept.est <-
+  robust.se(simple.swept.fe[[1]],simple.swept.fe[[3]],df.fix=TRUE)[1,]
+swept.est <- robust.se(swept.fe[[1]],swept.fe[[3]],df.fix=TRUE)[1,]
 all.ests<-rbind(base.est,simple.est,simple.swept.est,swept.est)
 rownames(all.ests)<-c("base","simple","simple.swept","full.swept")
 all.ests
@@ -193,10 +196,11 @@ cubic.reg.trend <- sweeplm(turnout~yearsoftv+advote+factor(regions5)*poly(trend,
 # Results with Trends
 - We'll come back to this example next recitation.
 ```{r 7-trend-results}
-linear.est <- robust.se(linear.trend[[1]],linear.trend[[3]])[1,]
-linear.reg.est <- robust.se(linear.reg.trend[[1]],linear.reg.trend[[3]])[1,]
-cubic.est <- robust.se(cubic.trend[[1]],cubic.trend[[3]])[1,]
-cubic.reg.est <- robust.se(cubic.reg.trend[[1]],cubic.trend[[3]])[1,]
+linear.est <- robust.se(linear.trend[[1]],linear.trend[[3]],df.fix=TRUE)[1,]
+linear.reg.est <-
+  robust.se(linear.reg.trend[[1]],linear.reg.trend[[3]],df.fix=TRUE)[1,]
+cubic.est <- robust.se(cubic.trend[[1]],cubic.trend[[3]],df.fix=TRUE)[1,]
+cubic.reg.est <- robust.se(cubic.reg.trend[[1]],cubic.trend[[3]],df.fix=TRUE)[1,]
 all.ests<-rbind(all.ests,linear.est,linear.reg.est,cubic.est,cubic.reg.est)
 rownames(all.ests)[5:8] <- c("linear","linear.region","cubic","cubic.region")
 all.ests
@@ -210,7 +214,7 @@ all.ests
 ```{r 7-splines}
 require(splines)
 spline.trend <- sweeplm(turnout~yearsoftv+advote+ns(trend,3),dat=dat,ind=dat$stcounty)
-spline.est <- robust.se(spline.trend[[1]],spline.trend[[3]])[1,]
+spline.est <- robust.se(spline.trend[[1]],spline.trend[[3]],df.fix=TRUE)[1,]
 all.ests<-rbind(all.ests,spline.est)
 rownames(all.ests)[9] <- "splines"
 all.ests
