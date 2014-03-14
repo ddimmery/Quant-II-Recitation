@@ -1,0 +1,217 @@
+% Time Trends and FEs
+% Drew Dimmery <drewd@nyu.edu>
+% March 14, 2014
+
+# Structure
+- Quick Homework Talk
+- Abadie's $\kappa$
+- Fixed effects
+- Time Trends
+
+# On CIA
+- There seemed to be some confusion on CIA.
+- The "traditional" method of choosing a covariate set is something like:
+    - Find the most significant or strongest predictors that you have
+    - Include those
+    - Don't include the weak predictors
+    - Include things that other studies have included
+- This isn't what we want, though.
+- CIA is a story about conditional randomization.
+- You don't justify based on raw correlations.
+- Because independence implies zero correlation
+- But not vice versa
+- Instead, you should think about where you might be seeing random variation,
+  and then adjust your conditioning strategy to ensure that you only work with
+  that variation.
+
+# More IV Stuff
+- We're going to be looking at [Ananat
+  (2011)](http://www.aeaweb.org/articles.php?doi=10.1257/app.3.2.34) in AEJ
+- This study looks at the effect of racial segregation on economic outcomes.
+- Outcome: Poverty rate & Inequality (Gini index)
+- Treatment: Segregation
+- Instrument: "railroad division index"
+- Main covariate of note: railroad length in a town
+- I'm dichotomizing treatment and instrument for simplicity.
+- And my outcomes are for the Black subsample
+
+. . .
+
+```{r 7-iv-setup}
+require(foreign)
+d<-read.dta("aej_maindata.dta")
+d$herf_b<-with(d,ifelse(herf >= quantile(herf,.5),1,0))
+d$dism1990_b<-with(d,ifelse(dism1990 >= quantile(dism1990,.5),1,0))
+first.stage <- lm(dism1990~herf+lenper,d)
+first.stage.b <- lm(dism1990_b~herf_b+lenper,d)
+require(AER)
+gini.iv <- ivreg(lngini_b~dism1990+lenper,~herf+lenper,d)
+gini.iv.b <- ivreg(lngini_b~dism1990_b+lenper,~herf_b+lenper,d)
+pov.iv <- ivreg(povrate_b~dism1990+lenper,~herf+lenper,d)
+pov.iv.b <- ivreg(povrate_b~dism1990_b+lenper,~herf_b+lenper,d)
+```
+
+# Base Results
+```{r 7-1st-st}
+round(summary(first.stage)$coefficients[2,],3)
+round(summary(first.stage.b)$coefficients[2,],3)
+round(summary(gini.iv)$coefficients[2,],3)
+round(summary(gini.iv.b)$coefficients[2,],3)
+round(summary(pov.iv)$coefficients[2,],3)
+round(summary(pov.iv.b)$coefficients[2,],3)
+```
+
+# Abadie's $\kappa$
+- Recall from the lecture that we can use a weighting scheme to calculate
+  statistics on the compliant population.
+- $E[g(Y,D,X)|D_1 > D_0] = {1 \over p(D_1>D_0)} E[\kappa g(Y,D,X)]$
+- $\kappa = 1 - {D_i (1-Z_i) \over p(Z_i =0|X)} - {(1-D_i)Z_i \over p(Z_i =1|X)}$
+- $E[\kappa|X] = E[D_1 -D_0|X] = E[D|X,Z=1] - E[D|X,Z=0]$
+- Take $w_i = {\kappa_i \over E[D_{1}-D_{0}|X_i]}$
+- Use this in calculating any interesting statistics (means, variance, etc)
+- This let's you explore the units composing your LATE.
+
+. . .
+
+```{r 7-kappa}
+getKappaWt<-function(D,Z) {
+  pz <- mean(Z)
+  pcomp <- mean(D[Z==1]) - mean(D[Z==0])
+  if(pcomp < 0) stop("Assuming p(D|Z) > .5")
+  kappa <- 1 - D*(1-Z)/(1-pz) - (1-D)*Z/pz
+  # Note that pcomp = mean(kappa)
+  kappa / pcomp
+}
+w <- with(d,getKappaWt(D=dism1990_b,Z=herf_b))
+varlist <- c("closeness","area1910","ctyliterate1920","hsdrop_b","manshr","ctymanuf_wkrs1920","ngov62")
+samp.stats<-sapply(varlist,function(v) mean(d[,v],na.rm=TRUE))
+comp.stats<-sapply(varlist,function(v) weighted.mean(d[,v],w,na.rm=TRUE))
+```
+
+# Examine Complier Statistics
+```{r 7-stats}
+summary(w)
+rbind(sample=samp.stats,compliers=comp.stats)
+```
+
+# New Example Data
+- Now we're going to look at [Gentzkow (2006)](http://faculty.chicagobooth.edu/matthew.gentzkow/research/tv_turnout.pdf)
+- This study examined how the introduction of television had an effect on voter turnout
+- Outcome: turnout in national elections
+- Treatment: Years since the introduction of TV
+- Identification comes from the idea that there are random variations in the timing of this introduction.
+- It uses local variations in this introduction.
+- Where locality is defined as a *within* effect.
+
+# Rough and Dirty Sweeping Function
+- `plm` also does this, but I like to be able to use (most of) the functions written for `lm` objects.
+- This assumes that you'll be clustering at the same level as your swept effects.
+```{r 7-sweep-fn}
+sweeplm <- function(formula,dat,ind) {
+  newd <- model.matrix(formula,model.frame(formula,dat,na.action=na.pass))
+  newd <- newd[,-1]
+  newd <- cbind(dat[,as.character(formula[2])],newd)
+  ok <- complete.cases(newd)
+  newd <- newd[ok,]
+  ind <- ind[ok]
+  newd <- apply(newd,2,function(x) unlist(tapply(x,ind,function(z) z-mean(z,na.rm=TRUE))))
+  list(lm(newd[,1]~newd[,-1]-1,as.data.frame(newd)),newd,as.character(ind))
+}
+```
+
+# Robust SEs again
+```{r 7-rob-se-fn}
+robust.se <- function(model, cluster){
+  require(sandwich)
+  require(lmtest)
+  M <- length(unique(cluster))
+  N <- length(cluster)           
+  K <- model$rank
+  dfc <- (M/(M - 1)) * ((N - 1)/(N - K))
+  uj  <- apply(estfun(model), 2, function(x) tapply(x, cluster, sum));
+  rcse.cov <- dfc * sandwich(model, meat. = crossprod(uj)/N)
+  rcse.se <- coeftest(model, rcse.cov)
+  return(rcse.se)
+}
+```
+
+# Fixed Effects
+- Let's demonstrate some of the benefits of sweeping out fixed effects.
+- Algebraic equivalence between these various methods.
+    - De-mean variables by group
+    - Apply the sweep matrix:  
+        - $\dot{Q} = (I_T - {1\over T}\iota_T\iota_T') \otimes I_N$
+        - $\beta = (X_{tv}' \dot{Q} X^{tv})^{-1} X_{tv}' \dot{Q} Y$
+    - Just throw the dummies in the regression.
+
+. . .
+
+```{r 7-gentzkow}
+dat <- read.csv("gentzkow_fixed.csv")
+dat$reg5year <- paste0(dat$regions5,dat$year)
+dat <- subset(dat,year>=1930)
+base.lm <- lm(turnout~yearsoftv+advote,dat)
+simple.fe <- lm(turnout~yearsoftv+advote+factor(reg5year),dat)
+dummy.time<-system.time(lm(turnout~yearsoftv+advote+factor(reg5year),dat))
+# all.fe <- lm(turnout~yearsoftv+advote+factor(reg5year)+factor(stcounty),dat)
+simple.swept.fe <- sweeplm(turnout~yearsoftv+advote,dat=dat,ind=dat$reg5year)
+sweep.time<-system.time(sweeplm(turnout~yearsoftv+advote,dat=dat,ind=dat$reg5year))
+swept.fe <- sweeplm(turnout~yearsoftv+advote+factor(reg5year),dat=dat,ind=dat$stcounty)
+rbind(dummy.time,sweep.time)
+```
+
+# FE Results
+```{r 7-fe-results}
+base.est <- robust.se(base.lm,dat$stcounty[-base.lm$na.action])[2,]
+simple.est <- robust.se(simple.fe,dat$stcounty[-simple.fe$na.action])[2,]
+simple.swept.est <- robust.se(simple.swept.fe[[1]],simple.swept.fe[[3]])[1,]
+swept.est <- robust.se(swept.fe[[1]],swept.fe[[3]])[1,]
+all.ests<-rbind(base.est,simple.est,simple.swept.est,swept.est)
+rownames(all.ests)<-c("base","simple","simple.swept","full.swept")
+all.ests
+```
+
+# Time Trends
+- Instead of estimating fixed effects for each region-year, we could impose some structure.
+- What if there is some unobserved process by which the outcome is *increasing* over time.
+- Estimating fixed effects for each year may vastly reduce power (a new parameter for each time period under study)
+- And if we are comfortable assuming this linear relationship with time, then we don't need to lose that power.
+- Of course, we need only assume linearity in parameters, so we can include polynomials in time, too.
+- Remember that you can perfectly interpolate $N$ points with an $N-1$ degree polynomial.
+- Think of it like fitting a polynomial *to the fixed effects*. It's sort of like that.
+
+. . .
+
+```{r 7-trend-est}
+dat$trend <- dat$year-min(dat$year)
+linear.trend <- sweeplm(turnout~yearsoftv+advote+trend,dat=dat,ind=dat$stcounty)
+linear.reg.trend <- sweeplm(turnout~yearsoftv+advote+factor(regions5)*trend,dat=dat,ind=dat$stcounty)
+cubic.trend <- sweeplm(turnout~yearsoftv+advote+poly(trend,3),dat=dat,ind=dat$stcounty)
+cubic.reg.trend <- sweeplm(turnout~yearsoftv+advote+factor(regions5)*poly(trend,3),dat=dat,ind=dat$stcounty)
+```
+
+# Results with Trends
+- We'll come back to this example next recitation.
+```{r 7-trend-results}
+linear.est <- robust.se(linear.trend[[1]],linear.trend[[3]])[1,]
+linear.reg.est <- robust.se(linear.reg.trend[[1]],linear.reg.trend[[3]])[1,]
+cubic.est <- robust.se(cubic.trend[[1]],cubic.trend[[3]])[1,]
+cubic.reg.est <- robust.se(cubic.reg.trend[[1]],cubic.trend[[3]])[1,]
+all.ests<-rbind(all.ests,linear.est,linear.reg.est,cubic.est,cubic.reg.est)
+rownames(all.ests)[5:8] <- c("linear","linear.region","cubic","cubic.region")
+all.ests
+```
+
+# Splines
+- You can also do this with splines, which have a slightly more non-parametric flavor.
+
+. . .
+
+```{r 7-splines}
+require(splines)
+spline.trend <- sweeplm(turnout~yearsoftv+advote+ns(trend,3),dat=dat,ind=dat$stcounty)
+spline.est <- robust.se(spline.trend[[1]],spline.trend[[3]])[1,]
+all.ests<-rbind(all.ests,spline.est)
+rownames(all.ests)[9] <- "splines"
+all.ests
+```
