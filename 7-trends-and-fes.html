@@ -195,17 +195,19 @@ comp.stats &lt;-<span class="st"> </span><span class="kw">sapply</span>(varlist,
     ind &lt;-<span class="st"> </span>ind[ok]
     newd &lt;-<span class="st"> </span><span class="kw">apply</span>(newd, <span class="dv">2</span>, function(x) <span class="kw">unlist</span>(<span class="kw">tapply</span>(x, ind, function(z) z -<span class="st"> </span>
 <span class="st">        </span><span class="kw">mean</span>(z, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>))))
+    ind &lt;-<span class="st"> </span><span class="kw">sort</span>(ind)
     <span class="kw">list</span>(<span class="kw">lm</span>(newd[, <span class="dv">1</span>] ~<span class="st"> </span>newd[, -<span class="dv">1</span>] -<span class="st"> </span><span class="dv">1</span>, <span class="kw">as.data.frame</span>(newd)), newd, <span class="kw">as.character</span>(ind))
 }</code></pre>
 </section>
 <section id="robust-ses-again" class="slide level1">
 <h1>Robust SEs again</h1>
-<pre class="sourceCode r"><code class="sourceCode r">robust.se &lt;-<span class="st"> </span>function(model, cluster) {
+<pre class="sourceCode r"><code class="sourceCode r">robust.se &lt;-<span class="st"> </span>function(model, cluster, <span class="dt">df.fix =</span> <span class="ot">FALSE</span>) {
     <span class="kw">require</span>(sandwich)
     <span class="kw">require</span>(lmtest)
     M &lt;-<span class="st"> </span><span class="kw">length</span>(<span class="kw">unique</span>(cluster))
     N &lt;-<span class="st"> </span><span class="kw">length</span>(cluster)
-    K &lt;-<span class="st"> </span>model$rank
+    <span class="co"># The df.fix assumes the swept FEs were the clusters</span>
+    K &lt;-<span class="st"> </span>model$rank +<span class="st"> </span><span class="kw">ifelse</span>(df.fix, M, <span class="dv">0</span>)
     dfc &lt;-<span class="st"> </span>(M/(M -<span class="st"> </span><span class="dv">1</span>)) *<span class="st"> </span>((N -<span class="st"> </span><span class="dv">1</span>)/(N -<span class="st"> </span>K))
     uj &lt;-<span class="st"> </span><span class="kw">apply</span>(<span class="kw">estfun</span>(model), <span class="dv">2</span>, function(x) <span class="kw">tapply</span>(x, cluster, sum))
     rcse.cov &lt;-<span class="st"> </span>dfc *<span class="st"> </span><span class="kw">sandwich</span>(model, <span class="dt">meat. =</span> <span class="kw">crossprod</span>(uj)/N)
@@ -244,26 +246,26 @@ swept.fe &lt;-<span class="st"> </span><span class="kw">sweeplm</span>(turnout ~
     <span class="dt">ind =</span> dat$stcounty)
 <span class="kw">rbind</span>(dummy.time, sweep.time)</code></pre>
 <pre><code>##            user.self sys.self elapsed user.child sys.child
-## dummy.time     1.025    0.107   1.160          0         0
-## sweep.time     0.257    0.042   0.299          0         0</code></pre>
+## dummy.time     0.882    0.098   0.983          0         0
+## sweep.time     0.642    0.054   0.732          0         0</code></pre>
 </div>
 </section>
 <section id="fe-results" class="slide level1">
 <h1>FE Results</h1>
 <pre class="sourceCode r"><code class="sourceCode r">base.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(base.lm, dat$stcounty[-base.lm$na.action])[<span class="dv">2</span>, ]</code></pre>
 <pre><code>## Note: no visible binding for global variable &#39;lmtest&#39;</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r">simple.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(simple.fe, dat$stcounty[-simple.fe$na.action])[<span class="dv">2</span>, ]
-simple.swept.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(simple.swept.fe[[<span class="dv">1</span>]], simple.swept.fe[[<span class="dv">3</span>]])[<span class="dv">1</span>, 
+<pre class="sourceCode r"><code class="sourceCode r">simple.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(simple.fe, dat$reg5year[-simple.fe$na.action])[<span class="dv">2</span>, ]
+simple.swept.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(simple.swept.fe[[<span class="dv">1</span>]], simple.swept.fe[[<span class="dv">3</span>]], <span class="dt">df.fix =</span> <span class="ot">TRUE</span>)[<span class="dv">1</span>, 
     ]
-swept.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(swept.fe[[<span class="dv">1</span>]], swept.fe[[<span class="dv">3</span>]])[<span class="dv">1</span>, ]
+swept.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(swept.fe[[<span class="dv">1</span>]], swept.fe[[<span class="dv">3</span>]], <span class="dt">df.fix =</span> <span class="ot">TRUE</span>)[<span class="dv">1</span>, ]
 all.ests &lt;-<span class="st"> </span><span class="kw">rbind</span>(base.est, simple.est, simple.swept.est, swept.est)
 <span class="kw">rownames</span>(all.ests) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;base&quot;</span>, <span class="st">&quot;simple&quot;</span>, <span class="st">&quot;simple.swept&quot;</span>, <span class="st">&quot;full.swept&quot;</span>)
 all.ests</code></pre>
 <pre><code>##              Estimate Std. Error t value  Pr(&gt;|t|)
 ## base           0.2475    0.01309  18.915 1.497e-79
-## simple        -0.1729    0.07258  -2.382 1.722e-02
-## simple.swept  -0.1729    0.03230  -5.353 8.706e-08
-## full.swept    -0.3863    0.04987  -7.746 9.619e-15</code></pre>
+## simple        -0.1729    0.05990  -2.886 3.899e-03
+## simple.swept  -0.1729    0.05990  -2.886 3.899e-03
+## full.swept    -0.3863    0.05107  -7.564 3.969e-14</code></pre>
 </section>
 <section id="time-trends" class="slide level1">
 <h1>Time Trends</h1>
@@ -292,23 +294,26 @@ cubic.reg.trend &lt;-<span class="st"> </span><span class="kw">sweeplm</span>(tu
 <ul>
 <li class="fragment">We'll come back to this example next recitation.</li>
 </ul>
-<pre class="sourceCode r"><code class="sourceCode r">linear.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(linear.trend[[<span class="dv">1</span>]], linear.trend[[<span class="dv">3</span>]])[<span class="dv">1</span>, ]
-linear.reg.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(linear.reg.trend[[<span class="dv">1</span>]], linear.reg.trend[[<span class="dv">3</span>]])[<span class="dv">1</span>, 
+<pre class="sourceCode r"><code class="sourceCode r">linear.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(linear.trend[[<span class="dv">1</span>]], linear.trend[[<span class="dv">3</span>]], <span class="dt">df.fix =</span> <span class="ot">TRUE</span>)[<span class="dv">1</span>, 
     ]
-cubic.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(cubic.trend[[<span class="dv">1</span>]], cubic.trend[[<span class="dv">3</span>]])[<span class="dv">1</span>, ]
-cubic.reg.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(cubic.reg.trend[[<span class="dv">1</span>]], cubic.trend[[<span class="dv">3</span>]])[<span class="dv">1</span>, ]
+linear.reg.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(linear.reg.trend[[<span class="dv">1</span>]], linear.reg.trend[[<span class="dv">3</span>]], <span class="dt">df.fix =</span> <span class="ot">TRUE</span>)[<span class="dv">1</span>, 
+    ]
+cubic.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(cubic.trend[[<span class="dv">1</span>]], cubic.trend[[<span class="dv">3</span>]], <span class="dt">df.fix =</span> <span class="ot">TRUE</span>)[<span class="dv">1</span>, 
+    ]
+cubic.reg.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(cubic.reg.trend[[<span class="dv">1</span>]], cubic.trend[[<span class="dv">3</span>]], <span class="dt">df.fix =</span> <span class="ot">TRUE</span>)[<span class="dv">1</span>, 
+    ]
 all.ests &lt;-<span class="st"> </span><span class="kw">rbind</span>(all.ests, linear.est, linear.reg.est, cubic.est, cubic.reg.est)
 <span class="kw">rownames</span>(all.ests)[<span class="dv">5</span>:<span class="dv">8</span>] &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;linear&quot;</span>, <span class="st">&quot;linear.region&quot;</span>, <span class="st">&quot;cubic&quot;</span>, <span class="st">&quot;cubic.region&quot;</span>)
 all.ests</code></pre>
 <pre><code>##               Estimate Std. Error t value  Pr(&gt;|t|)
 ## base            0.2475    0.01309  18.915 1.497e-79
-## simple         -0.1729    0.07258  -2.382 1.722e-02
-## simple.swept   -0.1729    0.03230  -5.353 8.706e-08
-## full.swept     -0.3863    0.04987  -7.746 9.619e-15
-## linear          0.1476    0.01549   9.528 1.658e-21
-## linear.region   0.1985    0.01468  13.524 1.301e-41
-## cubic          -0.2946    0.04486  -6.568 5.151e-11
-## cubic.region   -0.1188    0.04130  -2.877 4.017e-03</code></pre>
+## simple         -0.1729    0.05990  -2.886 3.899e-03
+## simple.swept   -0.1729    0.05990  -2.886 3.899e-03
+## full.swept     -0.3863    0.05107  -7.564 3.969e-14
+## linear          0.1476    0.01587   9.304 1.392e-20
+## linear.region   0.1985    0.01503  13.207 9.192e-40
+## cubic          -0.2946    0.04593  -6.413 1.434e-10
+## cubic.region   -0.1188    0.04229  -2.809 4.966e-03</code></pre>
 </section>
 <section id="splines" class="slide level1">
 <h1>Splines</h1>
@@ -319,20 +324,21 @@ all.ests</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(splines)
 spline.trend &lt;-<span class="st"> </span><span class="kw">sweeplm</span>(turnout ~<span class="st"> </span>yearsoftv +<span class="st"> </span>advote +<span class="st"> </span><span class="kw">ns</span>(trend, <span class="dv">3</span>), <span class="dt">dat =</span> dat, 
     <span class="dt">ind =</span> dat$stcounty)
-spline.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(spline.trend[[<span class="dv">1</span>]], spline.trend[[<span class="dv">3</span>]])[<span class="dv">1</span>, ]
+spline.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(spline.trend[[<span class="dv">1</span>]], spline.trend[[<span class="dv">3</span>]], <span class="dt">df.fix =</span> <span class="ot">TRUE</span>)[<span class="dv">1</span>, 
+    ]
 all.ests &lt;-<span class="st"> </span><span class="kw">rbind</span>(all.ests, spline.est)
 <span class="kw">rownames</span>(all.ests)[<span class="dv">9</span>] &lt;-<span class="st"> &quot;splines&quot;</span>
 all.ests</code></pre>
 <pre><code>##               Estimate Std. Error t value  Pr(&gt;|t|)
 ## base            0.2475    0.01309  18.915 1.497e-79
-## simple         -0.1729    0.07258  -2.382 1.722e-02
-## simple.swept   -0.1729    0.03230  -5.353 8.706e-08
-## full.swept     -0.3863    0.04987  -7.746 9.619e-15
-## linear          0.1476    0.01549   9.528 1.658e-21
-## linear.region   0.1985    0.01468  13.524 1.301e-41
-## cubic          -0.2946    0.04486  -6.568 5.151e-11
-## cubic.region   -0.1188    0.04130  -2.877 4.017e-03
-## splines        -0.4105    0.04833  -8.493 2.058e-17</code></pre>
+## simple         -0.1729    0.05990  -2.886 3.899e-03
+## simple.swept   -0.1729    0.05990  -2.886 3.899e-03
+## full.swept     -0.3863    0.05107  -7.564 3.969e-14
+## linear          0.1476    0.01587   9.304 1.392e-20
+## linear.region   0.1985    0.01503  13.207 9.192e-40
+## cubic          -0.2946    0.04593  -6.413 1.434e-10
+## cubic.region   -0.1188    0.04229  -2.809 4.966e-03
+## splines        -0.4105    0.04949  -8.294 1.122e-16</code></pre>
 </div>
 </section>
     </div>
