@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="Drew Dimmery drewd@nyu.edu" />
+  <meta name="dcterms.date" content="2014-03-14" />
+  <title>Time Trends and FEs</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="reveal.js/css/reveal.min.css"/>
+    <style type="text/css">code{white-space: pre;}</style>
+    <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+    </style>
+    <link rel="stylesheet" href="reveal.js/css/theme/simple.css" id="theme">
+  <link rel="stylesheet" media="print" href="reveal.js/css/print/pdf.css" />
+  <!--[if lt IE 9]>
+  <script src="reveal.js/lib/js/html5shiv.js"></script>
+  <![endif]-->
+    <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section>
+    <h1 class="title">Time Trends and FEs</h1>
+    <h2 class="author">Drew Dimmery <script type="text/javascript">
+<!--
+h='&#110;&#x79;&#x75;&#46;&#x65;&#100;&#x75;';a='&#64;';n='&#100;&#114;&#x65;&#x77;&#100;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#100;&#114;&#x65;&#x77;&#100;&#32;&#x61;&#116;&#32;&#110;&#x79;&#x75;&#32;&#100;&#x6f;&#116;&#32;&#x65;&#100;&#x75;</noscript></h2>
+    <h3 class="date">March 14, 2014</h3>
+</section>
+
+<section id="structure" class="slide level1">
+<h1>Structure</h1>
+<ul>
+<li class="fragment">Quick Homework Talk</li>
+<li class="fragment">Abadie's <span class="math">\(\kappa\)</span></li>
+<li class="fragment">Fixed effects</li>
+<li class="fragment">Time Trends</li>
+</ul>
+</section>
+<section id="on-cia" class="slide level1">
+<h1>On CIA</h1>
+<ul>
+<li class="fragment">There seemed to be some confusion on CIA.</li>
+<li class="fragment">The &quot;traditional&quot; method of choosing a covariate set is something like:
+<ul>
+<li class="fragment">Find the most significant or strongest predictors that you have</li>
+<li class="fragment">Include those</li>
+<li class="fragment">Don't include the weak predictors</li>
+<li class="fragment">Include things that other studies have included</li>
+</ul></li>
+<li class="fragment">This isn't what we want, though.</li>
+<li class="fragment">CIA is a story about conditional randomization.</li>
+<li class="fragment">You don't justify based on raw correlations.</li>
+<li class="fragment">Because independence implies zero correlation</li>
+<li class="fragment">But not vice versa</li>
+<li class="fragment">Instead, you should think about where you might be seeing random variation, and then adjust your conditioning strategy to ensure that you only work with that variation.</li>
+</ul>
+</section>
+<section id="more-iv-stuff" class="slide level1">
+<h1>More IV Stuff</h1>
+<ul>
+<li class="fragment">We're going to be looking at <a href="http://www.aeaweb.org/articles.php?doi=10.1257/app.3.2.34">Ananat (2011)</a> in AEJ</li>
+<li class="fragment">This study looks at the effect of racial segregation on economic outcomes.</li>
+<li class="fragment">Outcome: Poverty rate &amp; Inequality (Gini index)</li>
+<li class="fragment">Treatment: Segregation</li>
+<li class="fragment">Instrument: &quot;railroad division index&quot;</li>
+<li class="fragment">Main covariate of note: railroad length in a town</li>
+<li class="fragment">I'm dichotomizing treatment and instrument for simplicity.</li>
+<li class="fragment">And my outcomes are for the Black subsample</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(foreign)
+d &lt;-<span class="st"> </span><span class="kw">read.dta</span>(<span class="st">&quot;aej_maindata.dta&quot;</span>)
+d$herf_b &lt;-<span class="st"> </span><span class="kw">with</span>(d, <span class="kw">ifelse</span>(herf &gt;=<span class="st"> </span><span class="kw">quantile</span>(herf, <span class="fl">0.5</span>), <span class="dv">1</span>, <span class="dv">0</span>))
+d$dism1990_b &lt;-<span class="st"> </span><span class="kw">with</span>(d, <span class="kw">ifelse</span>(dism1990 &gt;=<span class="st"> </span><span class="kw">quantile</span>(dism1990, <span class="fl">0.5</span>), <span class="dv">1</span>, <span class="dv">0</span>))
+first.stage &lt;-<span class="st"> </span><span class="kw">lm</span>(dism1990 ~<span class="st"> </span>herf +<span class="st"> </span>lenper, d)
+first.stage.b &lt;-<span class="st"> </span><span class="kw">lm</span>(dism1990_b ~<span class="st"> </span>herf_b +<span class="st"> </span>lenper, d)
+<span class="kw">require</span>(AER)
+gini.iv &lt;-<span class="st"> </span><span class="kw">ivreg</span>(lngini_b ~<span class="st"> </span>dism1990 +<span class="st"> </span>lenper, ~herf +<span class="st"> </span>lenper, d)
+gini.iv.b &lt;-<span class="st"> </span><span class="kw">ivreg</span>(lngini_b ~<span class="st"> </span>dism1990_b +<span class="st"> </span>lenper, ~herf_b +<span class="st"> </span>lenper, d)
+pov.iv &lt;-<span class="st"> </span><span class="kw">ivreg</span>(povrate_b ~<span class="st"> </span>dism1990 +<span class="st"> </span>lenper, ~herf +<span class="st"> </span>lenper, d)
+pov.iv.b &lt;-<span class="st"> </span><span class="kw">ivreg</span>(povrate_b ~<span class="st"> </span>dism1990_b +<span class="st"> </span>lenper, ~herf_b +<span class="st"> </span>lenper, d)</code></pre>
+</div>
+</section>
+<section id="base-results" class="slide level1">
+<h1>Base Results</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">round</span>(<span class="kw">summary</span>(first.stage)$coefficients[<span class="dv">2</span>, ], <span class="dv">3</span>)</code></pre>
+<pre><code>##   Estimate Std. Error    t value   Pr(&gt;|t|) 
+##      0.357      0.081      4.395      0.000</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">round</span>(<span class="kw">summary</span>(first.stage.b)$coefficients[<span class="dv">2</span>, ], <span class="dv">3</span>)</code></pre>
+<pre><code>##   Estimate Std. Error    t value   Pr(&gt;|t|) 
+##      0.372      0.083      4.481      0.000</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">round</span>(<span class="kw">summary</span>(gini.iv)$coefficients[<span class="dv">2</span>, ], <span class="dv">3</span>)</code></pre>
+<pre><code>##   Estimate Std. Error    t value   Pr(&gt;|t|) 
+##      0.875      0.302      2.895      0.005</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">round</span>(<span class="kw">summary</span>(gini.iv.b)$coefficients[<span class="dv">2</span>, ], <span class="dv">3</span>)</code></pre>
+<pre><code>##   Estimate Std. Error    t value   Pr(&gt;|t|) 
+##      0.211      0.081      2.615      0.010</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">round</span>(<span class="kw">summary</span>(pov.iv)$coefficients[<span class="dv">2</span>, ], <span class="dv">3</span>)</code></pre>
+<pre><code>##   Estimate Std. Error    t value   Pr(&gt;|t|) 
+##      0.258      0.144      1.798      0.075</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">round</span>(<span class="kw">summary</span>(pov.iv.b)$coefficients[<span class="dv">2</span>, ], <span class="dv">3</span>)</code></pre>
+<pre><code>##   Estimate Std. Error    t value   Pr(&gt;|t|) 
+##      0.059      0.039      1.543      0.125</code></pre>
+</section>
+<section id="abadies-kappa" class="slide level1">
+<h1>Abadie's <span class="math">\(\kappa\)</span></h1>
+<ul>
+<li class="fragment">Recall from the lecture that we can use a weighting scheme to calculate statistics on the compliant population.</li>
+<li class="fragment"><span class="math">\(E[g(Y,D,X)|D_1 &gt; D_0] = {1 \over p(D_1&gt;D_0)} E[\kappa g(Y,D,X)]\)</span></li>
+<li class="fragment"><span class="math">\(\kappa = 1 - {D_i (1-Z_i) \over p(Z_i =0|X)} - {(1-D_i)Z_i \over p(Z_i =1|X)}\)</span></li>
+<li class="fragment"><span class="math">\(E[\kappa|X] = E[D_1 -D_0|X] = E[D|X,Z=1] - E[D|X,Z=0]\)</span></li>
+<li class="fragment">Take <span class="math">\(w_i = {\kappa_i \over E[D_{1}-D_{0}|X_i]}\)</span></li>
+<li class="fragment">Use this in calculating any interesting statistics (means, variance, etc)</li>
+<li class="fragment">This let's you explore the units composing your LATE.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">getKappaWt &lt;-<span class="st"> </span>function(D, Z) {
+    pz &lt;-<span class="st"> </span><span class="kw">mean</span>(Z)
+    pcomp &lt;-<span class="st"> </span><span class="kw">mean</span>(D[Z ==<span class="st"> </span><span class="dv">1</span>]) -<span class="st"> </span><span class="kw">mean</span>(D[Z ==<span class="st"> </span><span class="dv">0</span>])
+    if (pcomp &lt;<span class="st"> </span><span class="dv">0</span>) 
+        <span class="kw">stop</span>(<span class="st">&quot;Assuming p(D|Z) &gt; .5&quot;</span>)
+    kappa &lt;-<span class="st"> </span><span class="dv">1</span> -<span class="st"> </span>D *<span class="st"> </span>(<span class="dv">1</span> -<span class="st"> </span>Z)/(<span class="dv">1</span> -<span class="st"> </span>pz) -<span class="st"> </span>(<span class="dv">1</span> -<span class="st"> </span>D) *<span class="st"> </span>Z/pz
+    <span class="co"># Note that pcomp = mean(kappa)</span>
+    kappa/pcomp
+}
+w &lt;-<span class="st"> </span><span class="kw">with</span>(d, <span class="kw">getKappaWt</span>(<span class="dt">D =</span> dism1990_b, <span class="dt">Z =</span> herf_b))
+varlist &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;closeness&quot;</span>, <span class="st">&quot;area1910&quot;</span>, <span class="st">&quot;ctyliterate1920&quot;</span>, <span class="st">&quot;hsdrop_b&quot;</span>, <span class="st">&quot;manshr&quot;</span>, 
+    <span class="st">&quot;ctymanuf_wkrs1920&quot;</span>, <span class="st">&quot;ngov62&quot;</span>)
+samp.stats &lt;-<span class="st"> </span><span class="kw">sapply</span>(varlist, function(v) <span class="kw">mean</span>(d[, v], <span class="dt">na.rm =</span> <span class="ot">TRUE</span>))
+comp.stats &lt;-<span class="st"> </span><span class="kw">sapply</span>(varlist, function(v) <span class="kw">weighted.mean</span>(d[, v], w, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>))</code></pre>
+</div>
+</section>
+<section id="examine-complier-statistics" class="slide level1">
+<h1>Examine Complier Statistics</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(w)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##   -2.51   -2.43    2.47    1.00    2.47    2.47</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">rbind</span>(<span class="dt">sample =</span> samp.stats, <span class="dt">compliers =</span> comp.stats)</code></pre>
+<pre><code>##           closeness area1910 ctyliterate1920 hsdrop_b manshr
+## sample       -362.4    14626          0.9585   0.2516 0.1892
+## compliers    -299.1    18013          0.9515   0.2424 0.2110
+##           ctymanuf_wkrs1920 ngov62
+## sample               0.4619  55.55
+## compliers            0.4266  83.65</code></pre>
+</section>
+<section id="new-example-data" class="slide level1">
+<h1>New Example Data</h1>
+<ul>
+<li class="fragment">Now we're going to look at <a href="http://faculty.chicagobooth.edu/matthew.gentzkow/research/tv_turnout.pdf">Gentzkow (2006)</a></li>
+<li class="fragment">This study examined how the introduction of television had an effect on voter turnout</li>
+<li class="fragment">Outcome: turnout in national elections</li>
+<li class="fragment">Treatment: Years since the introduction of TV</li>
+<li class="fragment">Identification comes from the idea that there are random variations in the timing of this introduction.</li>
+<li class="fragment">It uses local variations in this introduction.</li>
+<li class="fragment">Where locality is defined as a <em>within</em> effect.</li>
+</ul>
+</section>
+<section id="rough-and-dirty-sweeping-function" class="slide level1">
+<h1>Rough and Dirty Sweeping Function</h1>
+<ul>
+<li class="fragment"><code>plm</code> also does this, but I like to be able to use (most of) the functions written for <code>lm</code> objects.</li>
+<li class="fragment">This assumes that you'll be clustering at the same level as your swept effects.</li>
+</ul>
+<pre class="sourceCode r"><code class="sourceCode r">sweeplm &lt;-<span class="st"> </span>function(formula, dat, ind) {
+    newd &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(formula, <span class="kw">model.frame</span>(formula, dat, <span class="dt">na.action =</span> na.pass))
+    newd &lt;-<span class="st"> </span>newd[, -<span class="dv">1</span>]
+    newd &lt;-<span class="st"> </span><span class="kw">cbind</span>(dat[, <span class="kw">as.character</span>(formula[<span class="dv">2</span>])], newd)
+    ok &lt;-<span class="st"> </span><span class="kw">complete.cases</span>(newd)
+    newd &lt;-<span class="st"> </span>newd[ok, ]
+    ind &lt;-<span class="st"> </span>ind[ok]
+    newd &lt;-<span class="st"> </span><span class="kw">apply</span>(newd, <span class="dv">2</span>, function(x) <span class="kw">unlist</span>(<span class="kw">tapply</span>(x, ind, function(z) z -<span class="st"> </span>
+<span class="st">        </span><span class="kw">mean</span>(z, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>))))
+    <span class="kw">list</span>(<span class="kw">lm</span>(newd[, <span class="dv">1</span>] ~<span class="st"> </span>newd[, -<span class="dv">1</span>] -<span class="st"> </span><span class="dv">1</span>, <span class="kw">as.data.frame</span>(newd)), newd, <span class="kw">as.character</span>(ind))
+}</code></pre>
+</section>
+<section id="robust-ses-again" class="slide level1">
+<h1>Robust SEs again</h1>
+<pre class="sourceCode r"><code class="sourceCode r">robust.se &lt;-<span class="st"> </span>function(model, cluster) {
+    <span class="kw">require</span>(sandwich)
+    <span class="kw">require</span>(lmtest)
+    M &lt;-<span class="st"> </span><span class="kw">length</span>(<span class="kw">unique</span>(cluster))
+    N &lt;-<span class="st"> </span><span class="kw">length</span>(cluster)
+    K &lt;-<span class="st"> </span>model$rank
+    dfc &lt;-<span class="st"> </span>(M/(M -<span class="st"> </span><span class="dv">1</span>)) *<span class="st"> </span>((N -<span class="st"> </span><span class="dv">1</span>)/(N -<span class="st"> </span>K))
+    uj &lt;-<span class="st"> </span><span class="kw">apply</span>(<span class="kw">estfun</span>(model), <span class="dv">2</span>, function(x) <span class="kw">tapply</span>(x, cluster, sum))
+    rcse.cov &lt;-<span class="st"> </span>dfc *<span class="st"> </span><span class="kw">sandwich</span>(model, <span class="dt">meat. =</span> <span class="kw">crossprod</span>(uj)/N)
+    rcse.se &lt;-<span class="st"> </span><span class="kw">coeftest</span>(model, rcse.cov)
+    <span class="kw">return</span>(rcse.se)
+}</code></pre>
+</section>
+<section id="fixed-effects" class="slide level1">
+<h1>Fixed Effects</h1>
+<ul>
+<li class="fragment">Let's demonstrate some of the benefits of sweeping out fixed effects.</li>
+<li class="fragment">Algebraic equivalence between these various methods.
+<ul>
+<li class="fragment">De-mean variables by group</li>
+<li class="fragment">Apply the sweep matrix:
+<ul>
+<li class="fragment"><span class="math">\(\dot{Q} = (I_T - {1\over T}\iota_T\iota_T&#39;) \otimes I_N\)</span></li>
+<li class="fragment"><span class="math">\(\beta = (X_{tv}&#39; \dot{Q} X^{tv})^{-1} X_{tv}&#39; \dot{Q} Y\)</span></li>
+</ul></li>
+<li class="fragment">Just throw the dummies in the regression.</li>
+</ul></li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">dat &lt;-<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">&quot;gentzkow_fixed.csv&quot;</span>)
+dat$reg5year &lt;-<span class="st"> </span><span class="kw">paste0</span>(dat$regions5, dat$year)
+dat &lt;-<span class="st"> </span><span class="kw">subset</span>(dat, year &gt;=<span class="st"> </span><span class="dv">1930</span>)
+base.lm &lt;-<span class="st"> </span><span class="kw">lm</span>(turnout ~<span class="st"> </span>yearsoftv +<span class="st"> </span>advote, dat)
+simple.fe &lt;-<span class="st"> </span><span class="kw">lm</span>(turnout ~<span class="st"> </span>yearsoftv +<span class="st"> </span>advote +<span class="st"> </span><span class="kw">factor</span>(reg5year), dat)
+dummy.time &lt;-<span class="st"> </span><span class="kw">system.time</span>(<span class="kw">lm</span>(turnout ~<span class="st"> </span>yearsoftv +<span class="st"> </span>advote +<span class="st"> </span><span class="kw">factor</span>(reg5year), 
+    dat))
+<span class="co"># all.fe &lt;-</span>
+<span class="co"># lm(turnout~yearsoftv+advote+factor(reg5year)+factor(stcounty),dat)</span>
+simple.swept.fe &lt;-<span class="st"> </span><span class="kw">sweeplm</span>(turnout ~<span class="st"> </span>yearsoftv +<span class="st"> </span>advote, <span class="dt">dat =</span> dat, <span class="dt">ind =</span> dat$reg5year)
+sweep.time &lt;-<span class="st"> </span><span class="kw">system.time</span>(<span class="kw">sweeplm</span>(turnout ~<span class="st"> </span>yearsoftv +<span class="st"> </span>advote, <span class="dt">dat =</span> dat, <span class="dt">ind =</span> dat$reg5year))
+swept.fe &lt;-<span class="st"> </span><span class="kw">sweeplm</span>(turnout ~<span class="st"> </span>yearsoftv +<span class="st"> </span>advote +<span class="st"> </span><span class="kw">factor</span>(reg5year), <span class="dt">dat =</span> dat, 
+    <span class="dt">ind =</span> dat$stcounty)
+<span class="kw">rbind</span>(dummy.time, sweep.time)</code></pre>
+<pre><code>##            user.self sys.self elapsed user.child sys.child
+## dummy.time     1.025    0.107   1.160          0         0
+## sweep.time     0.257    0.042   0.299          0         0</code></pre>
+</div>
+</section>
+<section id="fe-results" class="slide level1">
+<h1>FE Results</h1>
+<pre class="sourceCode r"><code class="sourceCode r">base.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(base.lm, dat$stcounty[-base.lm$na.action])[<span class="dv">2</span>, ]</code></pre>
+<pre><code>## Note: no visible binding for global variable &#39;lmtest&#39;</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">simple.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(simple.fe, dat$stcounty[-simple.fe$na.action])[<span class="dv">2</span>, ]
+simple.swept.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(simple.swept.fe[[<span class="dv">1</span>]], simple.swept.fe[[<span class="dv">3</span>]])[<span class="dv">1</span>, 
+    ]
+swept.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(swept.fe[[<span class="dv">1</span>]], swept.fe[[<span class="dv">3</span>]])[<span class="dv">1</span>, ]
+all.ests &lt;-<span class="st"> </span><span class="kw">rbind</span>(base.est, simple.est, simple.swept.est, swept.est)
+<span class="kw">rownames</span>(all.ests) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;base&quot;</span>, <span class="st">&quot;simple&quot;</span>, <span class="st">&quot;simple.swept&quot;</span>, <span class="st">&quot;full.swept&quot;</span>)
+all.ests</code></pre>
+<pre><code>##              Estimate Std. Error t value  Pr(&gt;|t|)
+## base           0.2475    0.01309  18.915 1.497e-79
+## simple        -0.1729    0.07258  -2.382 1.722e-02
+## simple.swept  -0.1729    0.03230  -5.353 8.706e-08
+## full.swept    -0.3863    0.04987  -7.746 9.619e-15</code></pre>
+</section>
+<section id="time-trends" class="slide level1">
+<h1>Time Trends</h1>
+<ul>
+<li class="fragment">Instead of estimating fixed effects for each region-year, we could impose some structure.</li>
+<li class="fragment">What if there is some unobserved process by which the outcome is <em>increasing</em> over time.</li>
+<li class="fragment">Estimating fixed effects for each year may vastly reduce power (a new parameter for each time period under study)</li>
+<li class="fragment">And if we are comfortable assuming this linear relationship with time, then we don't need to lose that power.</li>
+<li class="fragment">Of course, we need only assume linearity in parameters, so we can include polynomials in time, too.</li>
+<li class="fragment">Remember that you can perfectly interpolate <span class="math">\(N\)</span> points with an <span class="math">\(N-1\)</span> degree polynomial.</li>
+<li class="fragment">Think of it like fitting a polynomial <em>to the fixed effects</em>. It's sort of like that.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">dat$trend &lt;-<span class="st"> </span>dat$year -<span class="st"> </span><span class="kw">min</span>(dat$year)
+linear.trend &lt;-<span class="st"> </span><span class="kw">sweeplm</span>(turnout ~<span class="st"> </span>yearsoftv +<span class="st"> </span>advote +<span class="st"> </span>trend, <span class="dt">dat =</span> dat, <span class="dt">ind =</span> dat$stcounty)
+linear.reg.trend &lt;-<span class="st"> </span><span class="kw">sweeplm</span>(turnout ~<span class="st"> </span>yearsoftv +<span class="st"> </span>advote +<span class="st"> </span><span class="kw">factor</span>(regions5) *<span class="st"> </span>
+<span class="st">    </span>trend, <span class="dt">dat =</span> dat, <span class="dt">ind =</span> dat$stcounty)
+cubic.trend &lt;-<span class="st"> </span><span class="kw">sweeplm</span>(turnout ~<span class="st"> </span>yearsoftv +<span class="st"> </span>advote +<span class="st"> </span><span class="kw">poly</span>(trend, <span class="dv">3</span>), <span class="dt">dat =</span> dat, 
+    <span class="dt">ind =</span> dat$stcounty)
+cubic.reg.trend &lt;-<span class="st"> </span><span class="kw">sweeplm</span>(turnout ~<span class="st"> </span>yearsoftv +<span class="st"> </span>advote +<span class="st"> </span><span class="kw">factor</span>(regions5) *<span class="st"> </span>
+<span class="st">    </span><span class="kw">poly</span>(trend, <span class="dv">3</span>), <span class="dt">dat =</span> dat, <span class="dt">ind =</span> dat$stcounty)</code></pre>
+</div>
+</section>
+<section id="results-with-trends" class="slide level1">
+<h1>Results with Trends</h1>
+<ul>
+<li class="fragment">We'll come back to this example next recitation.</li>
+</ul>
+<pre class="sourceCode r"><code class="sourceCode r">linear.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(linear.trend[[<span class="dv">1</span>]], linear.trend[[<span class="dv">3</span>]])[<span class="dv">1</span>, ]
+linear.reg.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(linear.reg.trend[[<span class="dv">1</span>]], linear.reg.trend[[<span class="dv">3</span>]])[<span class="dv">1</span>, 
+    ]
+cubic.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(cubic.trend[[<span class="dv">1</span>]], cubic.trend[[<span class="dv">3</span>]])[<span class="dv">1</span>, ]
+cubic.reg.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(cubic.reg.trend[[<span class="dv">1</span>]], cubic.trend[[<span class="dv">3</span>]])[<span class="dv">1</span>, ]
+all.ests &lt;-<span class="st"> </span><span class="kw">rbind</span>(all.ests, linear.est, linear.reg.est, cubic.est, cubic.reg.est)
+<span class="kw">rownames</span>(all.ests)[<span class="dv">5</span>:<span class="dv">8</span>] &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;linear&quot;</span>, <span class="st">&quot;linear.region&quot;</span>, <span class="st">&quot;cubic&quot;</span>, <span class="st">&quot;cubic.region&quot;</span>)
+all.ests</code></pre>
+<pre><code>##               Estimate Std. Error t value  Pr(&gt;|t|)
+## base            0.2475    0.01309  18.915 1.497e-79
+## simple         -0.1729    0.07258  -2.382 1.722e-02
+## simple.swept   -0.1729    0.03230  -5.353 8.706e-08
+## full.swept     -0.3863    0.04987  -7.746 9.619e-15
+## linear          0.1476    0.01549   9.528 1.658e-21
+## linear.region   0.1985    0.01468  13.524 1.301e-41
+## cubic          -0.2946    0.04486  -6.568 5.151e-11
+## cubic.region   -0.1188    0.04130  -2.877 4.017e-03</code></pre>
+</section>
+<section id="splines" class="slide level1">
+<h1>Splines</h1>
+<ul>
+<li class="fragment">You can also do this with splines, which have a slightly more non-parametric flavor.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(splines)
+spline.trend &lt;-<span class="st"> </span><span class="kw">sweeplm</span>(turnout ~<span class="st"> </span>yearsoftv +<span class="st"> </span>advote +<span class="st"> </span><span class="kw">ns</span>(trend, <span class="dv">3</span>), <span class="dt">dat =</span> dat, 
+    <span class="dt">ind =</span> dat$stcounty)
+spline.est &lt;-<span class="st"> </span><span class="kw">robust.se</span>(spline.trend[[<span class="dv">1</span>]], spline.trend[[<span class="dv">3</span>]])[<span class="dv">1</span>, ]
+all.ests &lt;-<span class="st"> </span><span class="kw">rbind</span>(all.ests, spline.est)
+<span class="kw">rownames</span>(all.ests)[<span class="dv">9</span>] &lt;-<span class="st"> &quot;splines&quot;</span>
+all.ests</code></pre>
+<pre><code>##               Estimate Std. Error t value  Pr(&gt;|t|)
+## base            0.2475    0.01309  18.915 1.497e-79
+## simple         -0.1729    0.07258  -2.382 1.722e-02
+## simple.swept   -0.1729    0.03230  -5.353 8.706e-08
+## full.swept     -0.3863    0.04987  -7.746 9.619e-15
+## linear          0.1476    0.01549   9.528 1.658e-21
+## linear.region   0.1985    0.01468  13.524 1.301e-41
+## cubic          -0.2946    0.04486  -6.568 5.151e-11
+## cubic.region   -0.1188    0.04130  -2.877 4.017e-03
+## splines        -0.4105    0.04833  -8.493 2.058e-17</code></pre>
+</div>
+</section>
+    </div>
+  </div>
+
+  <script src="reveal.js/lib/js/head.min.js"></script>
+  <script src="reveal.js/js/reveal.min.js"></script>
+
+  <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        theme: 'simple', // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          { src: 'reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'reveal.js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+          { src: 'reveal.js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } },
+//          { src: 'reveal.js/plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; }, }
+//          { src: 'reveal.js/plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+]});
+    </script>
+  </body>
+</html>
