@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="Drew Dimmery drewd@nyu.edu" />
+  <title>Regression Discontinuity</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="reveal.js/css/reveal.min.css"/>
+    <style type="text/css">code{white-space: pre;}</style>
+    <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+    </style>
+    <link rel="stylesheet" href="reveal.js/css/theme/simple.css" id="theme">
+  <link rel="stylesheet" media="print" href="reveal.js/css/print/pdf.css" />
+  <!--[if lt IE 9]>
+  <script src="reveal.js/lib/js/html5shiv.js"></script>
+  <![endif]-->
+    <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section>
+    <h1 class="title">Regression Discontinuity</h1>
+    <h2 class="author">Drew Dimmery <script type="text/javascript">
+<!--
+h='&#110;&#x79;&#x75;&#46;&#x65;&#100;&#x75;';a='&#64;';n='&#100;&#114;&#x65;&#x77;&#100;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#100;&#114;&#x65;&#x77;&#100;&#32;&#x61;&#116;&#32;&#110;&#x79;&#x75;&#32;&#100;&#x6f;&#116;&#32;&#x65;&#100;&#x75;</noscript></h2>
+    <h3 class="date">April 4, 2014</h3>
+</section>
+
+<section id="structure" class="slide level1">
+<h1>Structure</h1>
+<ul>
+<li class="fragment">RDD interpretation</li>
+<li class="fragment">RDD estimation</li>
+<li class="fragment">Placebo tests</li>
+<li class="fragment">Sorting</li>
+<li class="fragment">Other stuff</li>
+</ul>
+</section>
+<section id="interpretation" class="slide level1">
+<h1>Interpretation</h1>
+<ul>
+<li class="fragment">It's a LATE!</li>
+<li class="fragment">A different kind of LATE!</li>
+<li class="fragment">It can be interpreted as a weighted average over all units (Lee &amp; Lemieux 2010)</li>
+<li class="fragment"><span class="math">\((W,U)\)</span> are observed and unobserved factors which explain all heterogeneity.</li>
+<li class="fragment"><span class="math">\(X=c\)</span> is the cutpoint on the running variable, <span class="math">\(Y\)</span> is the outcome <span class="math">\(\lim_{\epsilon \downarrow 0} E[Y|X=c+\epsilon] - \lim_{\epsilon\uparrow 0}   E[Y|X=c+\epsilon]\)</span><br /> <span class="math">\(= \sum_{w,u} \tau(w,u) p(W=w,U=u|X=c)\)</span><br /> <span class="math">\(= \sum_{w,u} \tau(w,u) {f(c|W=w,U=u) \over f(c)} p(W=w,U=u)\)</span></li>
+<li class="fragment">What does this mean?</li>
+<li class="fragment">It's a weight of individual treatment effects weighted by the likelihood that a unit will lie near the threshhold on the running variable.</li>
+<li class="fragment">Keep this in mind as you interpret results.</li>
+</ul>
+</section>
+<section id="estimation" class="slide level1">
+<h1>Estimation</h1>
+<ul>
+<li class="fragment">If only someone wrote a package to do this...</li>
+<li class="fragment"><a href="http://github.com/ddimmery/rdd">http://github.com/ddimmery/rdd</a></li>
+<li class="fragment">The current best pracices is to use local polynomial regression.</li>
+<li class="fragment">Typically linear</li>
+<li class="fragment">There are also some interesting methods using randomization inference, though. (Cattaneo et al n.d.)</li>
+</ul>
+</section>
+<section id="replication" class="slide level1">
+<h1>Replication</h1>
+<ul>
+<li class="fragment">I'll be replicating the recent Meyersson paper that's been making noise.</li>
+<li class="fragment"><a href="http://www.econometricsociety.org/suppmat.asp?id=528&amp;vid=82&amp;iid=1&amp;aid=7">Replication materials</a></li>
+<li class="fragment">The paper shows a (local) result that when Islamic parties won elections in Turkey, this resulted in better outcomes for women.</li>
+<li class="fragment">Running variable: vote margin (but not exclusively 2 party system as in Lee)</li>
+<li class="fragment">Outcome that we'll look at: high school education</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(foreign, <span class="dt">quietly =</span> <span class="ot">TRUE</span>)
+d &lt;-<span class="st"> </span><span class="kw">read.dta</span>(<span class="st">&quot;regdata0.dta&quot;</span>)
+<span class="kw">summary</span>(d$iwm94)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s 
+##    -1.0    -0.5    -0.3    -0.3    -0.1     1.0     544</code></pre>
+</div>
+</section>
+<section id="explore-data" class="slide level1">
+<h1>Explore data</h1>
+<ul>
+<li class="fragment">Plot the raw data.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">with</span>(d, <span class="kw">plot</span>(iwm94, hischshr1520f, <span class="dt">pch =</span> <span class="dv">19</span>, <span class="dt">cex =</span> <span class="fl">0.2</span>, <span class="dt">xlim =</span> <span class="kw">c</span>(-<span class="fl">0.5</span>, <span class="fl">0.5</span>)))
+left.lm &lt;-<span class="st"> </span><span class="kw">lm</span>(hischshr1520f ~<span class="st"> </span>iwm94, d, <span class="dt">subset =</span> iwm94 &lt;<span class="st"> </span><span class="dv">0</span>)
+right.lm &lt;-<span class="st"> </span><span class="kw">lm</span>(hischshr1520f ~<span class="st"> </span>iwm94, d, <span class="dt">subset =</span> iwm94 &gt;=<span class="st"> </span><span class="dv">0</span>)
+left.x &lt;-<span class="st"> </span><span class="kw">seq</span>(-<span class="fl">0.5</span>, <span class="dv">0</span>, <span class="fl">0.01</span>)
+right.x &lt;-<span class="st"> </span>-left.x
+<span class="kw">lines</span>(left.x, <span class="kw">predict</span>(left.lm, <span class="dt">newd =</span> <span class="kw">data.frame</span>(<span class="dt">iwm94 =</span> left.x)), <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)
+<span class="kw">lines</span>(right.x, <span class="kw">predict</span>(right.lm, <span class="dt">newd =</span> <span class="kw">data.frame</span>(<span class="dt">iwm94 =</span> right.x)), <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)</code></pre>
+<figure>
+<img src="figure/7-raw-plot.png" />
+</figure>
+</div>
+</section>
+<section id="estimation-1" class="slide level1">
+<h1>Estimation</h1>
+<ul>
+<li class="fragment">So the basic estimation would just take the difference of the intercepts from <code>left.lm</code> and <code>right.lm</code>.</li>
+<li class="fragment">And there's an equivalency to just running a single regression as Cyrus showed in class.</li>
+<li class="fragment">But I'm just going to use <code>rdd</code></li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">rd.out &lt;-<span class="st"> </span><span class="kw">RDestimate</span>(hischshr1520f ~<span class="st"> </span>iwm94, d)</code></pre>
+<pre><code>## Error: could not find function &quot;RDestimate&quot;</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">rd.out</code></pre>
+<pre><code>## Error: object &#39;rd.out&#39; not found</code></pre>
+</div>
+</section>
+<section id="full-results" class="slide level1">
+<h1>Full Results</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(rd.out)</code></pre>
+<pre><code>## Error: object &#39;rd.out&#39; not found</code></pre>
+</section>
+<section id="plot-it" class="slide level1">
+<h1>Plot it</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(rd.out, <span class="dt">range =</span> <span class="kw">c</span>(-<span class="fl">0.4</span>, <span class="fl">0.4</span>))</code></pre>
+<pre><code>## Error: object &#39;rd.out&#39; not found</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">title</span>(<span class="dt">xlab =</span> <span class="st">&quot;Islamic Party Vote Margin&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;Female High School Education Share&quot;</span>)</code></pre>
+<pre><code>## Error: plot.new has not been called yet</code></pre>
+</section>
+<section id="placebo-tests" class="slide level1">
+<h1>Placebo tests</h1>
+<ul>
+<li class="fragment">Do placebo tests on other covariates and other outcomes.</li>
+<li class="fragment">They're &quot;placebo&quot; because there &quot;shouldn't&quot; be an effect on them (except occasionally by chance)</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Age 19+</span>
+<span class="kw">RDestimate</span>(ageshr19 ~<span class="st"> </span>iwm94, d)[<span class="kw">c</span>(<span class="st">&quot;est&quot;</span>, <span class="st">&quot;se&quot;</span>)]</code></pre>
+<pre><code>## Error: could not find function &quot;RDestimate&quot;</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Log Population</span>
+<span class="kw">RDestimate</span>(lpop1994 ~<span class="st"> </span>iwm94, d)[<span class="kw">c</span>(<span class="st">&quot;est&quot;</span>, <span class="st">&quot;se&quot;</span>)]</code></pre>
+<pre><code>## Error: could not find function &quot;RDestimate&quot;</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Household Size</span>
+<span class="kw">RDestimate</span>(shhs ~<span class="st"> </span>iwm94, d)[<span class="kw">c</span>(<span class="st">&quot;est&quot;</span>, <span class="st">&quot;se&quot;</span>)]</code></pre>
+<pre><code>## Error: could not find function &quot;RDestimate&quot;</code></pre>
+</div>
+</section>
+<section id="more-placebos" class="slide level1">
+<h1>More Placebos</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Men in 2000</span>
+<span class="kw">RDestimate</span>(hischshr1520m ~<span class="st"> </span>iwm94, d)[<span class="kw">c</span>(<span class="st">&quot;est&quot;</span>, <span class="st">&quot;se&quot;</span>)]</code></pre>
+<pre><code>## Error: could not find function &quot;RDestimate&quot;</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Women in 1990 (pre-treatment)</span>
+<span class="kw">RDestimate</span>(c90hischshr1520f ~<span class="st"> </span>iwm94, d)[<span class="kw">c</span>(<span class="st">&quot;est&quot;</span>, <span class="st">&quot;se&quot;</span>)]</code></pre>
+<pre><code>## Error: could not find function &quot;RDestimate&quot;</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Men in 1990 (pre-treatment)</span>
+<span class="kw">RDestimate</span>(c90hischshr1520m ~<span class="st"> </span>iwm94, d)[<span class="kw">c</span>(<span class="st">&quot;est&quot;</span>, <span class="st">&quot;se&quot;</span>)]</code></pre>
+<pre><code>## Error: could not find function &quot;RDestimate&quot;</code></pre>
+</section>
+<section id="sorting" class="slide level1">
+<h1>Sorting</h1>
+<ul>
+<li class="fragment">As Cyrus discussed, density tests are also a good way to examine the possibility of sorting.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">DCdensity</span>(d$iwm94, <span class="dt">verbose =</span> <span class="ot">TRUE</span>, <span class="dt">plot =</span> <span class="ot">FALSE</span>)</code></pre>
+<pre><code>## Error: could not find function &quot;DCdensity&quot;</code></pre>
+</div>
+</section>
+<section id="density-plot" class="slide level1">
+<h1>Density Plot</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">DCdensity</span>(d$iwm94)</code></pre>
+<pre><code>## Error: could not find function &quot;DCdensity&quot;</code></pre>
+</section>
+<section id="fuzzy-designs" class="slide level1">
+<h1>Fuzzy designs</h1>
+<ul>
+<li class="fragment">I don't have an example for this, but it's quite easy.</li>
+<li class="fragment">Do it the same way as before, but with <code>RDestimate(Y~runvar+treatment)</code></li>
+</ul>
+</section>
+<section id="overall" class="slide level1">
+<h1>Overall</h1>
+<ul>
+<li class="fragment">Some big things for RDD:
+<ul>
+<li class="fragment">Lots of plots</li>
+<li class="fragment">Think about locality in interpretation</li>
+<li class="fragment">Use your covariates for robustness/placebo tests</li>
+<li class="fragment">Everything should be robust to different bandwidths, etc</li>
+<li class="fragment">If effects start disappearing as bw goes down, that's a bad sign.</li>
+<li class="fragment">Your bandwidth is probably to wide.</li>
+</ul></li>
+<li class="fragment">If there's still more time, maybe I'll go through some high points of the <code>rdd</code> code.</li>
+</ul>
+</section>
+    </div>
+  </div>
+
+  <script src="reveal.js/lib/js/head.min.js"></script>
+  <script src="reveal.js/js/reveal.min.js"></script>
+
+  <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        theme: 'simple', // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          { src: 'reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'reveal.js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+          { src: 'reveal.js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } },
+//          { src: 'reveal.js/plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; }, }
+//          { src: 'reveal.js/plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+]});
+    </script>
+  </body>
+</html>
