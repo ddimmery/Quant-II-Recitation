@@ -127,23 +127,64 @@ right.x &lt;-<span class="st"> </span>-left.x
 <li class="fragment">But I'm just going to use <code>rdd</code></li>
 </ul>
 <div class="fragment">
-<pre class="sourceCode r"><code class="sourceCode r">rd.out &lt;-<span class="st"> </span><span class="kw">RDestimate</span>(hischshr1520f ~<span class="st"> </span>iwm94, d)</code></pre>
-<pre><code>## Error: could not find function &quot;RDestimate&quot;</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r">rd.out</code></pre>
-<pre><code>## Error: object &#39;rd.out&#39; not found</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(rdd, <span class="dt">quietly =</span> <span class="ot">TRUE</span>)</code></pre>
+<pre><code>## Loading required package: zoo
+## 
+## Attaching package: &#39;zoo&#39;
+## 
+## The following objects are masked from &#39;package:base&#39;:
+## 
+##     as.Date, as.Date.numeric
+## 
+## Loading required package: car
+## Loading required package: survival
+## Loading required package: splines</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">rd.out &lt;-<span class="st"> </span><span class="kw">RDestimate</span>(hischshr1520f ~<span class="st"> </span>iwm94, d)
+rd.out</code></pre>
+<pre><code>## 
+## Call:
+## RDestimate(formula = hischshr1520f ~ iwm94, data = d)
+## 
+## Coefficients:
+##      LATE    Half-BW  Double-BW  
+##    0.0296     0.0250     0.0228</code></pre>
 </div>
 </section>
 <section id="full-results" class="slide level1">
 <h1>Full Results</h1>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(rd.out)</code></pre>
-<pre><code>## Error: object &#39;rd.out&#39; not found</code></pre>
+<pre><code>## 
+## Call:
+## RDestimate(formula = hischshr1520f ~ iwm94, data = d)
+## 
+## Type:
+## sharp 
+## 
+## Estimates:
+##            Bandwidth  Observations  Estimate  Std. Error  z value
+## LATE       0.24       1020          0.0296    0.0124      2.39   
+## Half-BW    0.12        589          0.0250    0.0165      1.52   
+## Double-BW  0.48       2050          0.0228    0.0101      2.26   
+##            Pr(&gt;|z|)   
+## LATE       0.0169    *
+## Half-BW    0.1286     
+## Double-BW  0.0240    *
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## F-statistics:
+##            F      Num. DoF  Denom. DoF  p       
+## LATE        4.99  3         1016        3.86e-03
+## Half-BW     1.70  3          585        3.30e-01
+## Double-BW  25.77  3         2046        4.44e-16</code></pre>
 </section>
 <section id="plot-it" class="slide level1">
 <h1>Plot it</h1>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(rd.out, <span class="dt">range =</span> <span class="kw">c</span>(-<span class="fl">0.4</span>, <span class="fl">0.4</span>))</code></pre>
-<pre><code>## Error: object &#39;rd.out&#39; not found</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">title</span>(<span class="dt">xlab =</span> <span class="st">&quot;Islamic Party Vote Margin&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;Female High School Education Share&quot;</span>)</code></pre>
-<pre><code>## Error: plot.new has not been called yet</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(rd.out, <span class="dt">range =</span> <span class="kw">c</span>(-<span class="fl">0.4</span>, <span class="fl">0.4</span>))
+<span class="kw">title</span>(<span class="dt">xlab =</span> <span class="st">&quot;Islamic Party Vote Margin&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;Female High School Education Share&quot;</span>)</code></pre>
+<figure>
+<img src="figure/7-plot-it.png" />
+</figure>
 </section>
 <section id="placebo-tests" class="slide level1">
 <h1>Placebo tests</h1>
@@ -154,26 +195,56 @@ right.x &lt;-<span class="st"> </span>-left.x
 <div class="fragment">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Age 19+</span>
 <span class="kw">RDestimate</span>(ageshr19 ~<span class="st"> </span>iwm94, d)[<span class="kw">c</span>(<span class="st">&quot;est&quot;</span>, <span class="st">&quot;se&quot;</span>)]</code></pre>
-<pre><code>## Error: could not find function &quot;RDestimate&quot;</code></pre>
+<pre><code>## $est
+##      LATE   Half-BW Double-BW 
+## -0.003737  0.006946 -0.004117 
+## 
+## $se
+## [1] 0.010314 0.013783 0.008307</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Log Population</span>
 <span class="kw">RDestimate</span>(lpop1994 ~<span class="st"> </span>iwm94, d)[<span class="kw">c</span>(<span class="st">&quot;est&quot;</span>, <span class="st">&quot;se&quot;</span>)]</code></pre>
-<pre><code>## Error: could not find function &quot;RDestimate&quot;</code></pre>
+<pre><code>## $est
+##      LATE   Half-BW Double-BW 
+##   0.06921  -0.04339   0.03000 
+## 
+## $se
+## [1] 0.2384 0.3276 0.1879</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Household Size</span>
 <span class="kw">RDestimate</span>(shhs ~<span class="st"> </span>iwm94, d)[<span class="kw">c</span>(<span class="st">&quot;est&quot;</span>, <span class="st">&quot;se&quot;</span>)]</code></pre>
-<pre><code>## Error: could not find function &quot;RDestimate&quot;</code></pre>
+<pre><code>## $est
+##      LATE   Half-BW Double-BW 
+## -0.006963  0.321148 -0.091759 
+## 
+## $se
+## [1] 0.3543 0.5431 0.2557</code></pre>
 </div>
 </section>
 <section id="more-placebos" class="slide level1">
 <h1>More Placebos</h1>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Men in 2000</span>
 <span class="kw">RDestimate</span>(hischshr1520m ~<span class="st"> </span>iwm94, d)[<span class="kw">c</span>(<span class="st">&quot;est&quot;</span>, <span class="st">&quot;se&quot;</span>)]</code></pre>
-<pre><code>## Error: could not find function &quot;RDestimate&quot;</code></pre>
+<pre><code>## $est
+##      LATE   Half-BW Double-BW 
+##  0.009632  0.016188  0.007619 
+## 
+## $se
+## [1] 0.009037 0.011807 0.007435</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Women in 1990 (pre-treatment)</span>
 <span class="kw">RDestimate</span>(c90hischshr1520f ~<span class="st"> </span>iwm94, d)[<span class="kw">c</span>(<span class="st">&quot;est&quot;</span>, <span class="st">&quot;se&quot;</span>)]</code></pre>
-<pre><code>## Error: could not find function &quot;RDestimate&quot;</code></pre>
+<pre><code>## $est
+##      LATE   Half-BW Double-BW 
+## 0.0079389 0.0007974 0.0130517 
+## 
+## $se
+## [1] 0.012239 0.017631 0.009308</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Men in 1990 (pre-treatment)</span>
 <span class="kw">RDestimate</span>(c90hischshr1520m ~<span class="st"> </span>iwm94, d)[<span class="kw">c</span>(<span class="st">&quot;est&quot;</span>, <span class="st">&quot;se&quot;</span>)]</code></pre>
-<pre><code>## Error: could not find function &quot;RDestimate&quot;</code></pre>
+<pre><code>## $est
+##      LATE   Half-BW Double-BW 
+##  0.005930  0.002779  0.003861 
+## 
+## $se
+## [1] 0.009770 0.013259 0.007891</code></pre>
 </section>
 <section id="sorting" class="slide level1">
 <h1>Sorting</h1>
@@ -182,13 +253,22 @@ right.x &lt;-<span class="st"> </span>-left.x
 </ul>
 <div class="fragment">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">DCdensity</span>(d$iwm94, <span class="dt">verbose =</span> <span class="ot">TRUE</span>, <span class="dt">plot =</span> <span class="ot">FALSE</span>)</code></pre>
-<pre><code>## Error: could not find function &quot;DCdensity&quot;</code></pre>
+<pre><code>## Assuming cutpoint of zero.
+## Using calculated bin size:  0.009 
+## Using calculated bandwidth:  0.165 
+## Log difference in heights is  -0.095  with SE  0.147 
+##   this gives a z-stat of  -0.650 
+##   and a p value of  0.515</code></pre>
+<pre><code>## [1] 0.5154</code></pre>
 </div>
 </section>
 <section id="density-plot" class="slide level1">
 <h1>Density Plot</h1>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">DCdensity</span>(d$iwm94)</code></pre>
-<pre><code>## Error: could not find function &quot;DCdensity&quot;</code></pre>
+<figure>
+<img src="figure/7-dcd-plot.png" />
+</figure>
+<pre><code>## [1] 0.5154</code></pre>
 </section>
 <section id="fuzzy-designs" class="slide level1">
 <h1>Fuzzy designs</h1>
