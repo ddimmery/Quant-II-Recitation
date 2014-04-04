@@ -75,6 +75,7 @@ lines(right.x,predict(right.lm,newd=data.frame(iwm94=right.x)),col="red")
 . . .
 
 ```{r 7-estimation}
+require(rdd,quietly=TRUE)
 rd.out<- RDestimate(hischshr1520f~iwm94,d)
 rd.out
 ```
