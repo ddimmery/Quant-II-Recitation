@@ -29,9 +29,9 @@ body {
 /*********************************************
  * HEADERS
  *********************************************/
-.reveal h1 { font-size: 3em; }
-.reveal h2 { font-size: 1.75em; }
-.reveal h3 { font-size: 1em; }
+.reveal h1 { font-size: 2em; }
+.reveal h2 { font-size: 1.5em; }
+.reveal h3 { font-size: .75em; }
 .reveal h4,
 .reveal h5,
 .reveal h6 {
