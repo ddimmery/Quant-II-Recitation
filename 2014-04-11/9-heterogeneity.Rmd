@@ -27,7 +27,7 @@ tau <- mean(y1-y0)
 y <- y1*d + y0*(1-d)
 simple <- lm(y~d)
 interact <- lm(y~d+d*x)
-c(tau,coef(simple)["d"],coef(interact)["d"])
+c(tau,coef(simple)["d"],coef(interact)["d"]+coef(interact)["d:x"]*mean(x))
 ```
 
 # Plot simulation
@@ -219,8 +219,11 @@ legend("topright",legend=c("Tau","Tau(x)","LOESS TE est"),
 
 - Why are the SEs so narrow in the area of sparsity?
 
-
 # Even better
+- Hill (2011)
+
+. . .
+
 ```{r 9-meff-bart,eval=FALSE}
 require(BayesTree,quietly=TRUE)
 bart.mod <-
@@ -300,7 +303,7 @@ x$alltreat <- ifelse(x$treatment==4,0,1)
 full.mod <- lm(summer_07~alltreat*perc_votecount_hh+unregistered+water_2006+apr_may_07+fmv+y_max_yblt+owner+old+factor(route),x)
 interact.mod <- lm(summer_07~alltreat*perc_votecount_hh,x)
 simple.mod <- lm(summer_07~alltreat,x)
-c(full=coef(full.mod)["alltreat"],interact=coef(interact.mod)["alltreat"],simple=coef(simple.mod)["alltreat"])
+c(full=coef(full.mod)["alltreat"],interact=coef(interact.mod)["alltreat"]+coef(interact.mod)["alltreat:perc_votecount_hh"]*mean(x$perc_votecount_hh,na.rm=TRUE),simple=coef(simple.mod)["alltreat"])
 ```
 
 # Examine Heterogeneity
