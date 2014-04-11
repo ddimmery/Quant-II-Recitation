@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="Drew Dimmery drewd@nyu.edu" />
+  <meta name="dcterms.date" content="2014-04-10" />
+  <title>Heterogeneity</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="reveal.js/css/reveal.min.css"/>
+    <style type="text/css">code{white-space: pre;}</style>
+    <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+    </style>
+    <link rel="stylesheet" href="reveal.js/css/theme/simple.css" id="theme">
+  <link rel="stylesheet" media="print" href="reveal.js/css/print/pdf.css" />
+  <!--[if lt IE 9]>
+  <script src="reveal.js/lib/js/html5shiv.js"></script>
+  <![endif]-->
+    <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section>
+    <h1 class="title">Heterogeneity</h1>
+    <h2 class="author">Drew Dimmery <script type="text/javascript">
+<!--
+h='&#110;&#x79;&#x75;&#46;&#x65;&#100;&#x75;';a='&#64;';n='&#100;&#114;&#x65;&#x77;&#100;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#100;&#114;&#x65;&#x77;&#100;&#32;&#x61;&#116;&#32;&#110;&#x79;&#x75;&#32;&#100;&#x6f;&#116;&#32;&#x65;&#100;&#x75;</noscript></h2>
+    <h3 class="date">April 10, 2014</h3>
+</section>
+
+<section id="structure" class="slide level1">
+<h1>Structure</h1>
+<ul>
+<li class="fragment">Define heterogeneity</li>
+<li class="fragment">Why I hate marginal effect plots</li>
+<li class="fragment">How to do it &quot;right&quot;</li>
+</ul>
+</section>
+<section id="definition" class="slide level1">
+<h1>Definition</h1>
+<ul>
+<li class="fragment">We are interested in the causal effect of <span class="math">\(D\)</span> on <span class="math">\(Y\)</span> <em>at</em> <span class="math">\(X=x\)</span>:<br /> <span class="math">\(E[Y_1 - Y_0 | X=x]\)</span></li>
+<li class="fragment">This is not a &quot;causal difference&quot;</li>
+<li class="fragment">It can reflect selection of units to particular <span class="math">\(x\)</span>, etc</li>
+</ul>
+</section>
+<section id="simulation" class="slide level1">
+<h1>Simulation</h1>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">x &lt;-<span class="st"> </span><span class="kw">runif</span>(<span class="dv">100</span>)
+x &lt;-<span class="st"> </span><span class="kw">c</span>(x, <span class="kw">abs</span>(<span class="kw">rnorm</span>(<span class="dv">100</span>)))
+d &lt;-<span class="st"> </span><span class="kw">rbinom</span>(<span class="dv">200</span>, <span class="dv">1</span>, <span class="fl">0.5</span>)
+y0 &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="dv">200</span>, <span class="dv">0</span>, <span class="fl">0.25</span>)
+y1 &lt;-<span class="st"> </span><span class="dv">3</span> +<span class="st"> </span><span class="dv">2</span> *<span class="st"> </span><span class="kw">cos</span>(<span class="dv">2</span> *<span class="st"> </span>x) +<span class="st"> </span><span class="kw">rnorm</span>(<span class="dv">200</span>, <span class="dv">0</span>, <span class="fl">0.25</span>)
+tau &lt;-<span class="st"> </span><span class="kw">mean</span>(y1 -<span class="st"> </span>y0)
+y &lt;-<span class="st"> </span>y1 *<span class="st"> </span>d +<span class="st"> </span>y0 *<span class="st"> </span>(<span class="dv">1</span> -<span class="st"> </span>d)
+simple &lt;-<span class="st"> </span><span class="kw">lm</span>(y ~<span class="st"> </span>d)
+interact &lt;-<span class="st"> </span><span class="kw">lm</span>(y ~<span class="st"> </span>d +<span class="st"> </span>d *<span class="st"> </span>x)
+<span class="kw">c</span>(tau, <span class="kw">coef</span>(simple)[<span class="st">&quot;d&quot;</span>], <span class="kw">coef</span>(interact)[<span class="st">&quot;d&quot;</span>] +<span class="st"> </span><span class="kw">coef</span>(interact)[<span class="st">&quot;d:x&quot;</span>] *<span class="st"> </span><span class="kw">mean</span>(x))</code></pre>
+<pre><code>##           d     d 
+## 3.560 3.655 3.570</code></pre>
+</div>
+</section>
+<section id="plot-simulation" class="slide level1">
+<h1>Plot simulation</h1>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(x,y0,<span class="dt">pch=</span><span class="st">&quot;0&quot;</span>,<span class="dt">cex=</span>.<span class="dv">5</span>,<span class="dt">ylim=</span><span class="kw">c</span>(<span class="kw">min</span>(<span class="kw">c</span>(y0,y1)),<span class="kw">max</span>(<span class="kw">c</span>(y0,y1))),<span class="dt">ylab=</span><span class="st">&quot;y&quot;</span>)
+<span class="kw">points</span>(x,y1,<span class="dt">pch=</span><span class="st">&quot;1&quot;</span>,<span class="dt">cex=</span>.<span class="dv">5</span>)
+x.fit &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="kw">min</span>(x),<span class="kw">max</span>(x),.<span class="dv">01</span>)
+n.fit &lt;-<span class="st"> </span><span class="kw">length</span>(x.fit)
+fit.true &lt;-<span class="st"> </span><span class="dv">3+2</span>*<span class="kw">cos</span>(<span class="dv">2</span>*x.fit)
+<span class="kw">lines</span>(x.fit,fit.true,<span class="dt">lty=</span><span class="st">&quot;dotted&quot;</span>,<span class="dt">col=</span><span class="st">&quot;red&quot;</span>)
+<span class="kw">lines</span>(x.fit,<span class="kw">rep</span>(<span class="dv">0</span>,n.fit),<span class="dt">lty=</span><span class="st">&quot;dotted&quot;</span>,<span class="dt">col=</span><span class="st">&quot;red&quot;</span>)</code></pre>
+<figure>
+<img src="figure/9-plot-sim.png" />
+</figure>
+</div>
+</section>
+<section id="marginal-effects" class="slide level1">
+<h1>Marginal Effects</h1>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(x.fit, <span class="kw">rep</span>(tau, n.fit), <span class="dt">col =</span> <span class="st">&quot;black&quot;</span>, <span class="dt">type =</span> <span class="st">&quot;l&quot;</span>, <span class="dt">xlab =</span> <span class="st">&quot;x&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;TE&quot;</span>, 
+    <span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">5</span>))
+<span class="kw">lines</span>(x.fit, fit.true, <span class="dt">col =</span> <span class="st">&quot;black&quot;</span>, <span class="dt">lty =</span> <span class="st">&quot;twodash&quot;</span>)
+<span class="kw">rug</span>(x)
+simple.pred &lt;-<span class="st"> </span><span class="kw">diff</span>(<span class="kw">predict</span>(simple, <span class="dt">newd =</span> <span class="kw">data.frame</span>(<span class="dt">d =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>))))
+simple.se &lt;-<span class="st"> </span><span class="kw">sqrt</span>(<span class="kw">var</span>(y[d ==<span class="st"> </span><span class="dv">1</span>])/<span class="kw">sum</span>(d ==<span class="st"> </span><span class="dv">1</span>) +<span class="st"> </span><span class="kw">var</span>(y[d ==<span class="st"> </span><span class="dv">0</span>])/<span class="kw">sum</span>(d ==<span class="st"> </span><span class="dv">0</span>))
+simple.upr &lt;-<span class="st"> </span>simple.pred +<span class="st"> </span><span class="fl">1.96</span> *<span class="st"> </span>simple.se
+simple.lwr &lt;-<span class="st"> </span>simple.pred -<span class="st"> </span><span class="fl">1.96</span> *<span class="st"> </span>simple.se
+<span class="kw">lines</span>(x.fit, <span class="kw">rep</span>(simple.pred, n.fit), <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>)
+<span class="kw">lines</span>(x.fit, <span class="kw">rep</span>(simple.upr, n.fit), <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lty =</span> <span class="st">&quot;dotted&quot;</span>)
+<span class="kw">lines</span>(x.fit, <span class="kw">rep</span>(simple.lwr, n.fit), <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lty =</span> <span class="st">&quot;dotted&quot;</span>)
+x.fit.frame &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">d =</span> <span class="kw">c</span>(<span class="kw">rep</span>(<span class="dv">1</span>, n.fit), <span class="kw">rep</span>(<span class="dv">0</span>, n.fit)), <span class="dt">x =</span> <span class="kw">rep</span>(x.fit, 
+    <span class="dv">2</span>))
+interact.pred &lt;-<span class="st"> </span><span class="kw">predict</span>(interact, <span class="dt">newd =</span> x.fit.frame)
+interact.pred &lt;-<span class="st"> </span>interact.pred[<span class="dv">1</span>:n.fit] -<span class="st"> </span>interact.pred[{
+    n.fit +<span class="st"> </span><span class="dv">1</span>
+}:{
+    <span class="dv">2</span> *<span class="st"> </span>n.fit
+}]
+vcv.int &lt;-<span class="st"> </span><span class="kw">vcov</span>(interact)
+interact.se.model &lt;-<span class="st"> </span><span class="kw">sqrt</span>(vcv.int[<span class="st">&quot;d&quot;</span>, <span class="st">&quot;d&quot;</span>] +<span class="st"> </span>x.fit^<span class="dv">2</span> *<span class="st"> </span>vcv.int[<span class="st">&quot;d:x&quot;</span>, <span class="st">&quot;d:x&quot;</span>] +<span class="st"> </span>
+<span class="st">    </span><span class="dv">2</span> *<span class="st"> </span>x.fit *<span class="st"> </span>vcv.int[<span class="st">&quot;d&quot;</span>, <span class="st">&quot;d:x&quot;</span>])
+interact.upr &lt;-<span class="st"> </span>interact.pred +<span class="st"> </span><span class="fl">1.96</span> *<span class="st"> </span>interact.se.model
+interact.lwr &lt;-<span class="st"> </span>interact.pred -<span class="st"> </span><span class="fl">1.96</span> *<span class="st"> </span>interact.se.model
+<span class="kw">lines</span>(x.fit, interact.pred, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)
+<span class="kw">lines</span>(x.fit, interact.upr, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">lty =</span> <span class="st">&quot;dotted&quot;</span>)
+<span class="kw">lines</span>(x.fit, interact.lwr, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">lty =</span> <span class="st">&quot;dotted&quot;</span>)
+<span class="kw">legend</span>(<span class="st">&quot;topright&quot;</span>, <span class="dt">legend =</span> <span class="kw">c</span>(<span class="st">&quot;Tau&quot;</span>, <span class="st">&quot;Tau(x)&quot;</span>, <span class="st">&quot;Simple TE est&quot;</span>, <span class="st">&quot;Interacted TE est&quot;</span>), 
+    <span class="dt">lty =</span> <span class="kw">c</span>(<span class="st">&quot;solid&quot;</span>, <span class="st">&quot;twodash&quot;</span>, <span class="st">&quot;solid&quot;</span>, <span class="st">&quot;solid&quot;</span>), <span class="dt">col =</span> <span class="kw">c</span>(<span class="st">&quot;black&quot;</span>, <span class="st">&quot;black&quot;</span>, 
+        <span class="st">&quot;blue&quot;</span>, <span class="st">&quot;red&quot;</span>), <span class="dt">cex =</span> <span class="fl">0.65</span>)</code></pre>
+</div>
+</section>
+<section id="show-the-plot" class="slide level1">
+<h1>Show the plot</h1>
+<ul>
+<li class="fragment">One of the most dangerous plots in social science:</li>
+</ul>
+<div class="fragment">
+<figure>
+<img src="figure/9-meff-plot.png" />
+</figure>
+</div>
+</section>
+<section id="what-instead" class="slide level1">
+<h1>What instead?</h1>
+<ul>
+<li class="fragment">One possibility is to plot estimates in strata.</li>
+<li class="fragment">This will actually preserve your &quot;true&quot; uncertainty in certain areas.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">strata &lt;-<span class="st"> </span><span class="kw">cbind</span>(<span class="dt">lwr =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="dv">1</span>, <span class="fl">1.5</span>, <span class="dv">2</span>, <span class="fl">2.5</span>), <span class="dt">upr =</span> <span class="kw">c</span>(<span class="fl">0.5</span>, <span class="dv">1</span>, <span class="fl">1.5</span>, <span class="dv">2</span>, <span class="fl">2.5</span>, 
+    <span class="dv">3</span>))
+getTE &lt;-<span class="st"> </span>function(z) {
+    lwr &lt;-<span class="st"> </span>z[<span class="dv">1</span>]
+    upr &lt;-<span class="st"> </span>z[<span class="dv">2</span>]
+    in.strata &lt;-<span class="st"> </span>x &gt;=<span class="st"> </span>lwr &amp;<span class="st"> </span>x &lt;<span class="st"> </span>upr
+    N1 &lt;-<span class="st"> </span><span class="kw">sum</span>(in.strata &amp;<span class="st"> </span>d ==<span class="st"> </span><span class="dv">1</span>)
+    N0 &lt;-<span class="st"> </span><span class="kw">sum</span>(in.strata &amp;<span class="st"> </span>d ==<span class="st"> </span><span class="dv">0</span>)
+    if (N1 &lt;<span class="st"> </span><span class="dv">1</span> |<span class="st"> </span>N0 &lt;<span class="st"> </span><span class="dv">1</span>) 
+        <span class="kw">return</span>(<span class="kw">c</span>(<span class="dt">te =</span> <span class="ot">NA</span>, <span class="dt">upr =</span> <span class="ot">NA</span>, <span class="dt">lwr =</span> <span class="ot">NA</span>))
+    mod &lt;-<span class="st"> </span><span class="kw">lm</span>(y ~<span class="st"> </span>d, <span class="dt">subset =</span> in.strata)
+    se &lt;-<span class="st"> </span><span class="kw">sqrt</span>(<span class="kw">var</span>(y[in.strata &amp;<span class="st"> </span>d ==<span class="st"> </span><span class="dv">1</span>])/N1 +<span class="st"> </span><span class="kw">var</span>(y[in.strata &amp;<span class="st"> </span>d ==<span class="st"> </span><span class="dv">0</span>])/N0)
+    te &lt;-<span class="st"> </span><span class="kw">diff</span>(<span class="kw">predict</span>(mod, <span class="dt">newd =</span> <span class="kw">data.frame</span>(<span class="dt">d =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>))))
+    upr &lt;-<span class="st"> </span>te +<span class="st"> </span><span class="fl">1.96</span> *<span class="st"> </span>se
+    lwr &lt;-<span class="st"> </span>te -<span class="st"> </span><span class="fl">1.96</span> *<span class="st"> </span>se
+    <span class="kw">names</span>(te) &lt;-<span class="st"> </span><span class="kw">names</span>(upr) &lt;-<span class="st"> </span><span class="kw">names</span>(lwr) &lt;-<span class="st"> </span><span class="ot">NULL</span>
+    <span class="kw">return</span>(<span class="kw">c</span>(<span class="dt">te =</span> te, <span class="dt">upr =</span> upr, <span class="dt">lwr =</span> lwr))
+}
+TEs &lt;-<span class="st"> </span><span class="kw">apply</span>(strata, <span class="dv">1</span>, getTE)</code></pre>
+</div>
+</section>
+<section id="plot-stratum-effects" class="slide level1">
+<h1>Plot Stratum Effects</h1>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(x.fit, <span class="kw">rep</span>(tau, n.fit), <span class="dt">col =</span> <span class="st">&quot;black&quot;</span>, <span class="dt">type =</span> <span class="st">&quot;l&quot;</span>, <span class="dt">xlab =</span> <span class="st">&quot;x&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;TE&quot;</span>, 
+    <span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">5</span>))
+<span class="kw">lines</span>(x.fit, fit.true, <span class="dt">col =</span> <span class="st">&quot;black&quot;</span>, <span class="dt">lty =</span> <span class="st">&quot;twodash&quot;</span>)
+<span class="kw">rug</span>(x)
+<span class="kw">lines</span>(x.fit, <span class="kw">rep</span>(simple.pred, n.fit), <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>)
+<span class="kw">lines</span>(x.fit, <span class="kw">rep</span>(simple.upr, n.fit), <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lty =</span> <span class="st">&quot;dotted&quot;</span>)
+<span class="kw">lines</span>(x.fit, <span class="kw">rep</span>(simple.lwr, n.fit), <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lty =</span> <span class="st">&quot;dotted&quot;</span>)
+for (i in <span class="dv">1</span>:<span class="kw">nrow</span>(strata)) {
+    x.fit.strata &lt;-<span class="st"> </span><span class="kw">seq</span>(strata[i, <span class="dv">1</span>], strata[i, <span class="dv">2</span>], <span class="fl">0.01</span>)
+    n.fit.strata &lt;-<span class="st"> </span><span class="kw">length</span>(x.fit.strata)
+    <span class="kw">lines</span>(x.fit.strata, <span class="kw">rep</span>(TEs[<span class="st">&quot;te&quot;</span>, i], n.fit.strata), <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)
+    <span class="kw">lines</span>(x.fit.strata, <span class="kw">rep</span>(TEs[<span class="st">&quot;lwr&quot;</span>, i], n.fit.strata), <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">lty =</span> <span class="st">&quot;dotted&quot;</span>)
+    <span class="kw">lines</span>(x.fit.strata, <span class="kw">rep</span>(TEs[<span class="st">&quot;upr&quot;</span>, i], n.fit.strata), <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">lty =</span> <span class="st">&quot;dotted&quot;</span>)
+}
+<span class="kw">legend</span>(<span class="st">&quot;topright&quot;</span>, <span class="dt">legend =</span> <span class="kw">c</span>(<span class="st">&quot;Tau&quot;</span>, <span class="st">&quot;Tau(x)&quot;</span>, <span class="st">&quot;Simple TE est&quot;</span>, <span class="st">&quot;Conditional TE est&quot;</span>), 
+    <span class="dt">lty =</span> <span class="kw">c</span>(<span class="st">&quot;solid&quot;</span>, <span class="st">&quot;twodash&quot;</span>, <span class="st">&quot;solid&quot;</span>, <span class="st">&quot;solid&quot;</span>), <span class="dt">col =</span> <span class="kw">c</span>(<span class="st">&quot;black&quot;</span>, <span class="st">&quot;black&quot;</span>, 
+        <span class="st">&quot;blue&quot;</span>, <span class="st">&quot;red&quot;</span>), <span class="dt">cex =</span> <span class="fl">0.65</span>)</code></pre>
+</div>
+</section>
+<section id="and-the-plot" class="slide level1">
+<h1>And the plot</h1>
+<figure>
+<img src="figure/9-meff-strata-plot.png" />
+</figure>
+</section>
+<section id="generalize-that-a-little" class="slide level1">
+<h1>Generalize that a little</h1>
+<pre class="sourceCode r"><code class="sourceCode r">y1.fit &lt;-<span class="st"> </span><span class="kw">predict</span>(<span class="kw">loess</span>(y ~<span class="st"> </span>x, <span class="dt">subset =</span> d ==<span class="st"> </span><span class="dv">1</span>), <span class="dt">newd =</span> <span class="kw">data.frame</span>(<span class="dt">x =</span> x.fit), 
+    <span class="dt">se =</span> <span class="ot">TRUE</span>)
+y0.fit &lt;-<span class="st"> </span><span class="kw">predict</span>(<span class="kw">loess</span>(y ~<span class="st"> </span>x, <span class="dt">subset =</span> d ==<span class="st"> </span><span class="dv">0</span>), <span class="dt">newd =</span> <span class="kw">data.frame</span>(<span class="dt">x =</span> x.fit), 
+    <span class="dt">se =</span> <span class="ot">TRUE</span>)
+TE.pred &lt;-<span class="st"> </span>y1.fit$fit -<span class="st"> </span>y0.fit$fit
+SE.pred &lt;-<span class="st"> </span><span class="kw">sqrt</span>(y1.fit$se^<span class="dv">2</span> +<span class="st"> </span>y0.fit$se^<span class="dv">2</span>)
+TE.upr &lt;-<span class="st"> </span>TE.pred +<span class="st"> </span><span class="fl">1.96</span> *<span class="st"> </span>SE.pred
+TE.lwr &lt;-<span class="st"> </span>TE.pred -<span class="st"> </span><span class="fl">1.96</span> *<span class="st"> </span>SE.pred
+<span class="kw">plot</span>(x.fit, <span class="kw">rep</span>(tau, n.fit), <span class="dt">col =</span> <span class="st">&quot;black&quot;</span>, <span class="dt">type =</span> <span class="st">&quot;l&quot;</span>, <span class="dt">xlab =</span> <span class="st">&quot;x&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;TE&quot;</span>, 
+    <span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">5</span>))
+<span class="kw">lines</span>(x.fit, fit.true, <span class="dt">col =</span> <span class="st">&quot;black&quot;</span>, <span class="dt">lty =</span> <span class="st">&quot;twodash&quot;</span>)
+<span class="kw">rug</span>(x)
+<span class="kw">lines</span>(x.fit, TE.pred, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)
+<span class="kw">lines</span>(x.fit, TE.upr, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">lty =</span> <span class="st">&quot;dotted&quot;</span>)
+<span class="kw">lines</span>(x.fit, TE.lwr, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">lty =</span> <span class="st">&quot;dotted&quot;</span>)
+<span class="kw">legend</span>(<span class="st">&quot;topright&quot;</span>, <span class="dt">legend =</span> <span class="kw">c</span>(<span class="st">&quot;Tau&quot;</span>, <span class="st">&quot;Tau(x)&quot;</span>, <span class="st">&quot;LOESS TE est&quot;</span>), <span class="dt">lty =</span> <span class="kw">c</span>(<span class="st">&quot;solid&quot;</span>, 
+    <span class="st">&quot;twodash&quot;</span>, <span class="st">&quot;solid&quot;</span>), <span class="dt">col =</span> <span class="kw">c</span>(<span class="st">&quot;black&quot;</span>, <span class="st">&quot;black&quot;</span>, <span class="st">&quot;red&quot;</span>), <span class="dt">cex =</span> <span class="fl">0.65</span>)</code></pre>
+</section>
+<section id="and-the-plot-1" class="slide level1">
+<h1>And the plot</h1>
+<figure>
+<img src="figure/9-meff-loess-plot.png" />
+</figure>
+<div class="fragment">
+<ul>
+<li class="fragment">Why are the SEs so narrow in the area of sparsity?</li>
+</ul>
+</div>
+</section>
+<section id="even-better" class="slide level1">
+<h1>Even better</h1>
+<ul>
+<li class="fragment">Hill (2011)</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(BayesTree, <span class="dt">quietly =</span> <span class="ot">TRUE</span>)
+bart.mod &lt;-<span class="st"> </span><span class="kw">bart</span>(<span class="kw">cbind</span>(d, x), y, <span class="kw">rbind</span>(<span class="kw">cbind</span>(<span class="dv">1</span>, x.fit), <span class="kw">cbind</span>(<span class="dv">0</span>, x.fit)), <span class="dt">verbose =</span> <span class="ot">FALSE</span>)
+TE.pred &lt;-<span class="st"> </span>bart.mod$yhat.test[, <span class="dv">1</span>:n.fit] -<span class="st"> </span>bart.mod$yhat.test[, {
+    n.fit +<span class="st"> </span><span class="dv">1</span>
+}:{
+    <span class="dv">2</span> *<span class="st"> </span>n.fit
+}]
+TE.upr &lt;-<span class="st"> </span><span class="kw">apply</span>(TE.pred, <span class="dv">2</span>, function(z) <span class="kw">quantile</span>(z, <span class="fl">0.975</span>))
+TE.lwr &lt;-<span class="st"> </span><span class="kw">apply</span>(TE.pred, <span class="dv">2</span>, function(z) <span class="kw">quantile</span>(z, <span class="fl">0.025</span>))
+TE.pred &lt;-<span class="st"> </span><span class="kw">colMeans</span>(TE.pred)
+<span class="kw">plot</span>(x.fit, <span class="kw">rep</span>(tau, n.fit), <span class="dt">col =</span> <span class="st">&quot;black&quot;</span>, <span class="dt">type =</span> <span class="st">&quot;l&quot;</span>, <span class="dt">xlab =</span> <span class="st">&quot;x&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;TE&quot;</span>, 
+    <span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">5</span>))
+<span class="kw">lines</span>(x.fit, fit.true, <span class="dt">col =</span> <span class="st">&quot;black&quot;</span>, <span class="dt">lty =</span> <span class="st">&quot;twodash&quot;</span>)
+<span class="kw">rug</span>(x)
+<span class="kw">lines</span>(x.fit, TE.pred, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)
+<span class="kw">lines</span>(x.fit, TE.upr, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">lty =</span> <span class="st">&quot;dotted&quot;</span>)
+<span class="kw">lines</span>(x.fit, TE.lwr, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">lty =</span> <span class="st">&quot;dotted&quot;</span>)
+<span class="kw">legend</span>(<span class="st">&quot;topright&quot;</span>, <span class="dt">legend =</span> <span class="kw">c</span>(<span class="st">&quot;Tau&quot;</span>, <span class="st">&quot;Tau(x)&quot;</span>, <span class="st">&quot;BART TE est&quot;</span>), <span class="dt">lty =</span> <span class="kw">c</span>(<span class="st">&quot;solid&quot;</span>, 
+    <span class="st">&quot;twodash&quot;</span>, <span class="st">&quot;solid&quot;</span>), <span class="dt">col =</span> <span class="kw">c</span>(<span class="st">&quot;black&quot;</span>, <span class="st">&quot;black&quot;</span>, <span class="st">&quot;red&quot;</span>), <span class="dt">cex =</span> <span class="fl">0.65</span>)</code></pre>
+</div>
+</section>
+<section id="bart-is-awesome" class="slide level1">
+<h1>BART is Awesome</h1>
+<figure>
+<img src="figure/9-meff-bart-plot.png" />
+</figure>
+<div class="fragment">
+<ul>
+<li class="fragment">That represents our uncertainty quite well, doesn't it?</li>
+</ul>
+</div>
+</section>
+<section id="bart-for-ate" class="slide level1">
+<h1>BART for ATE</h1>
+<ul>
+<li class="fragment">Remember how Blattman calculated marginal effects?</li>
+<li class="fragment">What we do here is a sort of analogue to that procedure.</li>
+<li class="fragment">We marginalize our results from BART over the empirical distribution of <span class="math">\(x\)</span>.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">bart.for.TE &lt;-<span class="st"> </span><span class="kw">bart</span>(<span class="kw">cbind</span>(d, x), y, <span class="kw">rbind</span>(<span class="kw">cbind</span>(<span class="dv">1</span>, x), <span class="kw">cbind</span>(<span class="dv">0</span>, x)), <span class="dt">verbose =</span> <span class="ot">FALSE</span>)
+TE.pred &lt;-<span class="st"> </span>bart.for.TE$yhat.test[, <span class="dv">1</span>:<span class="dv">200</span>] -<span class="st"> </span>bart.for.TE$yhat.test[, {
+    <span class="dv">201</span>
+}:{
+    <span class="dv">400</span>
+}]
+TE.pred &lt;-<span class="st"> </span><span class="kw">rowMeans</span>(TE.pred)
+<span class="kw">c</span>(<span class="dt">tau =</span> tau, <span class="dt">lwr =</span> <span class="kw">quantile</span>(TE.pred, <span class="fl">0.025</span>), <span class="dt">TE =</span> <span class="kw">mean</span>(TE.pred), <span class="dt">upr =</span> <span class="kw">quantile</span>(TE.pred, 
+    <span class="fl">0.975</span>))</code></pre>
+<pre><code>##       tau  lwr.2.5%        TE upr.97.5% 
+##     3.560     3.518     3.588     3.659</code></pre>
+</div>
+</section>
+<section id="replication" class="slide level1">
+<h1>Replication</h1>
+<ul>
+<li class="fragment">&quot;Are Voters More Likely to Contribute to Other Public Goods? Evidence from a Large-Scale Randomized Policy Experiment&quot;</li>
+<li class="fragment">Bolsen, Ferraro and Miranda (2014) <em>AJPS</em></li>
+<li class="fragment"><a href="http://hdl.handle.net/1902.1/21394">Replication Materials</a></li>
+<li class="fragment">Outcome: Water use (reducing is &quot;pro-social behavior&quot;)</li>
+<li class="fragment">Treatment: Appeals aimed at inducing pro-social behavior (and water use in particular)</li>
+<li class="fragment">Most relevant covariate is voting frequency</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">load</span>(<span class="st">&quot;AJPS_ReplicationDataset.Rdata&quot;</span>)
+x$alltreat &lt;-<span class="st"> </span><span class="kw">ifelse</span>(x$treatment ==<span class="st"> </span><span class="dv">4</span>, <span class="dv">0</span>, <span class="dv">1</span>)
+
+full.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(summer_07 ~<span class="st"> </span>alltreat *<span class="st"> </span>perc_votecount_hh +<span class="st"> </span>unregistered +<span class="st"> </span>water_2006 +<span class="st"> </span>
+<span class="st">    </span>apr_may_07 +<span class="st"> </span>fmv +<span class="st"> </span>y_max_yblt +<span class="st"> </span>owner +<span class="st"> </span>old +<span class="st"> </span><span class="kw">factor</span>(route), x)
+interact.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(summer_07 ~<span class="st"> </span>alltreat *<span class="st"> </span>perc_votecount_hh, x)
+simple.mod &lt;-<span class="st"> </span><span class="kw">lm</span>(summer_07 ~<span class="st"> </span>alltreat, x)
+<span class="kw">c</span>(<span class="dt">full =</span> <span class="kw">coef</span>(full.mod)[<span class="st">&quot;alltreat&quot;</span>], <span class="dt">interact =</span> <span class="kw">coef</span>(interact.mod)[<span class="st">&quot;alltreat&quot;</span>] +<span class="st"> </span>
+<span class="st">    </span><span class="kw">coef</span>(interact.mod)[<span class="st">&quot;alltreat:perc_votecount_hh&quot;</span>] *<span class="st"> </span><span class="kw">mean</span>(x$perc_votecount_hh, 
+        <span class="dt">na.rm =</span> <span class="ot">TRUE</span>), <span class="dt">simple =</span> <span class="kw">coef</span>(simple.mod)[<span class="st">&quot;alltreat&quot;</span>])</code></pre>
+<pre><code>##     full.alltreat interact.alltreat   simple.alltreat 
+##           -0.6910           -0.9074           -0.9265</code></pre>
+</div>
+</section>
+<section id="examine-heterogeneity" class="slide level1">
+<h1>Examine Heterogeneity</h1>
+<ul>
+<li class="fragment">We'll start with a simple difference in means as a benchmark, then develop a nice chart of the heterogeneity with respect to voting frequency.</li>
+</ul>
+<div class="fragment">
+<pre class="sourceCode r"><code class="sourceCode r">simple.TE &lt;-<span class="st"> </span><span class="kw">with</span>(x, <span class="kw">mean</span>(summer_07[alltreat ==<span class="st"> </span><span class="dv">1</span>]) -<span class="st"> </span><span class="kw">mean</span>(summer_07[alltreat ==<span class="st"> </span>
+<span class="st">    </span><span class="dv">0</span>]))
+simple.SE &lt;-<span class="st"> </span><span class="kw">with</span>(x, <span class="kw">sqrt</span>(<span class="kw">var</span>(summer_07[alltreat ==<span class="st"> </span><span class="dv">1</span>])/<span class="kw">sum</span>(alltreat ==<span class="st"> </span><span class="dv">1</span>) +<span class="st"> </span>
+<span class="st">    </span><span class="kw">var</span>(summer_07[alltreat ==<span class="st"> </span><span class="dv">0</span>])/<span class="kw">sum</span>(alltreat ==<span class="st"> </span><span class="dv">0</span>)))
+TE.upr &lt;-<span class="st"> </span>simple.TE +<span class="st"> </span><span class="fl">1.96</span> *<span class="st"> </span>simple.SE
+TE.lwr &lt;-<span class="st"> </span>simple.TE -<span class="st"> </span><span class="fl">1.96</span> *<span class="st"> </span>simple.SE
+x.fit &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.01</span>)
+n.fit &lt;-<span class="st"> </span><span class="kw">length</span>(x.fit)
+<span class="kw">plot</span>(x.fit, <span class="kw">rep</span>(simple.TE, n.fit), <span class="dt">ylim =</span> <span class="kw">c</span>(-<span class="dv">2</span>, <span class="dv">0</span>), <span class="dt">type =</span> <span class="st">&quot;l&quot;</span>)
+<span class="kw">rug</span>(x$perc_votecount_hh)
+<span class="kw">lines</span>(x.fit, <span class="kw">rep</span>(TE.upr, n.fit), <span class="dt">lty =</span> <span class="st">&quot;dotted&quot;</span>)
+<span class="kw">lines</span>(x.fit, <span class="kw">rep</span>(TE.lwr, n.fit), <span class="dt">lty =</span> <span class="st">&quot;dotted&quot;</span>)
+x.fit.frame &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">alltreat =</span> <span class="kw">c</span>(<span class="kw">rep</span>(<span class="dv">1</span>, n.fit), <span class="kw">rep</span>(<span class="dv">0</span>, n.fit)), <span class="dt">perc_votecount_hh =</span> <span class="kw">rep</span>(x.fit, 
+    <span class="dv">2</span>))
+interact.pred &lt;-<span class="st"> </span><span class="kw">predict</span>(interact.mod, <span class="dt">newd =</span> x.fit.frame)
+interact.pred &lt;-<span class="st"> </span>interact.pred[<span class="dv">1</span>:n.fit] -<span class="st"> </span>interact.pred[{
+    n.fit +<span class="st"> </span><span class="dv">1</span>
+}:{
+    <span class="dv">2</span> *<span class="st"> </span>n.fit
+}]
+vcv.int &lt;-<span class="st"> </span><span class="kw">vcov</span>(interact.mod)
+interact.se.model &lt;-<span class="st"> </span><span class="kw">sqrt</span>(vcv.int[<span class="st">&quot;alltreat&quot;</span>, <span class="st">&quot;alltreat&quot;</span>] +<span class="st"> </span>x.fit^<span class="dv">2</span> *<span class="st"> </span>vcv.int[<span class="st">&quot;alltreat:perc_votecount_hh&quot;</span>, 
+    <span class="st">&quot;alltreat:perc_votecount_hh&quot;</span>] +<span class="st"> </span><span class="dv">2</span> *<span class="st"> </span>x.fit *<span class="st"> </span>vcv.int[<span class="st">&quot;alltreat&quot;</span>, <span class="st">&quot;alltreat:perc_votecount_hh&quot;</span>])
+interact.upr &lt;-<span class="st"> </span>interact.pred +<span class="st"> </span><span class="fl">1.96</span> *<span class="st"> </span>interact.se.model
+interact.lwr &lt;-<span class="st"> </span>interact.pred -<span class="st"> </span><span class="fl">1.96</span> *<span class="st"> </span>interact.se.model
+<span class="kw">lines</span>(x.fit, interact.pred, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)
+<span class="kw">lines</span>(x.fit, interact.upr, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">lty =</span> <span class="st">&quot;dotted&quot;</span>)
+<span class="kw">lines</span>(x.fit, interact.lwr, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">lty =</span> <span class="st">&quot;dotted&quot;</span>)</code></pre>
+</div>
+</section>
+<section id="bart-for-heterogeneity" class="slide level1">
+<h1>BART for heterogeneity</h1>
+<pre class="sourceCode r"><code class="sourceCode r">x.train &lt;-<span class="st"> </span><span class="kw">cbind</span>(x$alltreat, x$perc_votecount_hh)
+y.train &lt;-<span class="st"> </span>x$summer_07
+ok &lt;-<span class="st"> </span><span class="kw">complete.cases</span>(x.train)
+x.train &lt;-<span class="st"> </span>x.train[ok, ]
+y.train &lt;-<span class="st"> </span>y.train[ok]
+bart.int.mod &lt;-<span class="st"> </span><span class="kw">bart</span>(x.train, y.train, <span class="kw">rbind</span>(<span class="kw">cbind</span>(<span class="dv">1</span>, x.fit), <span class="kw">cbind</span>(<span class="dv">0</span>, x.fit)), 
+    <span class="dt">verbose =</span> <span class="ot">FALSE</span>)
+bart.pred &lt;-<span class="st"> </span>bart.int.mod$yhat.test[, <span class="dv">1</span>:n.fit] -<span class="st"> </span>bart.int.mod$yhat.test[, {
+    n.fit +<span class="st"> </span><span class="dv">1</span>
+}:{
+    <span class="dv">2</span> *<span class="st"> </span>n.fit
+}]
+bart.upr &lt;-<span class="st"> </span><span class="kw">apply</span>(bart.pred, <span class="dv">2</span>, function(z) <span class="kw">quantile</span>(z, <span class="fl">0.975</span>))
+bart.lwr &lt;-<span class="st"> </span><span class="kw">apply</span>(bart.pred, <span class="dv">2</span>, function(z) <span class="kw">quantile</span>(z, <span class="fl">0.025</span>))
+bart.pred &lt;-<span class="st"> </span><span class="kw">colMeans</span>(bart.pred)
+<span class="kw">lines</span>(x.fit, bart.pred, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>)
+<span class="kw">lines</span>(x.fit, bart.upr, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lty =</span> <span class="st">&quot;dotted&quot;</span>)
+<span class="kw">lines</span>(x.fit, bart.lwr, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lty =</span> <span class="st">&quot;dotted&quot;</span>)
+<span class="kw">legend</span>(<span class="st">&quot;topright&quot;</span>, <span class="dt">legend =</span> <span class="kw">c</span>(<span class="st">&quot;ATE&quot;</span>, <span class="st">&quot;Interacted Model&quot;</span>, <span class="st">&quot;BART&quot;</span>), <span class="dt">lty =</span> <span class="kw">c</span>(<span class="st">&quot;solid&quot;</span>, 
+    <span class="st">&quot;solid&quot;</span>, <span class="st">&quot;solid&quot;</span>), <span class="dt">col =</span> <span class="kw">c</span>(<span class="st">&quot;black&quot;</span>, <span class="st">&quot;red&quot;</span>, <span class="st">&quot;blue&quot;</span>), <span class="dt">cex =</span> <span class="fl">0.65</span>)</code></pre>
+</section>
+<section id="the-final-plot" class="slide level1">
+<h1>The final plot</h1>
+<figure>
+<img src="figure/9-replic-plot.png" />
+</figure>
+</section>
+    </div>
+  </div>
+
+  <script src="reveal.js/lib/js/head.min.js"></script>
+  <script src="reveal.js/js/reveal.min.js"></script>
+
+  <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        theme: 'simple', // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          { src: 'reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'reveal.js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+          { src: 'reveal.js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } },
+//          { src: 'reveal.js/plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; }, }
+//          { src: 'reveal.js/plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+]});
+    </script>
+  </body>
+</html>
