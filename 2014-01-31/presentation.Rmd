@@ -62,6 +62,7 @@ pandoc presentation.md -o handout.pdf
 - [Advanced R Programming](http://adv-r.had.co.nz/) - forthcoming, H. Wickham
 - [The R Inferno](http://www.burns-stat.com/documents/books/the-r-inferno/) - P. Burns
 - [Rdataviz](https://github.com/pablobarbera/Rdataviz) - a talk by P. Barberá on ggplot2
+- [Basic Intro to R](https://github.com/pablobarbera/NYU-AD-160J/tree/master/lab1) - also by P. Barberá
 
 # Reading R Documentation
 - <a href="http://stat.ethz.ch/R-manual/R-patched/library/stats/html/lm.html" target="_blank">`?lm`</a>
